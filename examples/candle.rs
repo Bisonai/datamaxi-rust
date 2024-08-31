@@ -1,4 +1,4 @@
-use datamaxi:: {api::Datamaxi, candle::*};
+use datamaxi::{api::Datamaxi, candle::*};
 
 fn main() {
     let api_key: &str = "API_KEY";
