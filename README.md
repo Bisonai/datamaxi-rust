@@ -12,7 +12,7 @@ The package can be used to fetch both historical and latest data using [DataMaxi
 
 ```shell
 [dependencies]
-binance = { git = "https://github.com/bisonai/datamaxi-rust.git" }
+datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git" }
 ```
 
 ## Quickstart
