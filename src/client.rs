@@ -19,7 +19,7 @@ impl Client {
     pub fn new(api_key: String) -> Self {
         Client {
             host: HOST.to_string(),
-            api_key: api_key,
+            api_key,
             inner_client: reqwest::blocking::Client::builder()
                 .pool_idle_timeout(None)
                 .build()
