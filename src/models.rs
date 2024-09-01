@@ -50,3 +50,10 @@ pub struct LatestFundingRateDetail {
     pub q: String,
     pub r: f64,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct ForexDetail {
+    pub s: String,
+    pub d: i64,
+    pub r: f64,
+}
