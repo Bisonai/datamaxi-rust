@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorKind"],"struct":["Client","Config","Error"],"trait":["Datamaxi","ResultExt"],"type":["Result"]};
