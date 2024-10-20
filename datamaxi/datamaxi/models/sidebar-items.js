@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CandleDetail","CandleOptions","CandleResponse","PoolsOptions","PoolsResponse","SymbolsOptions","SymbolsResponse","TradeDetail","TradeOptions","TradeResponse"]};
