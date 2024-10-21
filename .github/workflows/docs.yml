@@ -33,6 +33,9 @@ jobs:
       - name: Add redirect
         run: echo '<meta http-equiv="refresh" content="0;url=datamaxi/index.html">' > target/doc/index.html
 
+      - name: Add CNAME
+        run: echo 'rust.datamaxiplus.com' > target/doc/CNAME
+
       - name: Remove lock file
         run: rm target/doc/.lock
 
