@@ -112,7 +112,7 @@ impl Datamaxi for Candle {
     /// # Example
     /// ```rust
     /// use crate::datamaxi::api::Datamaxi;
-    /// let candle = datamaxi::dex::Candle::new("my_api_key".to_string());
+    /// let candle = datamaxi::cex::Candle::new("my_api_key".to_string());
     /// ```
     fn new(api_key: String) -> Candle {
         let config = Config {
@@ -136,7 +136,7 @@ impl Datamaxi for Candle {
     /// # Example
     /// ```rust
     /// use crate::datamaxi::api::Datamaxi;
-    /// let candle = datamaxi::dex::Candle::new_with_base_url("my_api_key".to_string(), "https://custom-api.example.com".to_string());
+    /// let candle = datamaxi::cex::Candle::new_with_base_url("my_api_key".to_string(), "https://custom-api.example.com".to_string());
     /// ```
     fn new_with_base_url(api_key: String, base_url: String) -> Candle {
         let config = Config {

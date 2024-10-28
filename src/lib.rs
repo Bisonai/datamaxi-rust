@@ -50,54 +50,37 @@
 //! candle.get("binance", "ETH-USDT", candle_options);
 //! ```
 //!
-//! ### DEX Candle
+//! ### DEX
 //!
 //! ```rust
 //! let api_key = "my_api_key".to_string();
-//! let candle: datamaxi::dex::Candle = datamaxi::api::Datamaxi::new(api_key);
+//! let dex: datamaxi::dex::Dex = datamaxi::api::Datamaxi::new(api_key);
 //!
 //! // Fetch supported intervals for DEX candle data
-//! candle.intervals();
+//! dex.intervals();
 //!
-//! // Fetch supported exchange for DEX candle data
-//! candle.exchanges();
+//! // Fetch supported exchange for DEX data
+//! dex.exchanges();
 //!
-//! // Fetch supported chains for DEX candle data
-//! candle.chains();
+//! // Fetch supported chains for DEX data
+//! dex.chains();
 //!
-//! // Fetch supported pools for DEX candle data
+//! // Fetch supported pools for DEX data
 //! let pools_options = datamaxi::dex::PoolsOptions::new();
-//! candle.pools(pools_options);
+//! dex.pools(pools_options);
 //!
 //! // Fetch DEX candle data
 //! let params = datamaxi::dex::CandleOptions::new();
-//! candle.get(
+//! dex.candle(
 //!   "bsc_mainnet",
 //!   "pancakeswap",
 //!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
 //!   params,
 //! );
-//! ```
 //!
-//! ### DEX Trade
-//!
-//! ```rust
-//! let api_key = "my_api_key".to_string();
-//! let trade: datamaxi::dex::Trade = datamaxi::api::Datamaxi::new(api_key);
-//!
-//! // Fetch supported exchange for DEX trade data
-//! trade.exchanges();
-//!
-//! // Fetch supported chains for DEX trade data
-//! trade.chains();
-//!
-//! // Fetch supported pools for DEX trade data
-//! let pools_options = datamaxi::dex::PoolsOptions::new();
-//! trade.pools(pools_options);
-//!
-//! // Fetch DEX candle data
+//! // Fetch DEX trade data
 //! let trade_options = datamaxi::dex::TradeOptions::new().limit(5);
-//! trade.get(
+//! dex.trade(
 //!   "bsc_mainnet",
 //!   "pancakeswap",
 //!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
@@ -180,20 +163,19 @@ pub mod cex;
 ///     api_key: "my_api_key".to_string(),
 /// };
 /// let client = datamaxi::api::Client::new(config);
-/// let candle = datamaxi::dex::Candle { client: client.clone() };
-/// let trade = datamaxi::dex::Trade { client };
+/// let dex = datamaxi::dex::Dex { client: client.clone() };
 ///
 /// // Retrieve candle data
 /// let candle_options = datamaxi::dex::CandleOptions::new().interval("1h").limit(100);
-/// let candle_data = candle.get("kaia_mainnet", "dragonswap", "0x...", candle_options);
+/// let candle_data = dex.candle("kaia_mainnet", "dragonswap", "0x...", candle_options);
 ///
 /// // Retrieve trade data
 /// let trade_options = datamaxi::dex::TradeOptions::new().limit(50);
-/// let trade_data = trade.get("kaia_mainnet", "dragonswap", "0x...", trade_options);
+/// let trade_data = dex.trade("kaia_mainnet", "dragonswap", "0x...", trade_options);
 ///
 /// // Retrieve available pools
 /// let pools_options = datamaxi::dex::PoolsOptions::new().chain("kaia_mainnet");
-/// let pools = candle.pools(pools_options);
+/// let pools = dex.pools(pools_options);
 /// ```
 ///
 /// # Error Handling
