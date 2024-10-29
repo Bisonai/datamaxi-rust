@@ -185,24 +185,6 @@
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # DataMaxi+ Rust SDK
 //!
 //! This is the official implementation of Rust SDK for [DataMaxi+](https://datamaxiplus.com/).
@@ -255,54 +237,37 @@
 //! candle.get("binance", "ETH-USDT", candle_options);
 //! ```
 //!
-//! ### DEX Candle
+//! ### DEX
 //!
 //! ```rust
 //! let api_key = "my_api_key".to_string();
-//! let candle: datamaxi::dex::Candle = datamaxi::api::Datamaxi::new(api_key);
+//! let dex: datamaxi::dex::Dex = datamaxi::api::Datamaxi::new(api_key);
 //!
 //! // Fetch supported intervals for DEX candle data
-//! candle.intervals();
+//! dex.intervals();
 //!
-//! // Fetch supported exchange for DEX candle data
-//! candle.exchanges();
+//! // Fetch supported exchange for DEX data
+//! dex.exchanges();
 //!
-//! // Fetch supported chains for DEX candle data
-//! candle.chains();
+//! // Fetch supported chains for DEX data
+//! dex.chains();
 //!
-//! // Fetch supported pools for DEX candle data
+//! // Fetch supported pools for DEX data
 //! let pools_options = datamaxi::dex::PoolsOptions::new();
-//! candle.pools(pools_options);
+//! dex.pools(pools_options);
 //!
 //! // Fetch DEX candle data
 //! let params = datamaxi::dex::CandleOptions::new();
-//! candle.get(
+//! dex.candle(
 //!   "bsc_mainnet",
 //!   "pancakeswap",
 //!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
 //!   params,
 //! );
-//! ```
 //!
-//! ### DEX Trade
-//!
-//! ```rust
-//! let api_key = "my_api_key".to_string();
-//! let trade: datamaxi::dex::Trade = datamaxi::api::Datamaxi::new(api_key);
-//!
-//! // Fetch supported exchange for DEX trade data
-//! trade.exchanges();
-//!
-//! // Fetch supported chains for DEX trade data
-//! trade.chains();
-//!
-//! // Fetch supported pools for DEX trade data
-//! let pools_options = datamaxi::dex::PoolsOptions::new();
-//! trade.pools(pools_options);
-//!
-//! // Fetch DEX candle data
+//! // Fetch DEX trade data
 //! let trade_options = datamaxi::dex::TradeOptions::new().limit(5);
-//! trade.get(
+//! dex.trade(
 //!   "bsc_mainnet",
 //!   "pancakeswap",
 //!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
@@ -385,20 +350,19 @@
 ///     api_key: "my_api_key".to_string(),
 /// };
 /// let client = datamaxi::api::Client::new(config);
-/// let candle = datamaxi::dex::Candle { client: client.clone() };
-/// let trade = datamaxi::dex::Trade { client };
+/// let dex = datamaxi::dex::Dex { client: client.clone() };
 ///
 /// // Retrieve candle data
 /// let candle_options = datamaxi::dex::CandleOptions::new().interval("1h").limit(100);
-/// let candle_data = candle.get("kaia_mainnet", "dragonswap", "0x...", candle_options);
+/// let candle_data = dex.candle("kaia_mainnet", "dragonswap", "0x...", candle_options);
 ///
 /// // Retrieve trade data
 /// let trade_options = datamaxi::dex::TradeOptions::new().limit(50);
-/// let trade_data = trade.get("kaia_mainnet", "dragonswap", "0x...", trade_options);
+/// let trade_data = dex.trade("kaia_mainnet", "dragonswap", "0x...", trade_options);
 ///
 /// // Retrieve available pools
 /// let pools_options = datamaxi::dex::PoolsOptions::new().chain("kaia_mainnet");
-/// let pools = candle.pools(pools_options);
+/// let pools = dex.pools(pools_options);
 /// ```
 ///
 /// # Error Handling
