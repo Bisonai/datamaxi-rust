@@ -6,27 +6,27 @@ use serde::Serialize;
 pub struct CandleDetail {
     /// The timestamp of the candle's open time.
     #[serde(rename = "d")]
-    pub timestamp: String,
+    pub timestamp: i64,
 
     /// The opening price of the asset at the beginning of the time frame.
     #[serde(rename = "o")]
-    pub open: String,
+    pub open: f64,
 
     /// The highest price of the asset during the time frame.
     #[serde(rename = "h")]
-    pub high: String,
+    pub high: f64,
 
     /// The lowest price of the asset during the time frame.
     #[serde(rename = "l")]
-    pub low: String,
+    pub low: f64,
 
     /// The closing price of the asset at the end of the time frame.
     #[serde(rename = "c")]
-    pub close: String,
+    pub close: f64,
 
     /// The total volume of trades (in the base currency) that occurred during the time frame.
     #[serde(rename = "v")]
-    pub volume: String,
+    pub volume: f64,
 }
 
 /// Response containing candle data.
@@ -35,17 +35,20 @@ pub struct CandleResponse {
     /// A vector containing detailed information about each candle.
     pub data: Vec<CandleDetail>,
 
-    /// The current page number in the paginated response.
-    pub page: i32,
+    /// Requested exchange.
+    pub exchange: String,
 
-    /// The maximum number of items per page in the response.
-    pub limit: i32,
+    /// Requested symbol.
+    pub symbol: String,
 
-    /// The starting point of the time frame for the candle data.
-    pub from: String,
+    /// Requested market.
+    pub market: String,
 
-    /// The ending point of the time frame for the candle data.
-    pub to: String,
+    /// Requested currency.
+    pub currency: String,
+
+    /// The interval for the candle data (e.g., 1m, 1h, 1d).
+    pub interval: String,
 
     /// The sorting order for the candle data (e.g., "asc" or "desc").
     pub sort: String,
@@ -119,17 +122,8 @@ pub struct TradeResponse {
 
 /// Optional parameters for a candle request.
 pub struct CandleOptions {
-    /// The market type (e.g., spot, futures).
-    pub market: Option<String>,
-
     /// The interval for the candle data (e.g., 1m, 1h, 1d).
     pub interval: Option<String>,
-
-    /// The page number for the candle data.
-    pub page: Option<i32>,
-
-    /// The maximum number of items per page in the response.
-    pub limit: Option<i32>,
 
     /// The starting date & time for the candle data.
     pub from: Option<String>,
@@ -137,8 +131,8 @@ pub struct CandleOptions {
     /// The ending date & time for the candle data.
     pub to: Option<String>,
 
-    /// The sorting order for the candle data (e.g., "asc" or "desc").
-    pub sort: Option<String>,
+    /// The currency for the candle data.
+    pub currency: Option<String>,
 }
 
 impl Default for CandleOptions {
@@ -152,21 +146,13 @@ impl CandleOptions {
     /// Creates a new instance of `CandleOptions` with default values.
     pub fn new() -> Self {
         CandleOptions {
-            market: None,
             interval: None,
-            page: 1.into(),
-            limit: 1000.into(),
             from: None,
             to: None,
-            sort: Some("desc".into()),
+            currency: None,
         }
     }
 
-    /// Sets the market for the candle query.
-    pub fn market(mut self, market: &str) -> Self {
-        self.market = Some(market.into());
-        self
-    }
 
     /// Sets the interval for the candle query.
     pub fn interval(mut self, interval: &str) -> Self {
@@ -174,17 +160,6 @@ impl CandleOptions {
         self
     }
 
-    /// Sets the page number for the candle query.
-    pub fn page(mut self, page: i32) -> Self {
-        self.page = Some(page);
-        self
-    }
-
-    /// Sets the limit for the number of results returned.
-    pub fn limit(mut self, limit: i32) -> Self {
-        self.limit = Some(limit);
-        self
-    }
 
     /// Sets the starting date & time for the candle query.
     pub fn from(mut self, from: &str) -> Self {
@@ -195,12 +170,6 @@ impl CandleOptions {
     /// Sets the ending date & time for the candle query.
     pub fn to(mut self, to: &str) -> Self {
         self.to = Some(to.into());
-        self
-    }
-
-    /// Sets the sort order for the candle query (e.g., "asc" or "desc").
-    pub fn sort(mut self, sort: &str) -> Self {
-        self.sort = Some(sort.into());
         self
     }
 }

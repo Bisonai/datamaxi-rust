@@ -30,7 +30,7 @@ fn main() {
 
     // CEX Candle Data
     let candle_options = datamaxi::cex::CandleOptions::new();
-    let candle_response = candle.get("binance", "ETH-USDT", candle_options);
+    let candle_response = candle.get("binance", "spot", "ETH-USDT", candle_options);
     match candle_response {
         Ok(answer) => match serde_json::to_string(&answer) {
             Ok(json) => println!("{}", json),

@@ -13,44 +13,35 @@ impl Candle {
     /// Retrieves candle data for a specified exchange and symbol. Additional parameters can be
     /// provided to filter and sort the results. The response will contain an array of candle data
     /// objects, each representing a single candle with open, high, low, close, and volume values.
-    pub fn get<E, S>(
+    pub fn get<E, M, S>(
         &self,
         exchange: E,
+        market: M,
         symbol: S,
         options: CandleOptions,
     ) -> Result<CandleResponse>
     where
         E: Into<String>,
+        M: Into<String>,
         S: Into<String>,
     {
         let mut parameters = HashMap::new();
 
         // required
         parameters.insert("exchange".to_string(), exchange.into());
+        parameters.insert("market".to_string(), market.into());
         parameters.insert("symbol".to_string(), symbol.into());
 
         // optional
         parameters.extend(
             [
                 options
-                    .market
-                    .map(|market| ("market".to_string(), market.to_string())),
-                options
                     .interval
                     .map(|interval| ("interval".to_string(), interval.to_string())),
-                options
-                    .page
-                    .map(|page| ("page".to_string(), page.to_string())),
-                options
-                    .limit
-                    .map(|limit| ("limit".to_string(), limit.to_string())),
                 options
                     .from
                     .map(|from| ("from".to_string(), from.to_string())),
                 options.to.map(|to| ("to".to_string(), to.to_string())),
-                options
-                    .sort
-                    .map(|sort| ("sort".to_string(), sort.to_string())),
             ]
             .into_iter()
             .flatten(),

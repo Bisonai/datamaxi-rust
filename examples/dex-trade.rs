@@ -6,27 +6,27 @@ fn main() {
     let trade: datamaxi::dex::Trade = datamaxi::api::Datamaxi::new(api_key);
 
     // DEX Trade Exchanges
-    match trade.exchanges() {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
-    }
+    // match trade.exchanges() {
+    //     Ok(answer) => println!("{:?}", answer),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
-    // DEX Trade Chains
-    match trade.chains() {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
-    }
+    // // DEX Trade Chains
+    // match trade.chains() {
+    //     Ok(answer) => println!("{:?}", answer),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
     // DEX Trade Pools
-    let pools_options = datamaxi::dex::PoolsOptions::new();
-    let pools_response = trade.pools(pools_options);
-    match pools_response {
-        Ok(answer) => match serde_json::to_string(&answer) {
-            Ok(json) => println!("{}", json),
-            Err(e) => println!("Error: {}", e),
-        },
-        Err(e) => println!("Error: {}", e),
-    }
+    // let pools_options = datamaxi::dex::PoolsOptions::new();
+    // let pools_response = trade.pools(pools_options);
+    // match pools_response {
+    //     Ok(answer) => match serde_json::to_string(&answer) {
+    //         Ok(json) => println!("{}", json),
+    //         Err(e) => println!("Error: {}", e),
+    //     },
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
     // DEX Trade Data
     let trade_options = datamaxi::dex::TradeOptions::new().limit(5);

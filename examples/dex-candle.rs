@@ -6,33 +6,33 @@ fn main() {
     let candle: datamaxi::dex::Candle = datamaxi::api::Datamaxi::new(api_key);
 
     // DEX Candle Intervals
-    match candle.intervals() {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
-    }
+    // match candle.intervals() {
+    //     Ok(answer) => println!("{:?}", answer),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
-    // DEX Candle Exchanges
-    match candle.exchanges() {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
-    }
+    // // DEX Candle Exchanges
+    // match candle.exchanges() {
+    //     Ok(answer) => println!("{:?}", answer),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
-    // DEX Candle Chains
-    match candle.chains() {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
-    }
+    // // DEX Candle Chains
+    // match candle.chains() {
+    //     Ok(answer) => println!("{:?}", answer),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
     // DEX Candle Pools
-    let pools_options = datamaxi::dex::PoolsOptions::new();
-    let pools_response = candle.pools(pools_options);
-    match pools_response {
-        Ok(answer) => match serde_json::to_string(&answer) {
-            Ok(json) => println!("{}", json),
-            Err(e) => println!("Error: {}", e),
-        },
-        Err(e) => println!("Error: {}", e),
-    }
+    // let pools_options = datamaxi::dex::PoolsOptions::new();
+    // let pools_response = candle.pools(pools_options);
+    // match pools_response {
+    //     Ok(answer) => match serde_json::to_string(&answer) {
+    //         Ok(json) => println!("{}", json),
+    //         Err(e) => println!("Error: {}", e),
+    //     },
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
     // DEX Candle Data
     let params = datamaxi::dex::CandleOptions::new();

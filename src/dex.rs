@@ -36,68 +36,18 @@ impl Candle {
         parameters.extend(
             [
                 options
-                    .market
-                    .map(|market| ("market".to_string(), market.to_string())),
-                options
                     .interval
                     .map(|interval| ("interval".to_string(), interval.to_string())),
-                options
-                    .page
-                    .map(|page| ("page".to_string(), page.to_string())),
-                options
-                    .limit
-                    .map(|limit| ("limit".to_string(), limit.to_string())),
                 options
                     .from
                     .map(|from| ("from".to_string(), from.to_string())),
                 options.to.map(|to| ("to".to_string(), to.to_string())),
-                options
-                    .sort
-                    .map(|sort| ("sort".to_string(), sort.to_string())),
             ]
             .into_iter()
             .flatten(),
         );
 
         self.client.get("/dex/candle", Some(parameters))
-    }
-
-    /// Retrieves information about available pools, including details about the chain, exchange,
-    /// base and quote symbols, and pool address. Optional parameters can be provided to filter the
-    /// results by chain and exchange.
-    pub fn pools(&self, options: PoolsOptions) -> Result<Vec<PoolsResponse>> {
-        let mut parameters = HashMap::new();
-
-        // optional
-        parameters.extend(
-            [
-                options
-                    .exchange
-                    .map(|exchange| ("exchange".to_string(), exchange.to_string())),
-                options
-                    .chain
-                    .map(|chain| ("chain".to_string(), chain.to_string())),
-            ]
-            .into_iter()
-            .flatten(),
-        );
-
-        self.client.get("/dex/candle/pools", Some(parameters))
-    }
-
-    /// Retrieves a list of available chains for candle data.
-    pub fn chains(&self) -> Result<Vec<String>> {
-        self.client.get("/dex/candle/chains", None)
-    }
-
-    /// Retrieves a list of available exchanges for candle data.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/dex/candle/exchanges", None)
-    }
-
-    /// Retrieves a list of available intervals for candle data.
-    pub fn intervals(&self) -> Result<Vec<String>> {
-        self.client.get("/dex/candle/intervals", None)
     }
 }
 
@@ -204,39 +154,6 @@ impl Trade {
 
         self.client.get("/dex/trade", Some(parameters))
     }
-
-    /// Retrieves information about available pools, including details about the chain, exchange,
-    /// base and quote symbols, and pool address. Optional parameters can be provided to filter the
-    /// results by chain and exchange.
-    pub fn pools(&self, options: PoolsOptions) -> Result<Vec<PoolsResponse>> {
-        let mut parameters = HashMap::new();
-
-        // optional
-        parameters.extend(
-            [
-                options
-                    .chain
-                    .map(|chain| ("chain".to_string(), chain.to_string())),
-                options
-                    .exchange
-                    .map(|exchange| ("exchange".to_string(), exchange.to_string())),
-            ]
-            .into_iter()
-            .flatten(),
-        );
-
-        self.client.get("/dex/trade/pools", Some(parameters))
-    }
-
-    /// Retrieves a list of available intervals for trade data.
-    pub fn chains(&self) -> Result<Vec<String>> {
-        self.client.get("/dex/trade/chains", None)
-    }
-
-    /// Retrieves a list of available exchanges for trade data.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/dex/trade/exchanges", None)
-    }
 }
 
 /// Implements the `Datamaxi` trait for `Trade`, providing methods
@@ -285,6 +202,91 @@ impl Datamaxi for Trade {
             api_key,                  // Provided API key
         };
         Trade {
+            client: Client::new(config), // Create a new client with the given config
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Pool {
+    pub client: Client,
+}
+
+impl Pool {
+    /// Retrieves information about available pools, including details about the chain, exchange,
+    /// base and quote symbols, and pool address. Optional parameters can be provided to filter the
+    /// results by chain and exchange.
+    pub fn get(
+        &self,
+        options: PoolsOptions,
+    ) -> Result<PoolsResponse>
+    {
+        let mut parameters = HashMap::new();
+
+        // optional
+        parameters.extend(
+            [
+                options
+                    .exchange
+                    .map(|exchange| ("exchange".to_string(), exchange.to_string())),
+                options
+                    .chain
+                    .map(|chain| ("chain".to_string(), chain.to_string())),
+            ]
+            .into_iter()
+            .flatten(),
+        );
+
+        self.client.get("/dex/pools", Some(parameters))
+    }
+}
+
+/// Implements the `Datamaxi` trait for `Pool`, providing methods
+/// to create new instances of `Pool` with or without a custom base URL.
+impl Datamaxi for Pool {
+    /// Creates a new `Pool` instance with the default base URL.
+    ///
+    /// # Parameters
+    /// - `api_key`: A `String` containing the API key to authenticate requests.
+    ///
+    /// # Returns
+    /// A new `Pool` instance configured with the default base URL and the provided `api_key`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use crate::datamaxi::api::Datamaxi;
+    /// let pool = datamaxi::dex::Pool::new("my_api_key".to_string());
+    /// ```
+    fn new(api_key: String) -> Pool {
+        let config = Config {
+            base_url: None, // Use the default base URL
+            api_key,        // Provided API key
+        };
+        Pool {
+            client: Client::new(config), // Create a new client with the given config
+        }
+    }
+
+    /// Creates a new `Pool` instance with a custom base URL.
+    ///
+    /// # Parameters
+    /// - `api_key`: A `String` containing the API key to authenticate requests.
+    /// - `base_url`: A `String` specifying the custom base URL for API requests.
+    ///
+    /// # Returns
+    /// A new `Pool` instance configured with the provided `base_url` and `api_key`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use crate::datamaxi::api::Datamaxi;
+    /// let pool = datamaxi::dex::Pool::new_with_base_url("my_api_key".to_string(), "https://custom-api.example.com".to_string());
+    /// ```
+    fn new_with_base_url(api_key: String, base_url: String) -> Pool {
+        let config = Config {
+            base_url: Some(base_url), // Use the provided custom base URL
+            api_key,                  // Provided API key
+        };
+        Pool {
             client: Client::new(config), // Create a new client with the given config
         }
     }
