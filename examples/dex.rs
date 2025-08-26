@@ -33,7 +33,7 @@ fn main() {
     let trade_response = dex.trade(
         "bsc_mainnet",
         "pancakeswap",
-        "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
+        "0x6ee3eE9C3395BbD136B6076A70Cb6cFF241c0E24",
         trade_options,
     );
     match trade_response {
@@ -55,7 +55,7 @@ fn main() {
     let candle_response = dex.candle(
         "bsc_mainnet",
         "pancakeswap",
-        "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
+        "0x6ee3eE9C3395BbD136B6076A70Cb6cFF241c0E24",
         params,
     );
     match candle_response {

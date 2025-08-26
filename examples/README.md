@@ -12,7 +12,7 @@ cargo run --release -q --example "cex-candle"
 ## DEX Trade
 
 ```bash
-cargo run --release -q --example "dex-trade"
+cargo run --release -q --example "dex"
 ```
 
 ## DEX Candle

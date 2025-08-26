@@ -6,27 +6,27 @@ use serde::Serialize;
 pub struct CandleDetail {
     /// The timestamp of the candle's open time.
     #[serde(rename = "d")]
-    pub timestamp: String,
+    pub timestamp: f64,
 
     /// The opening price of the asset at the beginning of the time frame.
     #[serde(rename = "o")]
-    pub open: String,
+    pub open: f64,
 
     /// The highest price of the asset during the time frame.
     #[serde(rename = "h")]
-    pub high: String,
+    pub high: f64,
 
     /// The lowest price of the asset during the time frame.
     #[serde(rename = "l")]
-    pub low: String,
+    pub low: f64,
 
     /// The closing price of the asset at the end of the time frame.
     #[serde(rename = "c")]
-    pub close: String,
+    pub close: f64,
 
     /// The total volume of trades (in the base currency) that occurred during the time frame.
     #[serde(rename = "v")]
-    pub volume: String,
+    pub volume: f64,
 }
 
 /// Response containing candle data.
@@ -35,20 +35,66 @@ pub struct CandleResponse {
     /// A vector containing detailed information about each candle.
     pub data: Vec<CandleDetail>,
 
-    /// The current page number in the paginated response.
+    pub currency: String,
+
+    pub interval: String,
+
+    pub market: String,
+
+    pub symbol: String,
+}
+
+/// Detailed information about a dex candle.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DexCandleDetail {
+    /// The timestamp of the candle's open time.
+    #[serde(rename = "d")]
+    pub timestamp: f64,
+
+    /// The opening price of the asset at the beginning of the time frame.
+    #[serde(rename = "o")]
+    pub open: f64,
+
+    /// The highest price of the asset during the time frame.
+    #[serde(rename = "h")]
+    pub high: f64,
+
+    /// The lowest price of the asset during the time frame.
+    #[serde(rename = "l")]
+    pub low: f64,
+
+    /// The closing price of the asset at the end of the time frame.
+    #[serde(rename = "c")]
+    pub close: f64,
+
+    /// Specifies trading volume (base token) of the candle.
+    #[serde(rename = "bv")]
+    pub basevolume: f64,
+
+    /// Specifies trading volume (quote token) of the candle.
+    #[serde(rename = "qv")]
+    pub quotevolume: f64,
+}
+
+/// Response containing dex candle data
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DexCandleResponse {
+    /// A vector containing detailed information about each candle.
+    pub data: Vec<DexCandleDetail>,
+
+    pub exchange: String,
+
+    pub chain: String,
+
+    pub pool: String,
+
+    pub interval: String,
+
+    pub sort: String,
+
     pub page: i32,
 
-    /// The maximum number of items per page in the response.
     pub limit: i32,
-
-    /// The starting point of the time frame for the candle data.
-    pub from: String,
-
-    /// The ending point of the time frame for the candle data.
-    pub to: String,
-
-    /// The sorting order for the candle data (e.g., "asc" or "desc").
-    pub sort: String,
 }
 
 /// Detailed information about a trade.
@@ -56,19 +102,15 @@ pub struct CandleResponse {
 pub struct TradeDetail {
     /// The timestamp of the trade.
     #[serde(rename = "d")]
-    pub timestamp: String,
+    pub timestamp: i64,
 
     /// The block number in which the trade was recorded.
     #[serde(rename = "b")]
     pub block_number: i64,
 
-    /// The trading pool where the trade occurred.
-    #[serde(rename = "pool")]
-    pub pool: String,
+    pub base: String,
 
-    /// The trading symbol associated with the trade (e.g., BTC-USDT).
-    #[serde(rename = "s")]
-    pub symbol: String,
+    pub quote: String,
 
     /// The hash of the transaction related to the trade.
     #[serde(rename = "tx")]
@@ -84,15 +126,15 @@ pub struct TradeDetail {
 
     /// The quantity of the base asset traded, in base unit.
     #[serde(rename = "bq")]
-    pub base_quantity: String,
+    pub base_quantity: f64,
 
     /// The quantity of the quote asset traded, in base unit.
     #[serde(rename = "qq")]
-    pub quote_quantity: String,
+    pub quote_quantity: f64,
 
     /// The price of the trade in the quote asset's unit.
     #[serde(rename = "p")]
-    pub price: String,
+    pub price: f64,
 }
 
 /// Response containing trade data.
@@ -107,11 +149,11 @@ pub struct TradeResponse {
     /// The maximum number of items per page in the response.
     pub limit: i32,
 
-    /// The starting point of the time frame for the trade data.
-    pub from: String,
+    pub exchange: String,
 
-    /// The ending point of the time frame for the trade data.
-    pub to: String,
+    pub chain: String,
+
+    pub pool: String,
 
     /// The sorting order for the trade data (e.g., "asc" or "desc").
     pub sort: String,
@@ -139,6 +181,9 @@ pub struct CandleOptions {
 
     /// The sorting order for the candle data (e.g., "asc" or "desc").
     pub sort: Option<String>,
+
+    /// The currency to display (e.g. USD)
+    pub currency: Option<String>,
 }
 
 impl Default for CandleOptions {
@@ -159,6 +204,7 @@ impl CandleOptions {
             from: None,
             to: None,
             sort: Some("desc".into()),
+            currency: None,
         }
     }
 

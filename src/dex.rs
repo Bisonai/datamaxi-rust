@@ -1,6 +1,6 @@
 use crate::api::{Client, Config, Datamaxi, Result};
 pub use crate::models::{CandleOptions, PoolsOptions, TradeOptions};
-use crate::models::{CandleResponse, PoolsResponse, TradeResponse};
+use crate::models::{DexCandleResponse, PoolsResponse, TradeResponse};
 use std::collections::HashMap;
 
 /// Provides methods for retrieving DEX candle data and related information.
@@ -19,7 +19,7 @@ impl Dex {
         exchange: E,
         pool: P,
         options: CandleOptions,
-    ) -> Result<CandleResponse>
+    ) -> Result<DexCandleResponse>
     where
         C: Into<String>,
         E: Into<String>,
@@ -36,21 +36,18 @@ impl Dex {
         parameters.extend(
             [
                 options
-                    .market
-                    .map(|market| ("market".to_string(), market.to_string())),
-                options
                     .interval
                     .map(|interval| ("interval".to_string(), interval.to_string())),
+                options
+                    .from
+                    .map(|from| ("from".to_string(), from.to_string())),
+                options.to.map(|to| ("to".to_string(), to.to_string())),
                 options
                     .page
                     .map(|page| ("page".to_string(), page.to_string())),
                 options
                     .limit
                     .map(|limit| ("limit".to_string(), limit.to_string())),
-                options
-                    .from
-                    .map(|from| ("from".to_string(), from.to_string())),
-                options.to.map(|to| ("to".to_string(), to.to_string())),
                 options
                     .sort
                     .map(|sort| ("sort".to_string(), sort.to_string())),
@@ -88,15 +85,15 @@ impl Dex {
         parameters.extend(
             [
                 options
+                    .from
+                    .map(|from| ("from".to_string(), from.to_string())),
+                options.to.map(|to| ("to".to_string(), to.to_string())),
+                options
                     .page
                     .map(|page| ("page".to_string(), page.to_string())),
                 options
                     .limit
                     .map(|limit| ("limit".to_string(), limit.to_string())),
-                options
-                    .from
-                    .map(|from| ("from".to_string(), from.to_string())),
-                options.to.map(|to| ("to".to_string(), to.to_string())),
                 options
                     .sort
                     .map(|sort| ("sort".to_string(), sort.to_string())),
