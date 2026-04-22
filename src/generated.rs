@@ -233,6 +233,375 @@ impl CexCandleSymbolsOptions {
 
 }
 
+// --- CexSymbol ---
+
+#[derive(Clone)]
+pub struct CexSymbol {
+    pub client: Client,
+}
+
+impl Datamaxi for CexSymbol {
+    fn new(api_key: String) -> CexSymbol {
+        let config = Config { base_url: None, api_key };
+        CexSymbol { client: Client::new(config) }
+    }
+    fn new_with_base_url(api_key: String, base_url: String) -> CexSymbol {
+        let config = Config { base_url: Some(base_url), api_key };
+        CexSymbol { client: Client::new(config) }
+    }
+}
+
+impl CexSymbol {
+    /// Return currently-active caution/warning/danger flagged symbols. Bithumb provides an expiry (end_at); other exchanges are open-ended until the next collector poll clears them.
+    pub fn cautions(&self, options: CexSymbolCautionsOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.market {
+            parameters.insert("market".to_string(), v.to_string());
+        }
+        if let Some(v) = options.min_level {
+            parameters.insert("min_level".to_string(), v.to_string());
+        }
+        if let Some(v) = options.active_only {
+            parameters.insert("active_only".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        if let Some(v) = options.page {
+            parameters.insert("page".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/cautions", Some(parameters))
+    }
+
+    /// Return symbols with a known delisting_at timestamp or trading_status in {delisting, delisted}. Filter by time window to get upcoming delistings.
+    pub fn delistings(&self, options: CexSymbolDelistingsOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.market {
+            parameters.insert("market".to_string(), v.to_string());
+        }
+        if let Some(v) = options.from_ms {
+            parameters.insert("from_ms".to_string(), v.to_string());
+        }
+        if let Some(v) = options.to_ms {
+            parameters.insert("to_ms".to_string(), v.to_string());
+        }
+        if let Some(v) = options.include_past {
+            parameters.insert("include_past".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        if let Some(v) = options.page {
+            parameters.insert("page".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/delistings", Some(parameters))
+    }
+
+    /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
+    pub fn metadata(&self, options: CexSymbolMetadataOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.market {
+            parameters.insert("market".to_string(), v.to_string());
+        }
+        if let Some(v) = options.base {
+            parameters.insert("base".to_string(), v.to_string());
+        }
+        if let Some(v) = options.quote {
+            parameters.insert("quote".to_string(), v.to_string());
+        }
+        if let Some(v) = options.status {
+            parameters.insert("status".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        if let Some(v) = options.page {
+            parameters.insert("page".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/metadata", Some(parameters))
+    }
+
+    /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
+    pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.tag {
+            parameters.insert("tag".to_string(), v.to_string());
+        }
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.market {
+            parameters.insert("market".to_string(), v.to_string());
+        }
+        if let Some(v) = options.base {
+            parameters.insert("base".to_string(), v.to_string());
+        }
+        if let Some(v) = options.source {
+            parameters.insert("source".to_string(), v.to_string());
+        }
+        if let Some(v) = options.min_confidence {
+            parameters.insert("min_confidence".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        if let Some(v) = options.page {
+            parameters.insert("page".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/tags", Some(parameters))
+    }
+
+}
+
+pub struct CexSymbolCautionsOptions {
+    pub exchange: Option<String>,
+    pub market: Option<String>,
+    pub min_level: Option<String>,
+    pub active_only: Option<bool>,
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+impl CexSymbolCautionsOptions {
+    pub fn new() -> Self {
+        CexSymbolCautionsOptions {
+            exchange: None,
+            market: None,
+            min_level: None,
+            active_only: None,
+            limit: None,
+            page: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn market(mut self, market: impl Into<String>) -> Self {
+        self.market = Some(market.into());
+        self
+    }
+
+    pub fn min_level(mut self, min_level: impl Into<String>) -> Self {
+        self.min_level = Some(min_level.into());
+        self
+    }
+
+    pub fn active_only(mut self, active_only: bool) -> Self {
+        self.active_only = Some(active_only);
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn page(mut self, page: i64) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+}
+
+pub struct CexSymbolDelistingsOptions {
+    pub exchange: Option<String>,
+    pub market: Option<String>,
+    pub from_ms: Option<i64>,
+    pub to_ms: Option<i64>,
+    pub include_past: Option<bool>,
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+impl CexSymbolDelistingsOptions {
+    pub fn new() -> Self {
+        CexSymbolDelistingsOptions {
+            exchange: None,
+            market: None,
+            from_ms: None,
+            to_ms: None,
+            include_past: None,
+            limit: None,
+            page: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn market(mut self, market: impl Into<String>) -> Self {
+        self.market = Some(market.into());
+        self
+    }
+
+    pub fn from_ms(mut self, from_ms: i64) -> Self {
+        self.from_ms = Some(from_ms);
+        self
+    }
+
+    pub fn to_ms(mut self, to_ms: i64) -> Self {
+        self.to_ms = Some(to_ms);
+        self
+    }
+
+    pub fn include_past(mut self, include_past: bool) -> Self {
+        self.include_past = Some(include_past);
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn page(mut self, page: i64) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+}
+
+pub struct CexSymbolMetadataOptions {
+    pub exchange: Option<String>,
+    pub market: Option<String>,
+    pub base: Option<String>,
+    pub quote: Option<String>,
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+impl CexSymbolMetadataOptions {
+    pub fn new() -> Self {
+        CexSymbolMetadataOptions {
+            exchange: None,
+            market: None,
+            base: None,
+            quote: None,
+            status: None,
+            limit: None,
+            page: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn market(mut self, market: impl Into<String>) -> Self {
+        self.market = Some(market.into());
+        self
+    }
+
+    pub fn base(mut self, base: impl Into<String>) -> Self {
+        self.base = Some(base.into());
+        self
+    }
+
+    pub fn quote(mut self, quote: impl Into<String>) -> Self {
+        self.quote = Some(quote.into());
+        self
+    }
+
+    pub fn status(mut self, status: impl Into<String>) -> Self {
+        self.status = Some(status.into());
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn page(mut self, page: i64) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+}
+
+pub struct CexSymbolTagsOptions {
+    pub tag: Option<String>,
+    pub exchange: Option<String>,
+    pub market: Option<String>,
+    pub base: Option<String>,
+    pub source: Option<String>,
+    pub min_confidence: Option<i64>,
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+impl CexSymbolTagsOptions {
+    pub fn new() -> Self {
+        CexSymbolTagsOptions {
+            tag: None,
+            exchange: None,
+            market: None,
+            base: None,
+            source: None,
+            min_confidence: None,
+            limit: None,
+            page: None,
+        }
+    }
+
+    pub fn tag(mut self, tag: impl Into<String>) -> Self {
+        self.tag = Some(tag.into());
+        self
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn market(mut self, market: impl Into<String>) -> Self {
+        self.market = Some(market.into());
+        self
+    }
+
+    pub fn base(mut self, base: impl Into<String>) -> Self {
+        self.base = Some(base.into());
+        self
+    }
+
+    pub fn source(mut self, source: impl Into<String>) -> Self {
+        self.source = Some(source.into());
+        self
+    }
+
+    pub fn min_confidence(mut self, min_confidence: i64) -> Self {
+        self.min_confidence = Some(min_confidence);
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn page(mut self, page: i64) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+}
+
 // --- Dex ---
 
 #[derive(Clone)]
