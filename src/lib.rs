@@ -185,3 +185,20 @@ pub mod dex;
 
 /// Data models representing API responses and optional parameters.
 pub mod models;
+
+/// Auto-generated typed wrappers for every public REST endpoint on
+/// the data API. This module is the canonical surface for the OI /
+/// Liquidation / cex-symbol surfaces; the older hand-written modules
+/// (`cex`, `dex`) cover only a subset of endpoints and are kept for
+/// backward compatibility.
+///
+/// Usage:
+/// ```ignore
+/// use datamaxi::api::Datamaxi;
+/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
+///
+/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
+/// let opts = LiquidationHeatmapOptions::new();
+/// let heatmap = liq.heatmap(opts)?;
+/// ```
+pub mod generated;
