@@ -1,103 +1,87 @@
-## DataMaxi+ Rust SDK
+# DataMaxi+ Rust SDK
 
-This is the official implementation of Rust SDK for [DataMaxi+](https://datamaxiplus.com/).
-The package can be used to fetch both historical and latest data using [DataMaxi+ API](https://docs.datamaxiplus.com/).
+This is the official Rust SDK for [DataMaxi+](https://datamaxiplus.com/).
+Fetch both historical and real-time cryptocurrency data using the [DataMaxi+ API](https://docs.datamaxiplus.com/).
 
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Links](#links)
-- [Contributing](#contributing)
-- [License](#license)
+**Repository**: [Bisonai/datamaxi-rust](https://github.com/Bisonai/datamaxi-rust)
 
-### Installation
+## Installation
 
-```shell
+```toml
 [dependencies]
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git" }
 ```
 
-### Configuration
+## Configuration
 
-Private API endpoints are protected by an API key.
-You can get the API key upon registering at <https://datamaxiplus.com/auth>.
+Private API endpoints require an API key. Register at [datamaxiplus.com/auth](https://datamaxiplus.com/auth) to get one.
 
+| Option | Description |
+|--------|-------------|
+| `api_key` | Your DataMaxi+ API key |
+| `base_url` | API base URL (default: `https://api.datamaxiplus.com`) |
 
-| Option     | Explanation                                                                   |
-|------------|-------------------------------------------------------------------------------|
-| `api_key`  | Your API key                                                                  |
-| `base_url` | If `base_url` is not provided, it defaults to `https://api.datamaxiplus.com`. |
+### Environment Variable
 
-### Examples
+Set `DATAMAXI_API_KEY` to avoid passing the key inline.
 
-#### CEX Candle
+## Examples
+
+### CEX Candle
 
 ```rust
 let api_key = "my_api_key".to_string();
 let candle: datamaxi::cex::Candle = datamaxi::api::Datamaxi::new(api_key);
 
-// Fetch supported exchanges for CEX candle data
+// Supported exchanges and symbols
 candle.exchanges("spot");
-
-// Fetch supported symbols for CEX candle data
 let symbols_options = datamaxi::cex::SymbolsOptions::new();
 candle.symbols("binance", symbols_options);
-
-// Fetch supported intervals for CEX candle data
 candle.intervals();
 
-// Fetch CEX candle data
+// Fetch candle data
 let candle_options = datamaxi::cex::CandleOptions::new();
 candle.get("binance", "ETH-USDT", candle_options);
 ```
 
-#### DEX
+### DEX
 
 ```rust
 let api_key = "my_api_key".to_string();
 let dex: datamaxi::dex::Dex = datamaxi::api::Datamaxi::new(api_key);
 
-// Fetch supported intervals for DEX candle data
+dex.exchanges();
+dex.chains();
 dex.intervals();
 
-// Fetch supported exchange for DEX data
-dex.exchanges();
-
-// Fetch supported chains for DEX data
-dex.chains();
-
-// Fetch supported pools for DEX data
 let pools_options = datamaxi::dex::PoolsOptions::new();
 dex.pools(pools_options);
 
-// Fetch DEX candle data
+// Candle data
 let params = datamaxi::dex::CandleOptions::new();
-dex.candle(
-  "bsc_mainnet",
-  "pancakeswap",
-  "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
-  params,
-);
+dex.candle("bsc_mainnet", "pancakeswap", "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423", params);
 
-// Fetch DEX trade data
+// Trade data
 let trade_options = datamaxi::dex::TradeOptions::new().limit(5);
-dex.trade(
-  "bsc_mainnet",
-  "pancakeswap",
-  "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
-  trade_options
-);
+dex.trade("bsc_mainnet", "pancakeswap", "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423", trade_options);
 ```
 
-### Links
+See [`examples/`](./examples/) for runnable examples.
+
+## Code Generation
+
+Most of the SDK is auto-generated from the OpenAPI spec via `datamaxi-codegen`. Generated code is in `src/generated.rs` and marked with `DO NOT EDIT`. Manual edits to generated files will be overwritten.
+
+## Links
 
 - [Official Website](https://datamaxiplus.com/)
-- [Documentation](https://docs.datamaxiplus.com/)
+- [API Documentation](https://docs.datamaxiplus.com/)
+- [Python SDK](https://github.com/bisonai/datamaxi-python)
 
-### Contributing
+## Contributing
 
-We welcome contributions!
-If you discover a bug in this project, please feel free to open an issue to discuss the changes you would like to propose.
+We welcome contributions. If you discover a bug, please open an issue to discuss proposed changes.
 
-### License
+## License
 
 [MIT License](./LICENSE)
