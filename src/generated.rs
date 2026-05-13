@@ -303,6 +303,16 @@ impl CexSymbol {
         self.client.get("/api/v1/cex/symbol/delistings", Some(parameters))
     }
 
+    /// Sums long/short liquidation volume across all events in a rolling window for every exchange × quote pairing of the base asset. Window max 30d; default 24h.
+    pub fn liquidation(&self, base: impl Into<String>, options: CexSymbolLiquidationOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("base".to_string(), base.into());
+        if let Some(v) = options.window {
+            parameters.insert("window".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/liquidation", Some(parameters))
+    }
+
     /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
     pub fn metadata(&self, options: CexSymbolMetadataOptions) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
@@ -328,6 +338,29 @@ impl CexSymbol {
             parameters.insert("page".to_string(), v.to_string());
         }
         self.client.get("/api/v1/cex/symbol/metadata", Some(parameters))
+    }
+
+    /// Latest Open Interest snapshot across every futures venue carrying the given base. Sorted by USD value descending, NULLs last.
+    pub fn oi(&self, base: impl Into<String>, options: CexSymbolOiOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("base".to_string(), base.into());
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/oi", Some(parameters))
+    }
+
+    /// Enriched snapshot combining the latest OI (USD) with 1h/4h/24h change percentages and OI/24h volume ratio. Backed by the tfopeninterest taskflow's Redis HASH.
+    pub fn oi_stats(&self, base: impl Into<String>, options: CexSymbolOiStatsOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("base".to_string(), base.into());
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.currency {
+            parameters.insert("currency".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/oi-stats", Some(parameters))
     }
 
     /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
@@ -358,6 +391,16 @@ impl CexSymbol {
             parameters.insert("page".to_string(), v.to_string());
         }
         self.client.get("/api/v1/cex/symbol/tags", Some(parameters))
+    }
+
+    /// Latest 24h trading volume across every (exchange, market, quote) a token lists on. Backed by cache.latest_volume.
+    pub fn volume(&self, base: impl Into<String>, options: CexSymbolVolumeOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("base".to_string(), base.into());
+        if let Some(v) = options.market {
+            parameters.insert("market".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/cex/symbol/volume", Some(parameters))
     }
 
 }
@@ -475,6 +518,24 @@ impl CexSymbolDelistingsOptions {
 
 }
 
+pub struct CexSymbolLiquidationOptions {
+    pub window: Option<String>,
+}
+
+impl CexSymbolLiquidationOptions {
+    pub fn new() -> Self {
+        CexSymbolLiquidationOptions {
+            window: None,
+        }
+    }
+
+    pub fn window(mut self, window: impl Into<String>) -> Self {
+        self.window = Some(window.into());
+        self
+    }
+
+}
+
 pub struct CexSymbolMetadataOptions {
     pub exchange: Option<String>,
     pub market: Option<String>,
@@ -530,6 +591,49 @@ impl CexSymbolMetadataOptions {
 
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
+        self
+    }
+
+}
+
+pub struct CexSymbolOiOptions {
+    pub exchange: Option<String>,
+}
+
+impl CexSymbolOiOptions {
+    pub fn new() -> Self {
+        CexSymbolOiOptions {
+            exchange: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+}
+
+pub struct CexSymbolOiStatsOptions {
+    pub exchange: Option<String>,
+    pub currency: Option<String>,
+}
+
+impl CexSymbolOiStatsOptions {
+    pub fn new() -> Self {
+        CexSymbolOiStatsOptions {
+            exchange: None,
+            currency: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn currency(mut self, currency: impl Into<String>) -> Self {
+        self.currency = Some(currency.into());
         self
     }
 
@@ -597,6 +701,24 @@ impl CexSymbolTagsOptions {
 
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
+        self
+    }
+
+}
+
+pub struct CexSymbolVolumeOptions {
+    pub market: Option<String>,
+}
+
+impl CexSymbolVolumeOptions {
+    pub fn new() -> Self {
+        CexSymbolVolumeOptions {
+            market: None,
+        }
+    }
+
+    pub fn market(mut self, market: impl Into<String>) -> Self {
+        self.market = Some(market.into());
         self
     }
 
@@ -1092,6 +1214,68 @@ impl Liquidation {
         self.client.get("/api/v1/liquidation", Some(parameters))
     }
 
+    /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
+    pub fn feed(&self, options: LiquidationFeedOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.base {
+            parameters.insert("base".to_string(), v.to_string());
+        }
+        if let Some(v) = options.minVolumeUsd {
+            parameters.insert("minVolumeUsd".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/liquidation/feed", Some(parameters))
+    }
+
+    /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported (in-memory buckets are 30min); use the WS feed for finer granularity.
+    pub fn heatmap(&self, options: LiquidationHeatmapOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.window {
+            parameters.insert("window".to_string(), v.to_string());
+        }
+        if let Some(v) = options.topN {
+            parameters.insert("topN".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/liquidation/heatmap", Some(parameters))
+    }
+
+    /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
+    pub fn map(&self, base: impl Into<String>, options: LiquidationMapOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("base".to_string(), base.into());
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.quote {
+            parameters.insert("quote".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/liquidation/map", Some(parameters))
+    }
+
+    /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
+    pub fn symbol_history(&self, symbol: impl Into<String>, options: LiquidationSymbolHistoryOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("symbol".to_string(), symbol.into());
+        if let Some(v) = options.quote {
+            parameters.insert("quote".to_string(), v.to_string());
+        }
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.interval {
+            parameters.insert("interval".to_string(), v.to_string());
+        }
+        if let Some(v) = options.window {
+            parameters.insert("window".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/liquidation/symbol-history", Some(parameters))
+    }
+
 }
 
 pub struct LiquidationOptions {
@@ -1107,6 +1291,134 @@ impl LiquidationOptions {
 
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
+        self
+    }
+
+}
+
+pub struct LiquidationFeedOptions {
+    pub exchange: Option<String>,
+    pub base: Option<String>,
+    pub minVolumeUsd: Option<f64>,
+    pub limit: Option<i64>,
+}
+
+impl LiquidationFeedOptions {
+    pub fn new() -> Self {
+        LiquidationFeedOptions {
+            exchange: None,
+            base: None,
+            minVolumeUsd: None,
+            limit: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn base(mut self, base: impl Into<String>) -> Self {
+        self.base = Some(base.into());
+        self
+    }
+
+    pub fn minVolumeUsd(mut self, minVolumeUsd: f64) -> Self {
+        self.minVolumeUsd = Some(minVolumeUsd);
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+}
+
+pub struct LiquidationHeatmapOptions {
+    pub window: Option<String>,
+    pub topN: Option<i64>,
+}
+
+impl LiquidationHeatmapOptions {
+    pub fn new() -> Self {
+        LiquidationHeatmapOptions {
+            window: None,
+            topN: None,
+        }
+    }
+
+    pub fn window(mut self, window: impl Into<String>) -> Self {
+        self.window = Some(window.into());
+        self
+    }
+
+    pub fn topN(mut self, topN: i64) -> Self {
+        self.topN = Some(topN);
+        self
+    }
+
+}
+
+pub struct LiquidationMapOptions {
+    pub exchange: Option<String>,
+    pub quote: Option<String>,
+}
+
+impl LiquidationMapOptions {
+    pub fn new() -> Self {
+        LiquidationMapOptions {
+            exchange: None,
+            quote: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn quote(mut self, quote: impl Into<String>) -> Self {
+        self.quote = Some(quote.into());
+        self
+    }
+
+}
+
+pub struct LiquidationSymbolHistoryOptions {
+    pub quote: Option<String>,
+    pub exchange: Option<String>,
+    pub interval: Option<String>,
+    pub window: Option<String>,
+}
+
+impl LiquidationSymbolHistoryOptions {
+    pub fn new() -> Self {
+        LiquidationSymbolHistoryOptions {
+            quote: None,
+            exchange: None,
+            interval: None,
+            window: None,
+        }
+    }
+
+    pub fn quote(mut self, quote: impl Into<String>) -> Self {
+        self.quote = Some(quote.into());
+        self
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn interval(mut self, interval: impl Into<String>) -> Self {
+        self.interval = Some(interval.into());
+        self
+    }
+
+    pub fn window(mut self, window: impl Into<String>) -> Self {
+        self.window = Some(window.into());
         self
     }
 
@@ -1249,6 +1561,175 @@ impl OpenInterest {
         self.client.get("/api/v1/open-interest", Some(parameters))
     }
 
+    /// Historical Open Interest time series for a single token, broken down per exchange and aggregated to a fixed bucket (avg within bucket). The default lookback depends on the requested interval — 7 days for 1h, 30 days for 4h, 1 year for 1d — so callers don't have to hand-tune `from`/`to` for typical queries. The response also includes token metadata (icon, symbol, name) so a single call paints the whole header strip.
+    pub fn history_aggregated(&self, token_id: impl Into<String>, options: OpenInterestHistoryAggregatedOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        parameters.insert("token_id".to_string(), token_id.into());
+        if let Some(v) = options.interval {
+            parameters.insert("interval".to_string(), v.to_string());
+        }
+        if let Some(v) = options.from {
+            parameters.insert("from".to_string(), v.to_string());
+        }
+        if let Some(v) = options.to {
+            parameters.insert("to".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/open-interest/history-aggregated", Some(parameters))
+    }
+
+    /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
+    pub fn list(&self, options: OpenInterestListOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/open-interest/list", Some(parameters))
+    }
+
+    /// Paginated token × exchange Open Interest matrix. For each base asset we list the per-exchange notional OI in USD (when a venue carries the token) and `null` when it doesn't trade there. The matrix is sortable by any exchange column and searchable by base symbol — same shape the DataMaxi+ dashboard uses on `/open-interest`. Cached snapshot rebuilds every few seconds, so back-to-back requests are cheap.
+    pub fn overview(&self, options: OpenInterestOverviewOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.page {
+            parameters.insert("page".to_string(), v.to_string());
+        }
+        if let Some(v) = options.limit {
+            parameters.insert("limit".to_string(), v.to_string());
+        }
+        if let Some(v) = options.key {
+            parameters.insert("key".to_string(), v.to_string());
+        }
+        if let Some(v) = options.sort {
+            parameters.insert("sort".to_string(), v.to_string());
+        }
+        if let Some(v) = options.query {
+            parameters.insert("query".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/open-interest/overview", Some(parameters))
+    }
+
+    /// Top-line aggregates over the current Open Interest snapshot — total OI USD, top tokens by OI, top exchanges by OI, and the count of venues currently reporting any base. Powers the OI page's KPI strip and breakdown card without forcing the caller to fetch the full token list.
+    pub fn summary(&self, options: OpenInterestSummaryOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.topN {
+            parameters.insert("topN".to_string(), v.to_string());
+        }
+        self.client.get("/api/v1/open-interest/summary", Some(parameters))
+    }
+
+}
+
+pub struct OpenInterestHistoryAggregatedOptions {
+    pub interval: Option<String>,
+    pub from: Option<i64>,
+    pub to: Option<i64>,
+}
+
+impl OpenInterestHistoryAggregatedOptions {
+    pub fn new() -> Self {
+        OpenInterestHistoryAggregatedOptions {
+            interval: None,
+            from: None,
+            to: None,
+        }
+    }
+
+    pub fn interval(mut self, interval: impl Into<String>) -> Self {
+        self.interval = Some(interval.into());
+        self
+    }
+
+    pub fn from(mut self, from: i64) -> Self {
+        self.from = Some(from);
+        self
+    }
+
+    pub fn to(mut self, to: i64) -> Self {
+        self.to = Some(to);
+        self
+    }
+
+}
+
+pub struct OpenInterestListOptions {
+    pub exchange: Option<String>,
+}
+
+impl OpenInterestListOptions {
+    pub fn new() -> Self {
+        OpenInterestListOptions {
+            exchange: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+}
+
+pub struct OpenInterestOverviewOptions {
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub key: Option<String>,
+    pub sort: Option<String>,
+    pub query: Option<String>,
+}
+
+impl OpenInterestOverviewOptions {
+    pub fn new() -> Self {
+        OpenInterestOverviewOptions {
+            page: None,
+            limit: None,
+            key: None,
+            sort: None,
+            query: None,
+        }
+    }
+
+    pub fn page(mut self, page: i64) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn key(mut self, key: impl Into<String>) -> Self {
+        self.key = Some(key.into());
+        self
+    }
+
+    pub fn sort(mut self, sort: impl Into<String>) -> Self {
+        self.sort = Some(sort.into());
+        self
+    }
+
+    pub fn query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+}
+
+pub struct OpenInterestSummaryOptions {
+    pub topN: Option<i64>,
+}
+
+impl OpenInterestSummaryOptions {
+    pub fn new() -> Self {
+        OpenInterestSummaryOptions {
+            topN: None,
+        }
+    }
+
+    pub fn topN(mut self, topN: i64) -> Self {
+        self.topN = Some(topN);
+        self
+    }
+
 }
 
 // --- Premium ---
@@ -1270,6 +1751,12 @@ impl Datamaxi for Premium {
 }
 
 impl Premium {
+    /// Returns the sorted list of categorical token tags currently indexed for the premium table filter. Updated on the aggregator's tagstate reload cadence.
+    pub fn tags(&self) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        self.client.get("/api/v1/front/premium/tags", None)
+    }
+
     /// Get real-time premium (price difference) data across exchanges.
     pub fn get(&self, options: PremiumOptions) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
