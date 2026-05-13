@@ -151,7 +151,6 @@ impl CexCandle {
 
     /// Fetch supported intervals accepted by `/api/v1/cex/candle` endpoint.
     pub fn intervals(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/cex/candle/intervals", None)
     }
 
@@ -772,19 +771,16 @@ impl Dex {
 
     /// Get supported chains accepted by `/api/v1/dex/trade`, `/api/v1/dex/candle` and `/api/v1/dex/liquidity` endpoints.
     pub fn chains(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/dex/chains", None)
     }
 
     /// Get supported exchanges accepted by `/api/v1/dex/trade`, `/api/v1/dex/candle` and `/api/v1/dex/liquidity` endpoints.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/dex/exchanges", None)
     }
 
     /// Get supported intervals accepted by `/api/v1/dex/candle` endpoint.
     pub fn intervals(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/dex/intervals", None)
     }
 
@@ -980,7 +976,6 @@ impl Forex {
 
     /// Get supported forex symbols.
     pub fn symbols(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/forex/symbols", None)
     }
 
@@ -1025,7 +1020,6 @@ impl Datamaxi for FundingRate {
 impl FundingRate {
     /// Get supported exchanges accepted by `/api/v1/funding-rate` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/funding-rate/exchanges", None)
     }
 
@@ -1528,7 +1522,6 @@ impl NaverTrend {
 
     /// Get crypto symbols that are accepted by [Naver trend endpoint](./trend).
     pub fn symbols(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/naver-trend/symbols", None)
     }
 
@@ -1753,7 +1746,6 @@ impl Datamaxi for Premium {
 impl Premium {
     /// Returns the sorted list of categorical token tags currently indexed for the premium table filter. Updated on the aggregator's tagstate reload cadence.
     pub fn tags(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/front/premium/tags", None)
     }
 
@@ -1822,7 +1814,6 @@ impl Premium {
 
     /// Get supported source exchanges for premium data.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/premium/exchanges", None)
     }
 
@@ -2300,7 +2291,7 @@ impl Token {
         if let Some(v) = options.limit {
             parameters.insert("limit".to_string(), v.to_string());
         }
-        if let Some(v) = options.type {
+        if let Some(v) = options.r#type {
             parameters.insert("type".to_string(), v.to_string());
         }
         self.client.get("/api/v1/cex/token/updates", Some(parameters))
@@ -2311,7 +2302,7 @@ impl Token {
 pub struct CexTokenUpdatesOptions {
     pub page: Option<String>,
     pub limit: Option<String>,
-    pub type: Option<String>,
+    pub r#type: Option<String>,
 }
 
 impl CexTokenUpdatesOptions {
@@ -2319,7 +2310,7 @@ impl CexTokenUpdatesOptions {
         CexTokenUpdatesOptions {
             page: None,
             limit: None,
-            type: None,
+            r#type: None,
         }
     }
 
@@ -2333,8 +2324,8 @@ impl CexTokenUpdatesOptions {
         self
     }
 
-    pub fn type(mut self, type: impl Into<String>) -> Self {
-        self.type = Some(type.into());
+    pub fn r#type(mut self, r#type: impl Into<String>) -> Self {
+        self.r#type = Some(r#type.into());
         self
     }
 
@@ -2373,7 +2364,6 @@ impl TradingFees {
 
     /// Get supported exchanges accepted by `/api/v1/trading-fees` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/cex/fees/exchanges", None)
     }
 
@@ -2449,7 +2439,6 @@ impl WalletStatus {
 
     /// Get exchanges accepted by `/api/v1/wallet-status` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        let mut parameters = HashMap::new();
         self.client.get("/api/v1/wallet-status/exchanges", None)
     }
 
