@@ -44,7 +44,7 @@ impl Announcements {
         if let Some(v) = options.category {
             parameters.insert("category".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/announcements", Some(parameters))
+        self.client.get("/cex/announcements", Some(parameters))
     }
 
 }
@@ -139,19 +139,19 @@ impl CexCandle {
         if let Some(v) = options.to {
             parameters.insert("to".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/candle", Some(parameters))
+        self.client.get("/cex/candle", Some(parameters))
     }
 
     /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
     pub fn exchanges(&self, market: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("market".to_string(), market.into());
-        self.client.get("/api/v1/cex/candle/exchanges", Some(parameters))
+        self.client.get("/cex/candle/exchanges", Some(parameters))
     }
 
     /// Fetch supported intervals accepted by `/api/v1/cex/candle` endpoint.
     pub fn intervals(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/cex/candle/intervals", None)
+        self.client.get("/cex/candle/intervals", None)
     }
 
     /// Fetch supported symbols accepted by `/api/v1/cex/candle` endpoint.
@@ -163,7 +163,7 @@ impl CexCandle {
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/candle/symbols", Some(parameters))
+        self.client.get("/cex/candle/symbols", Some(parameters))
     }
 
 }
@@ -272,7 +272,7 @@ impl CexSymbol {
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/cautions", Some(parameters))
+        self.client.get("/cex/symbol/cautions", Some(parameters))
     }
 
     /// Return symbols with a known delisting_at timestamp or trading_status in {delisting, delisted}. Filter by time window to get upcoming delistings.
@@ -299,7 +299,7 @@ impl CexSymbol {
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/delistings", Some(parameters))
+        self.client.get("/cex/symbol/delistings", Some(parameters))
     }
 
     /// Sums long/short liquidation volume across all events in a rolling window for every exchange × quote pairing of the base asset. Window max 30d; default 24h.
@@ -309,7 +309,7 @@ impl CexSymbol {
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/liquidation", Some(parameters))
+        self.client.get("/cex/symbol/liquidation", Some(parameters))
     }
 
     /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
@@ -336,7 +336,7 @@ impl CexSymbol {
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/metadata", Some(parameters))
+        self.client.get("/cex/symbol/metadata", Some(parameters))
     }
 
     /// Latest Open Interest snapshot across every futures venue carrying the given base. Sorted by USD value descending, NULLs last.
@@ -346,7 +346,7 @@ impl CexSymbol {
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/oi", Some(parameters))
+        self.client.get("/cex/symbol/oi", Some(parameters))
     }
 
     /// Enriched snapshot combining the latest OI (USD) with 1h/4h/24h change percentages and OI/24h volume ratio. Backed by the tfopeninterest taskflow's Redis HASH.
@@ -359,7 +359,7 @@ impl CexSymbol {
         if let Some(v) = options.currency {
             parameters.insert("currency".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/oi-stats", Some(parameters))
+        self.client.get("/cex/symbol/oi-stats", Some(parameters))
     }
 
     /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
@@ -389,7 +389,7 @@ impl CexSymbol {
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/tags", Some(parameters))
+        self.client.get("/cex/symbol/tags", Some(parameters))
     }
 
     /// Latest 24h trading volume across every (exchange, market, quote) a token lists on. Backed by cache.latest_volume.
@@ -399,7 +399,7 @@ impl CexSymbol {
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/volume", Some(parameters))
+        self.client.get("/cex/symbol/volume", Some(parameters))
     }
 
 }
@@ -766,22 +766,22 @@ impl Dex {
         if let Some(v) = options.sort {
             parameters.insert("sort".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/dex/candle", Some(parameters))
+        self.client.get("/dex/candle", Some(parameters))
     }
 
     /// Get supported chains accepted by `/api/v1/dex/trade`, `/api/v1/dex/candle` and `/api/v1/dex/liquidity` endpoints.
     pub fn chains(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/dex/chains", None)
+        self.client.get("/dex/chains", None)
     }
 
     /// Get supported exchanges accepted by `/api/v1/dex/trade`, `/api/v1/dex/candle` and `/api/v1/dex/liquidity` endpoints.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/dex/exchanges", None)
+        self.client.get("/dex/exchanges", None)
     }
 
     /// Get supported intervals accepted by `/api/v1/dex/candle` endpoint.
     pub fn intervals(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/dex/intervals", None)
+        self.client.get("/dex/intervals", None)
     }
 
     /// Get supported pools accepted by `/api/v1/dex/trade`, `/api/v1/dex/candle` and `/api/v1/dex/liquidity` endpoints.
@@ -793,7 +793,7 @@ impl Dex {
         if let Some(v) = options.chain {
             parameters.insert("chain".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/dex/pools", Some(parameters))
+        self.client.get("/dex/pools", Some(parameters))
     }
 
     /// Get historical DEX trade data for a given `exchange` and `symbol`.
@@ -817,7 +817,7 @@ impl Dex {
         if let Some(v) = options.sort {
             parameters.insert("sort".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/dex/trade", Some(parameters))
+        self.client.get("/dex/trade", Some(parameters))
     }
 
 }
@@ -971,12 +971,12 @@ impl Forex {
         if let Some(v) = options.symbol {
             parameters.insert("symbol".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/forex", Some(parameters))
+        self.client.get("/forex", Some(parameters))
     }
 
     /// Get supported forex symbols.
     pub fn symbols(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/forex/symbols", None)
+        self.client.get("/forex/symbols", None)
     }
 
 }
@@ -1020,7 +1020,7 @@ impl Datamaxi for FundingRate {
 impl FundingRate {
     /// Get supported exchanges accepted by `/api/v1/funding-rate` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/funding-rate/exchanges", None)
+        self.client.get("/funding-rate/exchanges", None)
     }
 
     /// Get historical funding rate data for a given `exchange` and `symbol`.
@@ -1043,7 +1043,7 @@ impl FundingRate {
         if let Some(v) = options.sort {
             parameters.insert("sort".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/funding-rate/history", Some(parameters))
+        self.client.get("/funding-rate/history", Some(parameters))
     }
 
     /// Fetch the latest funding rate data for a given `exchange` and `symbol`.
@@ -1051,14 +1051,14 @@ impl FundingRate {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/funding-rate/latest", Some(parameters))
+        self.client.get("/funding-rate/latest", Some(parameters))
     }
 
     /// Fetch supported symbols accepted by `/api/v1/funding-rate` endpoint.
     pub fn symbols(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
-        self.client.get("/api/v1/funding-rate/symbols", Some(parameters))
+        self.client.get("/funding-rate/symbols", Some(parameters))
     }
 
 }
@@ -1141,7 +1141,7 @@ impl IndexPrice {
         if let Some(v) = options.interval {
             parameters.insert("interval".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/index-price", Some(parameters))
+        self.client.get("/index-price", Some(parameters))
     }
 
 }
@@ -1205,7 +1205,7 @@ impl Liquidation {
         if let Some(v) = options.limit {
             parameters.insert("limit".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation", Some(parameters))
+        self.client.get("/liquidation", Some(parameters))
     }
 
     /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
@@ -1223,7 +1223,7 @@ impl Liquidation {
         if let Some(v) = options.limit {
             parameters.insert("limit".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation/feed", Some(parameters))
+        self.client.get("/liquidation/feed", Some(parameters))
     }
 
     /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported (in-memory buckets are 30min); use the WS feed for finer granularity.
@@ -1235,7 +1235,7 @@ impl Liquidation {
         if let Some(v) = options.topN {
             parameters.insert("topN".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation/heatmap", Some(parameters))
+        self.client.get("/liquidation/heatmap", Some(parameters))
     }
 
     /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
@@ -1248,7 +1248,7 @@ impl Liquidation {
         if let Some(v) = options.quote {
             parameters.insert("quote".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation/map", Some(parameters))
+        self.client.get("/liquidation/map", Some(parameters))
     }
 
     /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
@@ -1267,7 +1267,7 @@ impl Liquidation {
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation/symbol-history", Some(parameters))
+        self.client.get("/liquidation/symbol-history", Some(parameters))
     }
 
 }
@@ -1443,7 +1443,7 @@ impl Listing {
         if let Some(v) = options.refresh {
             parameters.insert("refresh".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/listings/historical", Some(parameters))
+        self.client.get("/listings/historical", Some(parameters))
     }
 
 }
@@ -1489,7 +1489,7 @@ impl MarginBorrow {
     pub fn get(&self, asset: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("asset".to_string(), asset.into());
-        self.client.get("/api/v1/margin-borrow", Some(parameters))
+        self.client.get("/margin-borrow", Some(parameters))
     }
 
 }
@@ -1517,12 +1517,12 @@ impl NaverTrend {
     pub fn get(&self, symbol: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/naver-trend", Some(parameters))
+        self.client.get("/naver-trend", Some(parameters))
     }
 
     /// Get crypto symbols that are accepted by [Naver trend endpoint](./trend).
     pub fn symbols(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/naver-trend/symbols", None)
+        self.client.get("/naver-trend/symbols", None)
     }
 
 }
@@ -1551,7 +1551,7 @@ impl OpenInterest {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/open-interest", Some(parameters))
+        self.client.get("/open-interest", Some(parameters))
     }
 
     /// Historical Open Interest time series for a single token, broken down per exchange and aggregated to a fixed bucket (avg within bucket). The default lookback depends on the requested interval — 7 days for 1h, 30 days for 4h, 1 year for 1d — so callers don't have to hand-tune `from`/`to` for typical queries. The response also includes token metadata (icon, symbol, name) so a single call paints the whole header strip.
@@ -1567,7 +1567,7 @@ impl OpenInterest {
         if let Some(v) = options.to {
             parameters.insert("to".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/open-interest/history-aggregated", Some(parameters))
+        self.client.get("/open-interest/history-aggregated", Some(parameters))
     }
 
     /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
@@ -1576,7 +1576,7 @@ impl OpenInterest {
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/open-interest/list", Some(parameters))
+        self.client.get("/open-interest/list", Some(parameters))
     }
 
     /// Paginated token × exchange Open Interest matrix. For each base asset we list the per-exchange notional OI in USD (when a venue carries the token) and `null` when it doesn't trade there. The matrix is sortable by any exchange column and searchable by base symbol — same shape the DataMaxi+ dashboard uses on `/open-interest`. Cached snapshot rebuilds every few seconds, so back-to-back requests are cheap.
@@ -1597,7 +1597,7 @@ impl OpenInterest {
         if let Some(v) = options.query {
             parameters.insert("query".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/open-interest/overview", Some(parameters))
+        self.client.get("/open-interest/overview", Some(parameters))
     }
 
     /// Top-line aggregates over the current Open Interest snapshot — total OI USD, top tokens by OI, top exchanges by OI, and the count of venues currently reporting any base. Powers the OI page's KPI strip and breakdown card without forcing the caller to fetch the full token list.
@@ -1606,7 +1606,7 @@ impl OpenInterest {
         if let Some(v) = options.topN {
             parameters.insert("topN".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/open-interest/summary", Some(parameters))
+        self.client.get("/open-interest/summary", Some(parameters))
     }
 
 }
@@ -1746,7 +1746,7 @@ impl Datamaxi for Premium {
 impl Premium {
     /// Returns the sorted list of categorical token tags currently indexed for the premium table filter. Updated on the aggregator's tagstate reload cadence.
     pub fn tags(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/front/premium/tags", None)
+        self.client.get("/front/premium/tags", None)
     }
 
     /// Get real-time premium (price difference) data across exchanges.
@@ -1809,12 +1809,12 @@ impl Premium {
         if let Some(v) = options.min_tv {
             parameters.insert("min_tv".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/premium", Some(parameters))
+        self.client.get("/premium", Some(parameters))
     }
 
     /// Get supported source exchanges for premium data.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/premium/exchanges", None)
+        self.client.get("/premium/exchanges", None)
     }
 
 }
@@ -2000,7 +2000,7 @@ impl Telegram {
         if let Some(v) = options.sort {
             parameters.insert("sort".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/telegram/channels", Some(parameters))
+        self.client.get("/telegram/channels", Some(parameters))
     }
 
     /// Get Telegram messages.
@@ -2027,7 +2027,7 @@ impl Telegram {
         if let Some(v) = options.search_query {
             parameters.insert("search_query".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/telegram/messages", Some(parameters))
+        self.client.get("/telegram/messages", Some(parameters))
     }
 
 }
@@ -2171,7 +2171,7 @@ impl Ticker {
         if let Some(v) = options.conversion_base {
             parameters.insert("conversion_base".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/ticker", Some(parameters))
+        self.client.get("/ticker", Some(parameters))
     }
 
     /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
@@ -2180,7 +2180,7 @@ impl Ticker {
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/ticker/exchanges", Some(parameters))
+        self.client.get("/ticker/exchanges", Some(parameters))
     }
 
     /// Get supported symbols accepted by `/api/v1/ticker` endpoint.
@@ -2190,7 +2190,7 @@ impl Ticker {
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/ticker/symbols", Some(parameters))
+        self.client.get("/ticker/symbols", Some(parameters))
     }
 
 }
@@ -2294,7 +2294,7 @@ impl Token {
         if let Some(v) = options.r#type {
             parameters.insert("type".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/token/updates", Some(parameters))
+        self.client.get("/cex/token/updates", Some(parameters))
     }
 
 }
@@ -2359,19 +2359,19 @@ impl TradingFees {
         if let Some(v) = options.symbol {
             parameters.insert("symbol".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/fees", Some(parameters))
+        self.client.get("/cex/fees", Some(parameters))
     }
 
     /// Get supported exchanges accepted by `/api/v1/trading-fees` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/cex/fees/exchanges", None)
+        self.client.get("/cex/fees/exchanges", None)
     }
 
     /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
     pub fn symbols(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
-        self.client.get("/api/v1/cex/fees/symbols", Some(parameters))
+        self.client.get("/cex/fees/symbols", Some(parameters))
     }
 
 }
@@ -2427,19 +2427,19 @@ impl WalletStatus {
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/wallet-status", Some(parameters))
+        self.client.get("/wallet-status", Some(parameters))
     }
 
     /// Get assets accepted by `/api/v1/wallet-status` endpoint.
     pub fn assets(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
-        self.client.get("/api/v1/wallet-status/assets", Some(parameters))
+        self.client.get("/wallet-status/assets", Some(parameters))
     }
 
     /// Get exchanges accepted by `/api/v1/wallet-status` endpoint.
     pub fn exchanges(&self) -> Result<serde_json::Value> {
-        self.client.get("/api/v1/wallet-status/exchanges", None)
+        self.client.get("/wallet-status/exchanges", None)
     }
 
 }
