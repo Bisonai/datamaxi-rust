@@ -185,4 +185,21 @@
 <a href=#185 id=185 data-nosnippet>185</a>
 <a href=#186 id=186 data-nosnippet>186</a><span class="doccomment">/// Data models representing API responses and optional parameters.
 <a href=#187 id=187 data-nosnippet>187</a></span><span class="kw">pub mod </span>models;
+<a href=#188 id=188 data-nosnippet>188</a>
+<a href=#189 id=189 data-nosnippet>189</a><span class="doccomment">/// Auto-generated typed wrappers for every public REST endpoint on
+<a href=#190 id=190 data-nosnippet>190</a>/// the data API. This module is the canonical surface for the OI /
+<a href=#191 id=191 data-nosnippet>191</a>/// Liquidation / cex-symbol surfaces; the older hand-written modules
+<a href=#192 id=192 data-nosnippet>192</a>/// (`cex`, `dex`) cover only a subset of endpoints and are kept for
+<a href=#193 id=193 data-nosnippet>193</a>/// backward compatibility.
+<a href=#194 id=194 data-nosnippet>194</a>///
+<a href=#195 id=195 data-nosnippet>195</a>/// Usage:
+<a href=#196 id=196 data-nosnippet>196</a>/// ```ignore
+<a href=#197 id=197 data-nosnippet>197</a>/// use datamaxi::api::Datamaxi;
+<a href=#198 id=198 data-nosnippet>198</a>/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
+<a href=#199 id=199 data-nosnippet>199</a>///
+<a href=#200 id=200 data-nosnippet>200</a>/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
+<a href=#201 id=201 data-nosnippet>201</a>/// let opts = LiquidationHeatmapOptions::new();
+<a href=#202 id=202 data-nosnippet>202</a>/// let heatmap = liq.heatmap(opts)?;
+<a href=#203 id=203 data-nosnippet>203</a>/// ```
+<a href=#204 id=204 data-nosnippet>204</a></span><span class="kw">pub mod </span>generated;
 </code></pre></div></section></main></body></html>
