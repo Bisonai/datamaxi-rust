@@ -1,3 +1,2 @@
-var srcIndex = new Map(JSON.parse('[["datamaxi",["",[],["api.rs","cex.rs","dex.rs","lib.rs","models.rs"]]]]'));
-createSrcSidebar();
-//{"start":36,"fragment_lengths":[70]}
+createSrcSidebar('[["datamaxi",["",[],["api.rs","cex.rs","dex.rs","lib.rs","models.rs"]]]]');
+//{"start":19,"fragment_lengths":[70]}
