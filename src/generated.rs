@@ -1055,9 +1055,11 @@ impl FundingRate {
     }
 
     /// Fetch supported symbols accepted by `/api/v1/funding-rate` endpoint.
-    pub fn symbols(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
+    pub fn symbols(&self, options: FundingRateSymbolsOptions) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
-        parameters.insert("exchange".to_string(), exchange.into());
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
         self.client.get("/funding-rate/symbols", Some(parameters))
     }
 
@@ -1104,6 +1106,24 @@ impl FundingRateHistoryOptions {
 
     pub fn sort(mut self, sort: impl Into<String>) -> Self {
         self.sort = Some(sort.into());
+        self
+    }
+
+}
+
+pub struct FundingRateSymbolsOptions {
+    pub exchange: Option<String>,
+}
+
+impl FundingRateSymbolsOptions {
+    pub fn new() -> Self {
+        FundingRateSymbolsOptions {
+            exchange: None,
+        }
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
         self
     }
 
@@ -1226,7 +1246,7 @@ impl Liquidation {
         self.client.get("/liquidation/feed", Some(parameters))
     }
 
-    /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported (in-memory buckets are 30min); use the WS feed for finer granularity.
+    /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported; use the WS feed for finer granularity.
     pub fn heatmap(&self, options: LiquidationHeatmapOptions) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.window {
@@ -1249,6 +1269,21 @@ impl Liquidation {
             parameters.insert("quote".to_string(), v.to_string());
         }
         self.client.get("/liquidation/map", Some(parameters))
+    }
+
+    /// Aggregate liquidation stats (total, long/short split, count, venue count, biggest single event) over a 1h/4h/24h window. Backs the liquidation page KPI strip for windows the live feed buffer can't cover.
+    pub fn stats(&self, options: LiquidationStatsOptions) -> Result<serde_json::Value> {
+        let mut parameters = HashMap::new();
+        if let Some(v) = options.window {
+            parameters.insert("window".to_string(), v.to_string());
+        }
+        if let Some(v) = options.exchange {
+            parameters.insert("exchange".to_string(), v.to_string());
+        }
+        if let Some(v) = options.minVolumeUsd {
+            parameters.insert("minVolumeUsd".to_string(), v.to_string());
+        }
+        self.client.get("/liquidation/stats", Some(parameters))
     }
 
     /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
@@ -1374,6 +1409,38 @@ impl LiquidationMapOptions {
 
     pub fn quote(mut self, quote: impl Into<String>) -> Self {
         self.quote = Some(quote.into());
+        self
+    }
+
+}
+
+pub struct LiquidationStatsOptions {
+    pub window: Option<String>,
+    pub exchange: Option<String>,
+    pub minVolumeUsd: Option<f64>,
+}
+
+impl LiquidationStatsOptions {
+    pub fn new() -> Self {
+        LiquidationStatsOptions {
+            window: None,
+            exchange: None,
+            minVolumeUsd: None,
+        }
+    }
+
+    pub fn window(mut self, window: impl Into<String>) -> Self {
+        self.window = Some(window.into());
+        self
+    }
+
+    pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
+        self.exchange = Some(exchange.into());
+        self
+    }
+
+    pub fn minVolumeUsd(mut self, minVolumeUsd: f64) -> Self {
+        self.minVolumeUsd = Some(minVolumeUsd);
         self
     }
 
