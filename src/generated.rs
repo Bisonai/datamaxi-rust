@@ -1335,7 +1335,7 @@ impl Liquidation {
             parameters.insert("base".to_string(), v.to_string());
         }
         if let Some(v) = options.minVolumeUsd {
-            parameters.insert("minVolumeUsd".to_string(), v.to_string());
+            parameters.insert("min_volume_usd".to_string(), v.to_string());
         }
         if let Some(v) = options.limit {
             parameters.insert("limit".to_string(), v.to_string());
@@ -1350,7 +1350,7 @@ impl Liquidation {
             parameters.insert("window".to_string(), v.to_string());
         }
         if let Some(v) = options.topN {
-            parameters.insert("topN".to_string(), v.to_string());
+            parameters.insert("top_n".to_string(), v.to_string());
         }
         self.client.get("/liquidation/heatmap", Some(parameters))
     }
@@ -1382,7 +1382,7 @@ impl Liquidation {
             parameters.insert("exchange".to_string(), v.to_string());
         }
         if let Some(v) = options.minVolumeUsd {
-            parameters.insert("minVolumeUsd".to_string(), v.to_string());
+            parameters.insert("min_volume_usd".to_string(), v.to_string());
         }
         self.client.get("/liquidation/stats", Some(parameters))
     }
@@ -1811,7 +1811,7 @@ impl OpenInterest {
     pub fn summary(&self, options: OpenInterestSummaryOptions) -> Result<serde_json::Value> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.topN {
-            parameters.insert("topN".to_string(), v.to_string());
+            parameters.insert("top_n".to_string(), v.to_string());
         }
         self.client.get("/open-interest/summary", Some(parameters))
     }
