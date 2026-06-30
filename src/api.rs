@@ -46,36 +46,24 @@ impl Client {
         }
     }
 
-    /// Builds a request string from a set of parameters.
-    fn build_request(parameters: HashMap<String, String>) -> String {
-        parameters
-            .iter()
-            .map(|(key, value)| format!("{}={}", key, value))
-            .collect::<Vec<String>>()
-            .join("&")
-    }
-
     /// Sends a GET request to the specified endpoint with optional parameters.
     pub fn get<T: DeserializeOwned>(
         &self,
         endpoint: &'static str,
         parameters: Option<HashMap<String, String>>,
     ) -> Result<T> {
-        let mut url: String = format!("{}{}", self.base_url, endpoint);
+        let url: String = format!("{}{}", self.base_url, endpoint);
+
+        let mut request = self
+            .inner_client
+            .get(url.as_str())
+            .header("X-DTMX-APIKEY", &self.api_key);
 
         if let Some(p) = parameters {
-            let request = Self::build_request(p);
-
-            if !request.is_empty() {
-                url.push_str(format!("?{}", request).as_str());
-            }
+            request = request.query(&p);
         }
 
-        let client = &self.inner_client;
-        let response = client
-            .get(url.as_str())
-            .header("X-DTMX-APIKEY", &self.api_key)
-            .send()?;
+        let response = request.send()?;
 
         self.handle_response(response)
     }
