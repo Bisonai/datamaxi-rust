@@ -102,104 +102,116 @@
 <a href=#102 id=102 data-nosnippet>102</a>//!
 <a href=#103 id=103 data-nosnippet>103</a>//![MIT License](./LICENSE)
 <a href=#104 id=104 data-nosnippet>104</a>
-<a href=#105 id=105 data-nosnippet>105</a>/// API definitions and related utilities.
-<a href=#106 id=106 data-nosnippet>106</a></span><span class="kw">pub mod </span>api;
-<a href=#107 id=107 data-nosnippet>107</a>
-<a href=#108 id=108 data-nosnippet>108</a><span class="doccomment">/// CEX-related data fetcher and data structures.
-<a href=#109 id=109 data-nosnippet>109</a>///
-<a href=#110 id=110 data-nosnippet>110</a>/// This module provides functionality related to centralized exchange (CEX) data.
-<a href=#111 id=111 data-nosnippet>111</a>/// It includes data structures and methods for retrieving candle data, as well as information about supported exchanges, symbols and intervals.
-<a href=#112 id=112 data-nosnippet>112</a>///
-<a href=#113 id=113 data-nosnippet>113</a>/// # Usage
-<a href=#114 id=114 data-nosnippet>114</a>///
-<a href=#115 id=115 data-nosnippet>115</a>/// The `Candle` struct is the primary interface for interacting with the CEX data.
-<a href=#116 id=116 data-nosnippet>116</a>/// It provides methods for retrieving data with optional parameters to filter and sort the results.
+<a href=#105 id=105 data-nosnippet>105</a></span><span class="comment">// The archived `error-chain` dependency produces a large `Err` variant
+<a href=#106 id=106 data-nosnippet>106</a>// (`clippy::result_large_err`) and emits an internal `cfg` that rustc does not
+<a href=#107 id=107 data-nosnippet>107</a>// recognise (`unexpected_cfgs`). Both are pre-existing and require replacing
+<a href=#108 id=108 data-nosnippet>108</a>// `error-chain` to fix properly; allow them crate-wide so clippy can gate on
+<a href=#109 id=109 data-nosnippet>109</a>// genuine warnings. Tracked separately.
+<a href=#110 id=110 data-nosnippet>110</a></span><span class="attr">#![allow(clippy::result_large_err)]
+<a href=#111 id=111 data-nosnippet>111</a>#![allow(unexpected_cfgs)]
+<a href=#112 id=112 data-nosnippet>112</a>
+<a href=#113 id=113 data-nosnippet>113</a></span><span class="doccomment">/// API definitions and related utilities.
+<a href=#114 id=114 data-nosnippet>114</a></span><span class="kw">pub mod </span>api;
+<a href=#115 id=115 data-nosnippet>115</a>
+<a href=#116 id=116 data-nosnippet>116</a><span class="doccomment">/// CEX-related data fetcher and data structures.
 <a href=#117 id=117 data-nosnippet>117</a>///
-<a href=#118 id=118 data-nosnippet>118</a>/// ## Example
-<a href=#119 id=119 data-nosnippet>119</a>///
-<a href=#120 id=120 data-nosnippet>120</a>/// ```rust
-<a href=#121 id=121 data-nosnippet>121</a>/// let config = datamaxi::api::Config {
-<a href=#122 id=122 data-nosnippet>122</a>///     base_url: None,
-<a href=#123 id=123 data-nosnippet>123</a>///     api_key: "my_api_key".to_string(),
-<a href=#124 id=124 data-nosnippet>124</a>/// };
-<a href=#125 id=125 data-nosnippet>125</a>/// let client = datamaxi::api::Client::new(config);
-<a href=#126 id=126 data-nosnippet>126</a>/// let candle = datamaxi::cex::Candle { client: client.clone() };
+<a href=#118 id=118 data-nosnippet>118</a>/// This module provides functionality related to centralized exchange (CEX) data.
+<a href=#119 id=119 data-nosnippet>119</a>/// It includes data structures and methods for retrieving candle data, as well as information about supported exchanges, symbols and intervals.
+<a href=#120 id=120 data-nosnippet>120</a>///
+<a href=#121 id=121 data-nosnippet>121</a>/// # Usage
+<a href=#122 id=122 data-nosnippet>122</a>///
+<a href=#123 id=123 data-nosnippet>123</a>/// The `Candle` struct is the primary interface for interacting with the CEX data.
+<a href=#124 id=124 data-nosnippet>124</a>/// It provides methods for retrieving data with optional parameters to filter and sort the results.
+<a href=#125 id=125 data-nosnippet>125</a>///
+<a href=#126 id=126 data-nosnippet>126</a>/// ## Example
 <a href=#127 id=127 data-nosnippet>127</a>///
-<a href=#128 id=128 data-nosnippet>128</a>/// // Retrieve supported exchanges
-<a href=#129 id=129 data-nosnippet>129</a>/// let exchanges = candle.exchanges("spot");
-<a href=#130 id=130 data-nosnippet>130</a>///
-<a href=#131 id=131 data-nosnippet>131</a>/// // Retrieve supported intervals
-<a href=#132 id=132 data-nosnippet>132</a>/// let intervals = candle.intervals();
-<a href=#133 id=133 data-nosnippet>133</a>///
-<a href=#134 id=134 data-nosnippet>134</a>/// // Retrieve supported Binance symbols
-<a href=#135 id=135 data-nosnippet>135</a>/// let symbols_options = datamaxi::cex::SymbolsOptions::new();
-<a href=#136 id=136 data-nosnippet>136</a>/// let symbols = candle.symbols("binance", symbols_options);
-<a href=#137 id=137 data-nosnippet>137</a>///
-<a href=#138 id=138 data-nosnippet>138</a>/// // Retrieve candle data
-<a href=#139 id=139 data-nosnippet>139</a>/// let candle_options = datamaxi::cex::CandleOptions::new().interval("1h").market("spot");
-<a href=#140 id=140 data-nosnippet>140</a>/// let candle_data = candle.get("binance", "BTC-USDT", candle_options);
-<a href=#141 id=141 data-nosnippet>141</a>/// ```
-<a href=#142 id=142 data-nosnippet>142</a>///
-<a href=#143 id=143 data-nosnippet>143</a>/// # Error Handling
-<a href=#144 id=144 data-nosnippet>144</a>///
-<a href=#145 id=145 data-nosnippet>145</a>/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
-<a href=#146 id=146 data-nosnippet>146</a></span><span class="kw">pub mod </span>cex;
-<a href=#147 id=147 data-nosnippet>147</a>
-<a href=#148 id=148 data-nosnippet>148</a><span class="doccomment">/// DEX-related data fetcher and data structures.
-<a href=#149 id=149 data-nosnippet>149</a>///
-<a href=#150 id=150 data-nosnippet>150</a>/// This module provides functionality related to decentralized exchange (DEX) data,
-<a href=#151 id=151 data-nosnippet>151</a>/// It includes data structures and methods for retrieving candle and trade data, as well as information supported chains, exchanges, pools and intervals.
+<a href=#128 id=128 data-nosnippet>128</a>/// ```rust
+<a href=#129 id=129 data-nosnippet>129</a>/// let config = datamaxi::api::Config {
+<a href=#130 id=130 data-nosnippet>130</a>///     base_url: None,
+<a href=#131 id=131 data-nosnippet>131</a>///     api_key: "my_api_key".to_string(),
+<a href=#132 id=132 data-nosnippet>132</a>/// };
+<a href=#133 id=133 data-nosnippet>133</a>/// let client = datamaxi::api::Client::new(config);
+<a href=#134 id=134 data-nosnippet>134</a>/// let candle = datamaxi::cex::Candle { client: client.clone() };
+<a href=#135 id=135 data-nosnippet>135</a>///
+<a href=#136 id=136 data-nosnippet>136</a>/// // Retrieve supported exchanges
+<a href=#137 id=137 data-nosnippet>137</a>/// let exchanges = candle.exchanges("spot");
+<a href=#138 id=138 data-nosnippet>138</a>///
+<a href=#139 id=139 data-nosnippet>139</a>/// // Retrieve supported intervals
+<a href=#140 id=140 data-nosnippet>140</a>/// let intervals = candle.intervals();
+<a href=#141 id=141 data-nosnippet>141</a>///
+<a href=#142 id=142 data-nosnippet>142</a>/// // Retrieve supported Binance symbols
+<a href=#143 id=143 data-nosnippet>143</a>/// let symbols_options = datamaxi::cex::SymbolsOptions::new();
+<a href=#144 id=144 data-nosnippet>144</a>/// let symbols = candle.symbols("binance", symbols_options);
+<a href=#145 id=145 data-nosnippet>145</a>///
+<a href=#146 id=146 data-nosnippet>146</a>/// // Retrieve candle data
+<a href=#147 id=147 data-nosnippet>147</a>/// let candle_options = datamaxi::cex::CandleOptions::new().interval("1h").market("spot");
+<a href=#148 id=148 data-nosnippet>148</a>/// let candle_data = candle.get("binance", "BTC-USDT", candle_options);
+<a href=#149 id=149 data-nosnippet>149</a>/// ```
+<a href=#150 id=150 data-nosnippet>150</a>///
+<a href=#151 id=151 data-nosnippet>151</a>/// # Error Handling
 <a href=#152 id=152 data-nosnippet>152</a>///
-<a href=#153 id=153 data-nosnippet>153</a>/// # Usage
-<a href=#154 id=154 data-nosnippet>154</a>///
-<a href=#155 id=155 data-nosnippet>155</a>/// The `Candle` and `Trade` structs are the primary interfaces for interacting with the DEX data.
-<a href=#156 id=156 data-nosnippet>156</a>/// They provide methods for retrieving data with optional parameters to filter and sort the results.
+<a href=#153 id=153 data-nosnippet>153</a>/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
+<a href=#154 id=154 data-nosnippet>154</a></span><span class="kw">pub mod </span>cex;
+<a href=#155 id=155 data-nosnippet>155</a>
+<a href=#156 id=156 data-nosnippet>156</a><span class="doccomment">/// DEX-related data fetcher and data structures.
 <a href=#157 id=157 data-nosnippet>157</a>///
-<a href=#158 id=158 data-nosnippet>158</a>/// ## Example
-<a href=#159 id=159 data-nosnippet>159</a>///
-<a href=#160 id=160 data-nosnippet>160</a>/// ```rust
-<a href=#161 id=161 data-nosnippet>161</a>/// let config = datamaxi::api::Config {
-<a href=#162 id=162 data-nosnippet>162</a>///     base_url: None,
-<a href=#163 id=163 data-nosnippet>163</a>///     api_key: "my_api_key".to_string(),
-<a href=#164 id=164 data-nosnippet>164</a>/// };
-<a href=#165 id=165 data-nosnippet>165</a>/// let client = datamaxi::api::Client::new(config);
-<a href=#166 id=166 data-nosnippet>166</a>/// let dex = datamaxi::dex::Dex { client: client.clone() };
+<a href=#158 id=158 data-nosnippet>158</a>/// This module provides functionality related to decentralized exchange (DEX) data,
+<a href=#159 id=159 data-nosnippet>159</a>/// It includes data structures and methods for retrieving candle and trade data, as well as information supported chains, exchanges, pools and intervals.
+<a href=#160 id=160 data-nosnippet>160</a>///
+<a href=#161 id=161 data-nosnippet>161</a>/// # Usage
+<a href=#162 id=162 data-nosnippet>162</a>///
+<a href=#163 id=163 data-nosnippet>163</a>/// The `Candle` and `Trade` structs are the primary interfaces for interacting with the DEX data.
+<a href=#164 id=164 data-nosnippet>164</a>/// They provide methods for retrieving data with optional parameters to filter and sort the results.
+<a href=#165 id=165 data-nosnippet>165</a>///
+<a href=#166 id=166 data-nosnippet>166</a>/// ## Example
 <a href=#167 id=167 data-nosnippet>167</a>///
-<a href=#168 id=168 data-nosnippet>168</a>/// // Retrieve candle data
-<a href=#169 id=169 data-nosnippet>169</a>/// let candle_options = datamaxi::dex::CandleOptions::new().interval("1h").limit(100);
-<a href=#170 id=170 data-nosnippet>170</a>/// let candle_data = dex.candle("kaia_mainnet", "dragonswap", "0x...", candle_options);
-<a href=#171 id=171 data-nosnippet>171</a>///
-<a href=#172 id=172 data-nosnippet>172</a>/// // Retrieve trade data
-<a href=#173 id=173 data-nosnippet>173</a>/// let trade_options = datamaxi::dex::TradeOptions::new().limit(50);
-<a href=#174 id=174 data-nosnippet>174</a>/// let trade_data = dex.trade("kaia_mainnet", "dragonswap", "0x...", trade_options);
+<a href=#168 id=168 data-nosnippet>168</a>/// ```rust
+<a href=#169 id=169 data-nosnippet>169</a>/// let config = datamaxi::api::Config {
+<a href=#170 id=170 data-nosnippet>170</a>///     base_url: None,
+<a href=#171 id=171 data-nosnippet>171</a>///     api_key: "my_api_key".to_string(),
+<a href=#172 id=172 data-nosnippet>172</a>/// };
+<a href=#173 id=173 data-nosnippet>173</a>/// let client = datamaxi::api::Client::new(config);
+<a href=#174 id=174 data-nosnippet>174</a>/// let dex = datamaxi::dex::Dex { client: client.clone() };
 <a href=#175 id=175 data-nosnippet>175</a>///
-<a href=#176 id=176 data-nosnippet>176</a>/// // Retrieve available pools
-<a href=#177 id=177 data-nosnippet>177</a>/// let pools_options = datamaxi::dex::PoolsOptions::new().chain("kaia_mainnet");
-<a href=#178 id=178 data-nosnippet>178</a>/// let pools = dex.pools(pools_options);
-<a href=#179 id=179 data-nosnippet>179</a>/// ```
-<a href=#180 id=180 data-nosnippet>180</a>///
-<a href=#181 id=181 data-nosnippet>181</a>/// # Error Handling
-<a href=#182 id=182 data-nosnippet>182</a>///
-<a href=#183 id=183 data-nosnippet>183</a>/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
-<a href=#184 id=184 data-nosnippet>184</a></span><span class="kw">pub mod </span>dex;
-<a href=#185 id=185 data-nosnippet>185</a>
-<a href=#186 id=186 data-nosnippet>186</a><span class="doccomment">/// Data models representing API responses and optional parameters.
-<a href=#187 id=187 data-nosnippet>187</a></span><span class="kw">pub mod </span>models;
-<a href=#188 id=188 data-nosnippet>188</a>
-<a href=#189 id=189 data-nosnippet>189</a><span class="doccomment">/// Auto-generated typed wrappers for every public REST endpoint on
-<a href=#190 id=190 data-nosnippet>190</a>/// the data API. This module is the canonical surface for the OI /
-<a href=#191 id=191 data-nosnippet>191</a>/// Liquidation / cex-symbol surfaces; the older hand-written modules
-<a href=#192 id=192 data-nosnippet>192</a>/// (`cex`, `dex`) cover only a subset of endpoints and are kept for
-<a href=#193 id=193 data-nosnippet>193</a>/// backward compatibility.
-<a href=#194 id=194 data-nosnippet>194</a>///
-<a href=#195 id=195 data-nosnippet>195</a>/// Usage:
-<a href=#196 id=196 data-nosnippet>196</a>/// ```ignore
-<a href=#197 id=197 data-nosnippet>197</a>/// use datamaxi::api::Datamaxi;
-<a href=#198 id=198 data-nosnippet>198</a>/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
-<a href=#199 id=199 data-nosnippet>199</a>///
-<a href=#200 id=200 data-nosnippet>200</a>/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
-<a href=#201 id=201 data-nosnippet>201</a>/// let opts = LiquidationHeatmapOptions::new();
-<a href=#202 id=202 data-nosnippet>202</a>/// let heatmap = liq.heatmap(opts)?;
-<a href=#203 id=203 data-nosnippet>203</a>/// ```
-<a href=#204 id=204 data-nosnippet>204</a></span><span class="kw">pub mod </span>generated;
+<a href=#176 id=176 data-nosnippet>176</a>/// // Retrieve candle data
+<a href=#177 id=177 data-nosnippet>177</a>/// let candle_options = datamaxi::dex::CandleOptions::new().interval("1h").limit(100);
+<a href=#178 id=178 data-nosnippet>178</a>/// let candle_data = dex.candle("kaia_mainnet", "dragonswap", "0x...", candle_options);
+<a href=#179 id=179 data-nosnippet>179</a>///
+<a href=#180 id=180 data-nosnippet>180</a>/// // Retrieve trade data
+<a href=#181 id=181 data-nosnippet>181</a>/// let trade_options = datamaxi::dex::TradeOptions::new().limit(50);
+<a href=#182 id=182 data-nosnippet>182</a>/// let trade_data = dex.trade("kaia_mainnet", "dragonswap", "0x...", trade_options);
+<a href=#183 id=183 data-nosnippet>183</a>///
+<a href=#184 id=184 data-nosnippet>184</a>/// // Retrieve available pools
+<a href=#185 id=185 data-nosnippet>185</a>/// let pools_options = datamaxi::dex::PoolsOptions::new().chain("kaia_mainnet");
+<a href=#186 id=186 data-nosnippet>186</a>/// let pools = dex.pools(pools_options);
+<a href=#187 id=187 data-nosnippet>187</a>/// ```
+<a href=#188 id=188 data-nosnippet>188</a>///
+<a href=#189 id=189 data-nosnippet>189</a>/// # Error Handling
+<a href=#190 id=190 data-nosnippet>190</a>///
+<a href=#191 id=191 data-nosnippet>191</a>/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
+<a href=#192 id=192 data-nosnippet>192</a></span><span class="kw">pub mod </span>dex;
+<a href=#193 id=193 data-nosnippet>193</a>
+<a href=#194 id=194 data-nosnippet>194</a><span class="doccomment">/// Data models representing API responses and optional parameters.
+<a href=#195 id=195 data-nosnippet>195</a></span><span class="kw">pub mod </span>models;
+<a href=#196 id=196 data-nosnippet>196</a>
+<a href=#197 id=197 data-nosnippet>197</a><span class="doccomment">/// Auto-generated typed wrappers for every public REST endpoint on
+<a href=#198 id=198 data-nosnippet>198</a>/// the data API. This module is the canonical surface for the OI /
+<a href=#199 id=199 data-nosnippet>199</a>/// Liquidation / cex-symbol surfaces; the older hand-written modules
+<a href=#200 id=200 data-nosnippet>200</a>/// (`cex`, `dex`) cover only a subset of endpoints and are kept for
+<a href=#201 id=201 data-nosnippet>201</a>/// backward compatibility.
+<a href=#202 id=202 data-nosnippet>202</a>///
+<a href=#203 id=203 data-nosnippet>203</a>/// Usage:
+<a href=#204 id=204 data-nosnippet>204</a>/// ```ignore
+<a href=#205 id=205 data-nosnippet>205</a>/// use datamaxi::api::Datamaxi;
+<a href=#206 id=206 data-nosnippet>206</a>/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
+<a href=#207 id=207 data-nosnippet>207</a>///
+<a href=#208 id=208 data-nosnippet>208</a>/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
+<a href=#209 id=209 data-nosnippet>209</a>/// let opts = LiquidationHeatmapOptions::new();
+<a href=#210 id=210 data-nosnippet>210</a>/// let heatmap = liq.heatmap(opts)?;
+<a href=#211 id=211 data-nosnippet>211</a>/// ```
+<a href=#212 id=212 data-nosnippet>212</a></span><span class="comment">// `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
+<a href=#213 id=213 data-nosnippet>213</a>// upstream API's camelCase params and the generator's constructors, so they are
+<a href=#214 id=214 data-nosnippet>214</a>// suppressed at the module boundary rather than hand-edited in generated output.
+<a href=#215 id=215 data-nosnippet>215</a></span><span class="attr">#[allow(non_snake_case, unused_imports, clippy::new_without_default)]
+<a href=#216 id=216 data-nosnippet>216</a></span><span class="kw">pub mod </span>generated;
 </code></pre></div></section></main></body></html>
