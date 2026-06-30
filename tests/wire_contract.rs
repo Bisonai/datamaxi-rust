@@ -1,0 +1,162 @@
+//! Request-level wire-contract tests.
+//!
+//! These lock the outbound HTTP contract (path + query-string keys + auth
+//! header) that the typed builders produce, and exercise `handle_response`'s
+//! status-code mapping. They use `mockito` to stand up a local server and a
+//! client pointed at it via `new_with_base_url`.
+//!
+//! Regression guard: PR #8 shipped a wrong snake_case query key. The builder
+//! methods are camelCase (`topN`, `minVolumeUsd`) but the wire keys MUST be
+//! snake_case (`top_n`, `min_volume_usd`). The query-key assertions below fail
+//! if a future codegen regen reintroduces that bug.
+
+use datamaxi::api::{Datamaxi, ErrorKind};
+use datamaxi::generated::{
+    CexCandle, CexCandleOptions, Liquidation, LiquidationHeatmapOptions, LiquidationStatsOptions,
+};
+use mockito::Matcher;
+
+const API_KEY: &str = "test-api-key";
+
+/// `top_n` wire key (regression guard for PR #8) + `window`, plus path and the
+/// `X-DTMX-APIKEY` auth header.
+#[test]
+fn liquidation_heatmap_sends_top_n_window_and_apikey() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/liquidation/heatmap")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("top_n".into(), "10".into()),
+            Matcher::UrlEncoded("window".into(), "1h".into()),
+        ]))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create();
+
+    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let opts = LiquidationHeatmapOptions::new().window("1h").topN(10);
+    let res = liq.heatmap(opts);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// `min_volume_usd` wire key (regression guard for PR #8) on the stats endpoint.
+#[test]
+fn liquidation_stats_sends_min_volume_usd() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/liquidation/stats")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("min_volume_usd".into(), "5".into()),
+            Matcher::UrlEncoded("window".into(), "24h".into()),
+        ]))
+        .with_status(200)
+        .with_body("{}")
+        .expect(1)
+        .create();
+
+    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let opts = LiquidationStatsOptions::new()
+        .window("24h")
+        .minVolumeUsd(5.0);
+    let res = liq.stats(opts);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// CEX candle: required path params + several optional query keys/values.
+#[test]
+fn cex_candle_sends_required_and_optional_keys() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/cex/candle")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("exchange".into(), "binance".into()),
+            Matcher::UrlEncoded("market".into(), "spot".into()),
+            Matcher::UrlEncoded("symbol".into(), "BTC-USDT".into()),
+            Matcher::UrlEncoded("interval".into(), "1h".into()),
+            Matcher::UrlEncoded("currency".into(), "USD".into()),
+        ]))
+        .with_status(200)
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let opts = CexCandleOptions::new().interval("1h").currency("USD");
+    let res = candle.get("binance", "spot", "BTC-USDT", opts);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+// --- handle_response status mapping ---------------------------------------
+
+#[allow(clippy::result_large_err)] // crate Error is error_chain-sized; not under test here
+fn call_with_status(status: usize, body: &str) -> datamaxi::api::Result<serde_json::Value> {
+    let mut server = mockito::Server::new();
+    let _mock = server
+        .mock("GET", "/liquidation/heatmap")
+        .with_status(status)
+        .with_body(body)
+        .create();
+
+    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    liq.heatmap(LiquidationHeatmapOptions::new())
+}
+
+#[test]
+fn status_200_maps_to_ok() {
+    let res = call_with_status(200, "{\"ok\":true}");
+    assert!(res.is_ok(), "200 should map to Ok, got {:?}", res);
+}
+
+#[test]
+fn status_400_maps_to_bad_request() {
+    let err = call_with_status(400, "bad input").expect_err("400 should be Err");
+    assert!(
+        matches!(err.kind(), ErrorKind::BadRequest(_)),
+        "400 should map to BadRequest, got {:?}",
+        err
+    );
+}
+
+#[test]
+fn status_401_maps_to_unauthorized() {
+    let err = call_with_status(401, "").expect_err("401 should be Err");
+    assert!(
+        matches!(err.kind(), ErrorKind::Unauthorized),
+        "401 should map to Unauthorized, got {:?}",
+        err
+    );
+}
+
+#[test]
+fn status_500_maps_to_internal_server_error() {
+    let err = call_with_status(500, "boom").expect_err("500 should be Err");
+    assert!(
+        matches!(err.kind(), ErrorKind::InternalServerError(_)),
+        "500 should map to InternalServerError, got {:?}",
+        err
+    );
+}
+
+#[test]
+fn status_404_maps_to_unexpected_status_code() {
+    let err = call_with_status(404, "nope").expect_err("404 should be Err");
+    assert!(
+        matches!(err.kind(), ErrorKind::UnexpectedStatusCode(404)),
+        "404 should map to UnexpectedStatusCode(404), got {:?}",
+        err
+    );
+}
