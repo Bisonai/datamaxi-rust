@@ -100,6 +100,39 @@ fn cex_candle_sends_required_and_optional_keys() {
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
 }
 
+/// Query-param values containing reserved/non-ASCII characters MUST be
+/// percent-encoded on the wire (issue #10). `Matcher::UrlEncoded` decodes the
+/// incoming query before comparing, so a match proves the raw value was encoded
+/// and round-trips. A pre-fix hand-rolled `k=v` join would emit the raw `&`,
+/// `=`, space and `\u{e9}`, corrupting the query string and failing this match.
+#[test]
+fn query_params_are_percent_encoded() {
+    let mut server = mockito::Server::new();
+
+    // Contains `&`, `=`, a space and a non-ASCII char.
+    let raw_symbol = "A&B=C D\u{e9}";
+
+    let mock = server
+        .mock("GET", "/cex/candle")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("exchange".into(), "binance".into()),
+            Matcher::UrlEncoded("market".into(), "spot".into()),
+            Matcher::UrlEncoded("symbol".into(), raw_symbol.into()),
+        ]))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let res = candle.get("binance", "spot", raw_symbol, CexCandleOptions::new());
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
 // --- handle_response status mapping ---------------------------------------
 
 #[allow(clippy::result_large_err)] // crate Error is error_chain-sized; not under test here
