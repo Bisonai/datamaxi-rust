@@ -102,6 +102,14 @@
 //!
 //![MIT License](./LICENSE)
 
+// The archived `error-chain` dependency produces a large `Err` variant
+// (`clippy::result_large_err`) and emits an internal `cfg` that rustc does not
+// recognise (`unexpected_cfgs`). Both are pre-existing and require replacing
+// `error-chain` to fix properly; allow them crate-wide so clippy can gate on
+// genuine warnings. Tracked separately.
+#![allow(clippy::result_large_err)]
+#![allow(unexpected_cfgs)]
+
 /// API definitions and related utilities.
 pub mod api;
 
@@ -201,4 +209,8 @@ pub mod models;
 /// let opts = LiquidationHeatmapOptions::new();
 /// let heatmap = liq.heatmap(opts)?;
 /// ```
+// `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
+// upstream API's camelCase params and the generator's constructors, so they are
+// suppressed at the module boundary rather than hand-edited in generated output.
+#[allow(non_snake_case, unused_imports, clippy::new_without_default)]
 pub mod generated;
