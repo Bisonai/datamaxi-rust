@@ -6,11 +6,11 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-dotenv = "0.15.0"
 error-chain = "0.12.4"
 reqwest = { version = "0.12.7", features = ["blocking", "json"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 
 [dev-dependencies]
+dotenvy = "0.15.7"
 mockito = "1.5.0"

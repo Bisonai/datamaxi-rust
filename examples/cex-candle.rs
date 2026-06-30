@@ -1,7 +1,7 @@
 use std::env;
 
 fn main() {
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
     let api_key = env::var("DATAMAXI_API_KEY").expect("DATAMAXI_API_KEY not found");
     let candle: datamaxi::cex::Candle = datamaxi::api::Datamaxi::new(api_key);
 
