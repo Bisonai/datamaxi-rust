@@ -1335,7 +1335,7 @@
 <a href=#1335 id=1335 data-nosnippet>1335</a>            parameters.insert(<span class="string">"base"</span>.to_string(), v.to_string());
 <a href=#1336 id=1336 data-nosnippet>1336</a>        }
 <a href=#1337 id=1337 data-nosnippet>1337</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = options.minVolumeUsd {
-<a href=#1338 id=1338 data-nosnippet>1338</a>            parameters.insert(<span class="string">"minVolumeUsd"</span>.to_string(), v.to_string());
+<a href=#1338 id=1338 data-nosnippet>1338</a>            parameters.insert(<span class="string">"min_volume_usd"</span>.to_string(), v.to_string());
 <a href=#1339 id=1339 data-nosnippet>1339</a>        }
 <a href=#1340 id=1340 data-nosnippet>1340</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = options.limit {
 <a href=#1341 id=1341 data-nosnippet>1341</a>            parameters.insert(<span class="string">"limit"</span>.to_string(), v.to_string());
@@ -1350,7 +1350,7 @@
 <a href=#1350 id=1350 data-nosnippet>1350</a>            parameters.insert(<span class="string">"window"</span>.to_string(), v.to_string());
 <a href=#1351 id=1351 data-nosnippet>1351</a>        }
 <a href=#1352 id=1352 data-nosnippet>1352</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = options.topN {
-<a href=#1353 id=1353 data-nosnippet>1353</a>            parameters.insert(<span class="string">"topN"</span>.to_string(), v.to_string());
+<a href=#1353 id=1353 data-nosnippet>1353</a>            parameters.insert(<span class="string">"top_n"</span>.to_string(), v.to_string());
 <a href=#1354 id=1354 data-nosnippet>1354</a>        }
 <a href=#1355 id=1355 data-nosnippet>1355</a>        <span class="self">self</span>.client.get(<span class="string">"/liquidation/heatmap"</span>, <span class="prelude-val">Some</span>(parameters))
 <a href=#1356 id=1356 data-nosnippet>1356</a>    }
@@ -1382,7 +1382,7 @@
 <a href=#1382 id=1382 data-nosnippet>1382</a>            parameters.insert(<span class="string">"exchange"</span>.to_string(), v.to_string());
 <a href=#1383 id=1383 data-nosnippet>1383</a>        }
 <a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = options.minVolumeUsd {
-<a href=#1385 id=1385 data-nosnippet>1385</a>            parameters.insert(<span class="string">"minVolumeUsd"</span>.to_string(), v.to_string());
+<a href=#1385 id=1385 data-nosnippet>1385</a>            parameters.insert(<span class="string">"min_volume_usd"</span>.to_string(), v.to_string());
 <a href=#1386 id=1386 data-nosnippet>1386</a>        }
 <a href=#1387 id=1387 data-nosnippet>1387</a>        <span class="self">self</span>.client.get(<span class="string">"/liquidation/stats"</span>, <span class="prelude-val">Some</span>(parameters))
 <a href=#1388 id=1388 data-nosnippet>1388</a>    }
@@ -1811,7 +1811,7 @@
 <a href=#1811 id=1811 data-nosnippet>1811</a>    </span><span class="kw">pub fn </span>summary(<span class="kw-2">&amp;</span><span class="self">self</span>, options: OpenInterestSummaryOptions) -&gt; <span class="prelude-ty">Result</span>&lt;serde_json::Value&gt; {
 <a href=#1812 id=1812 data-nosnippet>1812</a>        <span class="kw">let </span><span class="kw-2">mut </span>parameters = HashMap::new();
 <a href=#1813 id=1813 data-nosnippet>1813</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = options.topN {
-<a href=#1814 id=1814 data-nosnippet>1814</a>            parameters.insert(<span class="string">"topN"</span>.to_string(), v.to_string());
+<a href=#1814 id=1814 data-nosnippet>1814</a>            parameters.insert(<span class="string">"top_n"</span>.to_string(), v.to_string());
 <a href=#1815 id=1815 data-nosnippet>1815</a>        }
 <a href=#1816 id=1816 data-nosnippet>1816</a>        <span class="self">self</span>.client.get(<span class="string">"/open-interest/summary"</span>, <span class="prelude-val">Some</span>(parameters))
 <a href=#1817 id=1817 data-nosnippet>1817</a>    }
