@@ -50,44 +50,6 @@
 //! candle.get("binance", "ETH-USDT", candle_options);
 //! ```
 //!
-//! ### DEX
-//!
-//! ```rust
-//! let api_key = "my_api_key".to_string();
-//! let dex: datamaxi::dex::Dex = datamaxi::api::Datamaxi::new(api_key);
-//!
-//! // Fetch supported intervals for DEX candle data
-//! dex.intervals();
-//!
-//! // Fetch supported exchange for DEX data
-//! dex.exchanges();
-//!
-//! // Fetch supported chains for DEX data
-//! dex.chains();
-//!
-//! // Fetch supported pools for DEX data
-//! let pools_options = datamaxi::dex::PoolsOptions::new();
-//! dex.pools(pools_options);
-//!
-//! // Fetch DEX candle data
-//! let params = datamaxi::dex::CandleOptions::new();
-//! dex.candle(
-//!   "bsc_mainnet",
-//!   "pancakeswap",
-//!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
-//!   params,
-//! );
-//!
-//! // Fetch DEX trade data
-//! let trade_options = datamaxi::dex::TradeOptions::new().limit(5);
-//! dex.trade(
-//!   "bsc_mainnet",
-//!   "pancakeswap",
-//!   "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423",
-//!   trade_options
-//! );
-//! ```
-//!
 //! ## Links
 //!
 //! - [Official Website](https://datamaxiplus.com/)
@@ -145,51 +107,13 @@ pub mod api;
 /// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
 pub mod cex;
 
-/// DEX-related data fetcher and data structures.
-///
-/// This module provides functionality related to decentralized exchange (DEX) data,
-/// It includes data structures and methods for retrieving candle and trade data, as well as information supported chains, exchanges, pools and intervals.
-///
-/// # Usage
-///
-/// The `Candle` and `Trade` structs are the primary interfaces for interacting with the DEX data.
-/// They provide methods for retrieving data with optional parameters to filter and sort the results.
-///
-/// ## Example
-///
-/// ```rust
-/// let config = datamaxi::api::Config {
-///     base_url: None,
-///     api_key: "my_api_key".to_string(),
-/// };
-/// let client = datamaxi::api::Client::new(config);
-/// let dex = datamaxi::dex::Dex { client: client.clone() };
-///
-/// // Retrieve candle data
-/// let candle_options = datamaxi::dex::CandleOptions::new().interval("1h").limit(100);
-/// let candle_data = dex.candle("kaia_mainnet", "dragonswap", "0x...", candle_options);
-///
-/// // Retrieve trade data
-/// let trade_options = datamaxi::dex::TradeOptions::new().limit(50);
-/// let trade_data = dex.trade("kaia_mainnet", "dragonswap", "0x...", trade_options);
-///
-/// // Retrieve available pools
-/// let pools_options = datamaxi::dex::PoolsOptions::new().chain("kaia_mainnet");
-/// let pools = dex.pools(pools_options);
-/// ```
-///
-/// # Error Handling
-///
-/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
-pub mod dex;
-
 /// Data models representing API responses and optional parameters.
 pub mod models;
 
 /// Auto-generated typed wrappers for every public REST endpoint on
 /// the data API. This module is the canonical surface for the OI /
-/// Liquidation / cex-symbol surfaces; the older hand-written modules
-/// (`cex`, `dex`) cover only a subset of endpoints and are kept for
+/// Liquidation / cex-symbol surfaces; the older hand-written `cex`
+/// module covers only a subset of endpoints and is kept for
 /// backward compatibility.
 ///
 /// Usage:

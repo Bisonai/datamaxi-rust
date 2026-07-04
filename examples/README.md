@@ -8,15 +8,3 @@ Setup your environment variable with your API key in `.env` file before running 
 ```bash
 cargo run --release -q --example "cex-candle"
 ```
-
-## DEX Trade
-
-```bash
-cargo run --release -q --example "dex-trade"
-```
-
-## DEX Candle
-
-```bash
-cargo run --release -q --example "dex-candle"
-```
