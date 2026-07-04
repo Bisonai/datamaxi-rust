@@ -16,7 +16,10 @@
 //! ```
 
 use datamaxi::api::Datamaxi;
-use datamaxi::generated::{CexCandle, CexCandleOptions, Liquidation, LiquidationHeatmapOptions};
+use datamaxi::generated::{
+    CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, Liquidation,
+    LiquidationHeatmapOptions, LiquidationHeatmapWindow,
+};
 
 /// Resolve the API key from the environment, preferring `DTMX_API_KEY` and
 /// falling back to `DATAMAXI_API_KEY`. Empty values are treated as absent.
@@ -48,7 +51,7 @@ fn live_cex_candle_exchanges() {
     let candle: CexCandle = Datamaxi::new(key);
 
     let v = candle
-        .exchanges("spot")
+        .exchanges(CexCandleExchangesMarket::Spot)
         .expect("live /cex/candle/exchanges request failed");
 
     let arr = v.as_array().expect("expected a JSON array of exchanges");
@@ -66,9 +69,11 @@ fn live_cex_candle_get() {
     let key = key_or_skip!("live_cex_candle_get");
     let candle: CexCandle = Datamaxi::new(key);
 
-    let opts = CexCandleOptions::new().interval("1h");
+    let opts = CexCandleOptions::new()
+        .market(CexCandleMarket::Spot)
+        .interval("1h");
     let v = candle
-        .get("binance", "spot", "BTC-USDT", opts)
+        .get("binance", "BTC-USDT", opts)
         .expect("live /cex/candle request failed");
 
     let data = v
@@ -86,7 +91,9 @@ fn live_liquidation_heatmap() {
     let key = key_or_skip!("live_liquidation_heatmap");
     let liq: Liquidation = Datamaxi::new(key);
 
-    let opts = LiquidationHeatmapOptions::new().window("1h").topN(3);
+    let opts = LiquidationHeatmapOptions::new()
+        .window(LiquidationHeatmapWindow::_1h)
+        .top_n(3);
     let v = liq
         .heatmap(opts)
         .expect("live /liquidation/heatmap request failed");
