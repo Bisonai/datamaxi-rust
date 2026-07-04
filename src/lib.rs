@@ -31,23 +31,19 @@
 //!
 //! ### CEX Candle
 //!
-//! ```rust
-//! let api_key = "my_api_key".to_string();
-//! let candle: datamaxi::cex::Candle = datamaxi::api::Datamaxi::new(api_key);
+//! ```no_run
+//! use datamaxi::api::Datamaxi;
+//! use datamaxi::generated::{CexCandle, CexCandleOptions, CexCandleSymbolsOptions};
 //!
-//! // Fetch supported exchanges for CEX candle data
-//! candle.exchanges("spot");
+//! let candle: CexCandle = Datamaxi::new("my_api_key".to_string());
 //!
-//! // Fetch supported symbols for CEX candle data
-//! let symbols_options = datamaxi::cex::SymbolsOptions::new();
-//! candle.symbols("binance", symbols_options);
-//!
-//! // Fetch supported intervals for CEX candle data
-//! candle.intervals();
+//! // Supported exchanges, symbols and intervals
+//! let _ = candle.exchanges("spot");
+//! let _ = candle.symbols(CexCandleSymbolsOptions::new().exchange("binance"));
+//! let _ = candle.intervals();
 //!
 //! // Fetch CEX candle data
-//! let candle_options = datamaxi::cex::CandleOptions::new();
-//! candle.get("binance", "ETH-USDT", candle_options);
+//! let _ = candle.get("binance", "spot", "BTC-USDT", CexCandleOptions::new());
 //! ```
 //!
 //! ## Links
@@ -67,44 +63,12 @@
 /// API definitions and related utilities.
 pub mod api;
 
-/// CEX-related data fetcher and data structures.
+/// **Deprecated** hand-written CEX candle surface.
 ///
-/// This module provides functionality related to centralized exchange (CEX) data.
-/// It includes data structures and methods for retrieving candle data, as well as information about supported exchanges, symbols and intervals.
-///
-/// # Usage
-///
-/// The `Candle` struct is the primary interface for interacting with the CEX data.
-/// It provides methods for retrieving data with optional parameters to filter and sort the results.
-///
-/// ## Example
-///
-/// ```rust
-/// let config = datamaxi::api::Config {
-///     base_url: None,
-///     api_key: "my_api_key".to_string(),
-/// };
-/// let client = datamaxi::api::Client::new(config);
-/// let candle = datamaxi::cex::Candle { client: client.clone() };
-///
-/// // Retrieve supported exchanges
-/// let exchanges = candle.exchanges("spot");
-///
-/// // Retrieve supported intervals
-/// let intervals = candle.intervals();
-///
-/// // Retrieve supported Binance symbols
-/// let symbols_options = datamaxi::cex::SymbolsOptions::new();
-/// let symbols = candle.symbols("binance", symbols_options);
-///
-/// // Retrieve candle data
-/// let candle_options = datamaxi::cex::CandleOptions::new().interval("1h").market("spot");
-/// let candle_data = candle.get("binance", "BTC-USDT", candle_options);
-/// ```
-///
-/// # Error Handling
-///
-/// All methods return a `Result` type, which should be handled appropriately to manage potential errors.
+/// Superseded by [`crate::generated::CexCandle`], which is generated from the
+/// API spec and stays in sync with it. This module is kept only for backward
+/// compatibility and will be removed in a future release; new code should use
+/// `generated::CexCandle`.
 pub mod cex;
 
 /// Data models representing API responses and optional parameters.
