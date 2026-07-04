@@ -12,7 +12,9 @@
 
 use datamaxi::api::{ClientBuilder, Datamaxi, Error};
 use datamaxi::generated::{
-    CexCandle, CexCandleOptions, Liquidation, LiquidationHeatmapOptions, LiquidationStatsOptions,
+    CexCandle, CexCandleOptions, CexSymbol, CexSymbolCautionsOptions, Liquidation,
+    LiquidationHeatmapOptions, LiquidationStatsOptions, OpenInterest, OpenInterestSummaryOptions,
+    Premium, PremiumOptions,
 };
 use mockito::Matcher;
 
@@ -191,6 +193,98 @@ fn status_404_maps_to_unexpected_status_code() {
         "404 should map to UnexpectedStatusCode(404), got {:?}",
         err
     );
+}
+
+// --- Per-endpoint snake_case wire-key guards (issue #16) -------------------
+//
+// These extend the heatmap/stats guards to more endpoints most at risk of a
+// camelCase-builder → snake_case-wire-key regression on a codegen regen (the
+// PR #8 failure mode). Each also locks the request path (no `/api/v1` prefix
+// duplication, per 7c84bae) since `base_url` is the mock server.
+
+/// `/open-interest/summary`: the `topN` builder must serialize to the `top_n`
+/// wire key — the same camelCase→snake_case case PR #8 got wrong on liquidation.
+#[test]
+fn open_interest_summary_sends_top_n() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/open-interest/summary")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::UrlEncoded("top_n".into(), "5".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create();
+
+    let oi: OpenInterest = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let res = oi.summary(OpenInterestSummaryOptions::new().topN(5));
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// `/cex/symbol/cautions`: multi-word snake_case keys `min_level` and
+/// `active_only` (bool) round-trip on the wire.
+#[test]
+fn cex_symbol_cautions_sends_snake_keys() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/cex/symbol/cautions")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("exchange".into(), "binance".into()),
+            Matcher::UrlEncoded("min_level".into(), "high".into()),
+            Matcher::UrlEncoded("active_only".into(), "true".into()),
+        ]))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let sym: CexSymbol = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let opts = CexSymbolCautionsOptions::new()
+        .exchange("binance")
+        .min_level("high")
+        .active_only(true);
+    let res = sym.cautions(opts);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// `/premium`: several multi-word snake_case keys (`source_exchange`,
+/// `target_exchange`, `premium_type`) and the un-prefixed path.
+#[test]
+fn premium_sends_snake_keys() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/premium")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("source_exchange".into(), "binance".into()),
+            Matcher::UrlEncoded("target_exchange".into(), "upbit".into()),
+            Matcher::UrlEncoded("premium_type".into(), "kimchi".into()),
+        ]))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create();
+
+    let premium: Premium = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let opts = PremiumOptions::new()
+        .source_exchange("binance")
+        .target_exchange("upbit")
+        .premium_type("kimchi");
+    let res = premium.get(opts);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
 }
 
 // --- ClientBuilder ---------------------------------------------------------
