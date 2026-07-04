@@ -10,7 +10,7 @@
 //! snake_case (`top_n`, `min_volume_usd`). The query-key assertions below fail
 //! if a future codegen regen reintroduces that bug.
 
-use datamaxi::api::{Datamaxi, ErrorKind};
+use datamaxi::api::{Datamaxi, Error};
 use datamaxi::generated::{
     CexCandle, CexCandleOptions, Liquidation, LiquidationHeatmapOptions, LiquidationStatsOptions,
 };
@@ -135,7 +135,6 @@ fn query_params_are_percent_encoded() {
 
 // --- handle_response status mapping ---------------------------------------
 
-#[allow(clippy::result_large_err)] // crate Error is error_chain-sized; not under test here
 fn call_with_status(status: usize, body: &str) -> datamaxi::api::Result<serde_json::Value> {
     let mut server = mockito::Server::new();
     let _mock = server
@@ -158,7 +157,7 @@ fn status_200_maps_to_ok() {
 fn status_400_maps_to_bad_request() {
     let err = call_with_status(400, "bad input").expect_err("400 should be Err");
     assert!(
-        matches!(err.kind(), ErrorKind::BadRequest(_)),
+        matches!(err, Error::BadRequest(_)),
         "400 should map to BadRequest, got {:?}",
         err
     );
@@ -168,7 +167,7 @@ fn status_400_maps_to_bad_request() {
 fn status_401_maps_to_unauthorized() {
     let err = call_with_status(401, "").expect_err("401 should be Err");
     assert!(
-        matches!(err.kind(), ErrorKind::Unauthorized),
+        matches!(err, Error::Unauthorized),
         "401 should map to Unauthorized, got {:?}",
         err
     );
@@ -178,7 +177,7 @@ fn status_401_maps_to_unauthorized() {
 fn status_500_maps_to_internal_server_error() {
     let err = call_with_status(500, "boom").expect_err("500 should be Err");
     assert!(
-        matches!(err.kind(), ErrorKind::InternalServerError(_)),
+        matches!(err, Error::InternalServerError(_)),
         "500 should map to InternalServerError, got {:?}",
         err
     );
@@ -188,7 +187,7 @@ fn status_500_maps_to_internal_server_error() {
 fn status_404_maps_to_unexpected_status_code() {
     let err = call_with_status(404, "nope").expect_err("404 should be Err");
     assert!(
-        matches!(err.kind(), ErrorKind::UnexpectedStatusCode(404)),
+        matches!(err, Error::UnexpectedStatusCode(404)),
         "404 should map to UnexpectedStatusCode(404), got {:?}",
         err
     );

@@ -1,9 +1,9 @@
-use error_chain::error_chain;
 use reqwest::blocking::Response;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::io::Read;
+use thiserror::Error;
 
 const BASE_URL: &str = "https://api.datamaxiplus.com/api/v1";
 
@@ -75,50 +75,46 @@ impl Client {
             StatusCode::INTERNAL_SERVER_ERROR => {
                 let mut response_text = String::new();
                 response.take(1000).read_to_string(&mut response_text)?;
-                Err(ErrorKind::InternalServerError(response_text).into())
+                Err(Error::InternalServerError(response_text))
             }
-            StatusCode::UNAUTHORIZED => Err(ErrorKind::Unauthorized.into()),
+            StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
             StatusCode::BAD_REQUEST => {
                 let mut response_text = String::new();
                 response.take(1000).read_to_string(&mut response_text)?;
-                Err(ErrorKind::BadRequest(response_text).into())
+                Err(Error::BadRequest(response_text))
             }
-            status => Err(ErrorKind::UnexpectedStatusCode(status.as_u16()).into()),
+            status => Err(Error::UnexpectedStatusCode(status.as_u16())),
         }
     }
 }
 
-error_chain! {
-    errors {
-        /// Represents an error that occurs when a request to the API returns a bad request status.
-        BadRequest(msg: String) {
-            description("Bad request")
-            display("Bad request: {}", msg)
-        }
+/// A specialized [`Result`](std::result::Result) type for Datamaxi+ API calls.
+pub type Result<T> = std::result::Result<T, Error>;
 
-        /// Represents an error that occurs when a request to the API returns an unauthorized status.
-        Unauthorized {
-            description("Unauthorized")
-            display("Unauthorized")
-        }
+/// Errors returned by the Datamaxi+ API client.
+#[derive(Debug, Error)]
+pub enum Error {
+    /// The API returned a `400 Bad Request`; the payload carries the server message.
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 
-        /// Represents an error that occurs when a request to the API returns an internal server error status.
-        InternalServerError(msg: String) {
-            description("Internal server error")
-            display("Internal server error: {}", msg)
-        }
+    /// The API returned a `401 Unauthorized` (missing or invalid API key).
+    #[error("Unauthorized")]
+    Unauthorized,
 
-        /// Represents an error that occurs when a request to the API returns an unexpected status code.
-        UnexpectedStatusCode(status: u16) {
-            description("Unexpected status code")
-            display("Received unexpected status code: {}", status)
-        }
-     }
+    /// The API returned a `500 Internal Server Error`; the payload carries the server message.
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
 
-    foreign_links {
-        ReqError(reqwest::Error);
-        InvalidHeaderError(reqwest::header::InvalidHeaderValue);
-        IoError(std::io::Error);
-        Json(serde_json::Error);
-    }
+    /// The API returned a status code the client does not specifically handle.
+    #[error("Received unexpected status code: {0}")]
+    UnexpectedStatusCode(u16),
+
+    /// The underlying HTTP request failed, or the response body could not be decoded.
+    #[error(transparent)]
+    Http(#[from] reqwest::Error),
+
+    /// Reading the response body failed.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
