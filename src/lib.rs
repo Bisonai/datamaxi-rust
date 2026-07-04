@@ -102,14 +102,6 @@
 //!
 //![MIT License](./LICENSE)
 
-// The archived `error-chain` dependency produces a large `Err` variant
-// (`clippy::result_large_err`) and emits an internal `cfg` that rustc does not
-// recognise (`unexpected_cfgs`). Both are pre-existing and require replacing
-// `error-chain` to fix properly; allow them crate-wide so clippy can gate on
-// genuine warnings. Tracked separately.
-#![allow(clippy::result_large_err)]
-#![allow(unexpected_cfgs)]
-
 /// API definitions and related utilities.
 pub mod api;
 
