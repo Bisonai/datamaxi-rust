@@ -44,28 +44,6 @@ let candle_options = datamaxi::cex::CandleOptions::new();
 candle.get("binance", "ETH-USDT", candle_options);
 ```
 
-### DEX
-
-```rust
-let api_key = "my_api_key".to_string();
-let dex: datamaxi::dex::Dex = datamaxi::api::Datamaxi::new(api_key);
-
-dex.exchanges();
-dex.chains();
-dex.intervals();
-
-let pools_options = datamaxi::dex::PoolsOptions::new();
-dex.pools(pools_options);
-
-// Candle data
-let params = datamaxi::dex::CandleOptions::new();
-dex.candle("bsc_mainnet", "pancakeswap", "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423", params);
-
-// Trade data
-let trade_options = datamaxi::dex::TradeOptions::new().limit(5);
-dex.trade("bsc_mainnet", "pancakeswap", "0xb24cd29e32FaCDDf9e73831d5cD1FFcd1e535423", trade_options);
-```
-
 See [`examples/`](./examples/) for runnable examples.
 
 ## Code Generation
