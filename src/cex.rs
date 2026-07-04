@@ -1,9 +1,18 @@
+// This hand-written module is deprecated in favour of `crate::generated::CexCandle`.
+// `allow(deprecated)` silences the deprecation warnings for the module's *own*
+// references to `Candle`; external users still get the warning when they name it.
+#![allow(deprecated)]
+
 use crate::api::{Client, Config, Datamaxi, Result};
 pub use crate::models::{CandleOptions, SymbolsOptions};
 use crate::models::{CandleResponse, SymbolsResponse};
 use std::collections::HashMap;
 
 /// Provides methods for retrieving CEX candle data and related information.
+#[deprecated(
+    since = "0.4.0",
+    note = "use datamaxi::generated::CexCandle instead; this hand-written module will be removed in a future release"
+)]
 #[derive(Clone)]
 pub struct Candle {
     pub client: Client,

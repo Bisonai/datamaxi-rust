@@ -30,18 +30,19 @@ Set `DATAMAXI_API_KEY` to avoid passing the key inline.
 ### CEX Candle
 
 ```rust
-let api_key = "my_api_key".to_string();
-let candle: datamaxi::cex::Candle = datamaxi::api::Datamaxi::new(api_key);
+use datamaxi::api::Datamaxi;
+use datamaxi::generated::{CexCandle, CexCandleOptions, CexCandleSymbolsOptions};
 
-// Supported exchanges and symbols
+let api_key = "my_api_key".to_string();
+let candle: CexCandle = Datamaxi::new(api_key);
+
+// Supported exchanges, symbols and intervals
 candle.exchanges("spot");
-let symbols_options = datamaxi::cex::SymbolsOptions::new();
-candle.symbols("binance", symbols_options);
+candle.symbols(CexCandleSymbolsOptions::new().exchange("binance"));
 candle.intervals();
 
-// Fetch candle data
-let candle_options = datamaxi::cex::CandleOptions::new();
-candle.get("binance", "ETH-USDT", candle_options);
+// Fetch candle data (exchange, market, symbol)
+candle.get("binance", "spot", "ETH-USDT", CexCandleOptions::new());
 ```
 
 See [`examples/`](./examples/) for runnable examples.
