@@ -10,7 +10,7 @@
 //! snake_case (`top_n`, `min_volume_usd`). The query-key assertions below fail
 //! if a future codegen regen reintroduces that bug.
 
-use datamaxi::api::{Datamaxi, Error};
+use datamaxi::api::{ClientBuilder, Datamaxi, Error};
 use datamaxi::generated::{
     CexCandle, CexCandleOptions, Liquidation, LiquidationHeatmapOptions, LiquidationStatsOptions,
 };
@@ -189,6 +189,55 @@ fn status_404_maps_to_unexpected_status_code() {
     assert!(
         matches!(err, Error::UnexpectedStatusCode(404)),
         "404 should map to UnexpectedStatusCode(404), got {:?}",
+        err
+    );
+}
+
+// --- ClientBuilder ---------------------------------------------------------
+
+/// A `Client` built via `ClientBuilder` sends the `datamaxi-rust/<ver>`
+/// User-Agent and the auth header, and routes requests through the same path.
+#[test]
+fn client_builder_sets_user_agent_and_auth() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/cex/candle/exchanges")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_header(
+            "user-agent",
+            Matcher::Regex(r"^datamaxi-rust/\d+\.\d+\.\d+".to_string()),
+        )
+        .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let client = ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(server.url())
+        .build()
+        .expect("explicit api key should build");
+    let candle = CexCandle { client };
+    let res = candle.exchanges("spot");
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// With no explicit key and `DATAMAXI_API_KEY` unset, `build` fails with
+/// `MissingApiKey` rather than silently constructing an unauthenticated client.
+#[test]
+fn client_builder_without_key_errors() {
+    std::env::remove_var("DATAMAXI_API_KEY");
+    let err = ClientBuilder::new()
+        .build()
+        .expect_err("no key should fail to build");
+    assert!(
+        matches!(err, Error::MissingApiKey),
+        "expected MissingApiKey, got {:?}",
         err
     );
 }
