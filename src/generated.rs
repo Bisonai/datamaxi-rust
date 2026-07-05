@@ -1242,7 +1242,7 @@ impl std::fmt::Display for CexAnnouncementsCategory {
 
 #[derive(Clone)]
 pub struct Announcements {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Announcements {
@@ -1267,8 +1267,13 @@ impl Datamaxi for Announcements {
 }
 
 impl Announcements {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get latest announcements from centralized exchanges
-    pub fn announcements(
+    pub async fn announcements(
         &self,
         options: CexAnnouncementsOptions,
     ) -> Result<CexAnnouncementsResponse> {
@@ -1293,6 +1298,7 @@ impl Announcements {
         }
         self.client
             .get("/api/v1/cex/announcements", Some(parameters))
+            .await
     }
 }
 
@@ -1453,7 +1459,7 @@ impl std::fmt::Display for CexCandleSymbolsMarket {
 
 #[derive(Clone)]
 pub struct CexCandle {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for CexCandle {
@@ -1478,8 +1484,13 @@ impl Datamaxi for CexCandle {
 }
 
 impl CexCandle {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`.
-    pub fn get(
+    pub async fn get(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -1503,24 +1514,27 @@ impl CexCandle {
         if let Some(v) = options.to {
             parameters.insert("to".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/candle", Some(parameters))
+        self.client
+            .get("/api/v1/cex/candle", Some(parameters))
+            .await
     }
 
     /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
-    pub fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
+    pub async fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
             .get("/api/v1/cex/candle/exchanges", Some(parameters))
+            .await
     }
 
     /// Fetch supported intervals accepted by `/api/v1/cex/candle` endpoint.
-    pub fn intervals(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/cex/candle/intervals", None)
+    pub async fn intervals(&self) -> Result<Vec<String>> {
+        self.client.get("/api/v1/cex/candle/intervals", None).await
     }
 
     /// Fetch supported symbols accepted by `/api/v1/cex/candle` endpoint.
-    pub fn symbols(
+    pub async fn symbols(
         &self,
         exchange: impl Into<String>,
         options: CexCandleSymbolsOptions,
@@ -1532,6 +1546,7 @@ impl CexCandle {
         }
         self.client
             .get("/api/v1/cex/candle/symbols", Some(parameters))
+            .await
     }
 }
 
@@ -1807,7 +1822,7 @@ impl std::fmt::Display for CexSymbolVolumeMarket {
 
 #[derive(Clone)]
 pub struct CexSymbol {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for CexSymbol {
@@ -1832,8 +1847,13 @@ impl Datamaxi for CexSymbol {
 }
 
 impl CexSymbol {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Return currently-active caution/warning/danger flagged symbols. Bithumb provides an expiry (end_at); other exchanges are open-ended until the next collector poll clears them.
-    pub fn cautions(
+    pub async fn cautions(
         &self,
         options: CexSymbolCautionsOptions,
     ) -> Result<Vec<CexSymbolCautionsView>> {
@@ -1858,10 +1878,11 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/cautions", Some(parameters))
+            .await
     }
 
     /// Return symbols with a known delisting_at timestamp or trading_status in {delisting, delisted}. Filter by time window to get upcoming delistings.
-    pub fn delistings(
+    pub async fn delistings(
         &self,
         options: CexSymbolDelistingsOptions,
     ) -> Result<Vec<CexSymbolDelistingsView>> {
@@ -1889,10 +1910,11 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/delistings", Some(parameters))
+            .await
     }
 
     /// Sums long/short liquidation volume across all events in a rolling window for every exchange × quote pairing of the base asset. Window max 30d; default 24h.
-    pub fn liquidation(
+    pub async fn liquidation(
         &self,
         base: impl Into<String>,
         options: CexSymbolLiquidationOptions,
@@ -1904,10 +1926,11 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/liquidation", Some(parameters))
+            .await
     }
 
     /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
-    pub fn metadata(
+    pub async fn metadata(
         &self,
         options: CexSymbolMetadataOptions,
     ) -> Result<Vec<CexSymbolMetadataView>> {
@@ -1935,10 +1958,11 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/metadata", Some(parameters))
+            .await
     }
 
     /// Latest Open Interest snapshot across every futures venue carrying the given base. Sorted by USD value descending, NULLs last.
-    pub fn oi(
+    pub async fn oi(
         &self,
         base: impl Into<String>,
         options: CexSymbolOiOptions,
@@ -1948,11 +1972,13 @@ impl CexSymbol {
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/oi", Some(parameters))
+        self.client
+            .get("/api/v1/cex/symbol/oi", Some(parameters))
+            .await
     }
 
     /// Enriched snapshot combining the latest OI (USD) with 1h/4h/24h change percentages and OI/24h volume ratio. Backed by the tfopeninterest taskflow's Redis HASH.
-    pub fn oi_stats(
+    pub async fn oi_stats(
         &self,
         base: impl Into<String>,
         options: CexSymbolOiStatsOptions,
@@ -1967,10 +1993,11 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/oi-stats", Some(parameters))
+            .await
     }
 
     /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
-    pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
+    pub async fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.tag {
             parameters.insert("tag".to_string(), v.to_string());
@@ -1996,11 +2023,13 @@ impl CexSymbol {
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/symbol/tags", Some(parameters))
+        self.client
+            .get("/api/v1/cex/symbol/tags", Some(parameters))
+            .await
     }
 
     /// Latest 24h trading volume across every (exchange, market, quote) a token lists on. Backed by cache.latest_volume.
-    pub fn volume(
+    pub async fn volume(
         &self,
         base: impl Into<String>,
         options: CexSymbolVolumeOptions,
@@ -2012,6 +2041,7 @@ impl CexSymbol {
         }
         self.client
             .get("/api/v1/cex/symbol/volume", Some(parameters))
+            .await
     }
 }
 
@@ -2332,7 +2362,7 @@ impl CexSymbolVolumeOptions {
 
 #[derive(Clone)]
 pub struct Forex {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Forex {
@@ -2357,16 +2387,21 @@ impl Datamaxi for Forex {
 }
 
 impl Forex {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get the latest forex rate for given symbol.
-    pub fn get(&self, symbol: impl Into<String>) -> Result<ForexResponse> {
+    pub async fn get(&self, symbol: impl Into<String>) -> Result<ForexResponse> {
         let mut parameters = HashMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/forex", Some(parameters))
+        self.client.get("/api/v1/forex", Some(parameters)).await
     }
 
     /// Get supported forex symbols.
-    pub fn symbols(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/forex/symbols", None)
+    pub async fn symbols(&self) -> Result<Vec<String>> {
+        self.client.get("/api/v1/forex/symbols", None).await
     }
 }
 
@@ -2399,7 +2434,7 @@ impl std::fmt::Display for FundingRateHistorySort {
 
 #[derive(Clone)]
 pub struct FundingRate {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for FundingRate {
@@ -2424,13 +2459,20 @@ impl Datamaxi for FundingRate {
 }
 
 impl FundingRate {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get supported exchanges accepted by `/api/v1/funding-rate` endpoint.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/funding-rate/exchanges", None)
+    pub async fn exchanges(&self) -> Result<Vec<String>> {
+        self.client
+            .get("/api/v1/funding-rate/exchanges", None)
+            .await
     }
 
     /// Get historical funding rate data for a given `exchange` and `symbol`.
-    pub fn history(
+    pub async fn history(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -2456,10 +2498,11 @@ impl FundingRate {
         }
         self.client
             .get("/api/v1/funding-rate/history", Some(parameters))
+            .await
     }
 
     /// Fetch the latest funding rate data for a given `exchange` and `symbol`.
-    pub fn latest(
+    pub async fn latest(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -2469,10 +2512,11 @@ impl FundingRate {
         parameters.insert("symbol".to_string(), symbol.into());
         self.client
             .get("/api/v1/funding-rate/latest", Some(parameters))
+            .await
     }
 
     /// Fetch supported symbols accepted by `/api/v1/funding-rate` endpoint.
-    pub fn symbols(
+    pub async fn symbols(
         &self,
         options: FundingRateSymbolsOptions,
     ) -> Result<Vec<FundingRateSymbolsView>> {
@@ -2482,6 +2526,7 @@ impl FundingRate {
         }
         self.client
             .get("/api/v1/funding-rate/symbols", Some(parameters))
+            .await
     }
 }
 
@@ -2551,7 +2596,7 @@ impl FundingRateSymbolsOptions {
 
 #[derive(Clone)]
 pub struct IndexPrice {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for IndexPrice {
@@ -2576,8 +2621,13 @@ impl Datamaxi for IndexPrice {
 }
 
 impl IndexPrice {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get index price
-    pub fn get(
+    pub async fn get(
         &self,
         asset: impl Into<String>,
         options: IndexPriceOptions,
@@ -2593,7 +2643,9 @@ impl IndexPrice {
         if let Some(v) = options.interval {
             parameters.insert("interval".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/index-price", Some(parameters))
+        self.client
+            .get("/api/v1/index-price", Some(parameters))
+            .await
     }
 }
 
@@ -2741,7 +2793,7 @@ impl std::fmt::Display for LiquidationSymbolHistoryWindow {
 
 #[derive(Clone)]
 pub struct Liquidation {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Liquidation {
@@ -2766,8 +2818,13 @@ impl Datamaxi for Liquidation {
 }
 
 impl Liquidation {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Fetch recent liquidation events for a futures symbol on a given exchange, newest first.
-    pub fn get(
+    pub async fn get(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -2779,11 +2836,13 @@ impl Liquidation {
         if let Some(v) = options.limit {
             parameters.insert("limit".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation", Some(parameters))
+        self.client
+            .get("/api/v1/liquidation", Some(parameters))
+            .await
     }
 
     /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
-    pub fn feed(&self, options: LiquidationFeedOptions) -> Result<LiquidationFeedResponse> {
+    pub async fn feed(&self, options: LiquidationFeedOptions) -> Result<LiquidationFeedResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -2799,10 +2858,11 @@ impl Liquidation {
         }
         self.client
             .get("/api/v1/liquidation/feed", Some(parameters))
+            .await
     }
 
     /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported; use the WS feed for finer granularity.
-    pub fn heatmap(
+    pub async fn heatmap(
         &self,
         options: LiquidationHeatmapOptions,
     ) -> Result<LiquidationHeatmapResponse> {
@@ -2815,10 +2875,11 @@ impl Liquidation {
         }
         self.client
             .get("/api/v1/liquidation/heatmap", Some(parameters))
+            .await
     }
 
     /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
-    pub fn map(&self, options: LiquidationMapOptions) -> Result<LiquidationMapResponse> {
+    pub async fn map(&self, options: LiquidationMapOptions) -> Result<LiquidationMapResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -2829,11 +2890,16 @@ impl Liquidation {
         if let Some(v) = options.quote {
             parameters.insert("quote".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/liquidation/map", Some(parameters))
+        self.client
+            .get("/api/v1/liquidation/map", Some(parameters))
+            .await
     }
 
     /// Aggregate liquidation stats (total, long/short split, count, venue count, biggest single event) over a 1h/4h/24h window. Backs the liquidation page KPI strip for windows the live feed buffer can't cover.
-    pub fn stats(&self, options: LiquidationStatsOptions) -> Result<LiquidationStatsResponse> {
+    pub async fn stats(
+        &self,
+        options: LiquidationStatsOptions,
+    ) -> Result<LiquidationStatsResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
@@ -2846,10 +2912,11 @@ impl Liquidation {
         }
         self.client
             .get("/api/v1/liquidation/stats", Some(parameters))
+            .await
     }
 
     /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
-    pub fn symbol_history(
+    pub async fn symbol_history(
         &self,
         symbol: impl Into<String>,
         options: LiquidationSymbolHistoryOptions,
@@ -2870,6 +2937,7 @@ impl Liquidation {
         }
         self.client
             .get("/api/v1/liquidation/symbol-history", Some(parameters))
+            .await
     }
 }
 
@@ -3060,7 +3128,7 @@ impl LiquidationSymbolHistoryOptions {
 
 #[derive(Clone)]
 pub struct Listing {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Listing {
@@ -3085,8 +3153,13 @@ impl Datamaxi for Listing {
 }
 
 impl Listing {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get historical token listings for Upbit and Bithumb for KRW market
-    pub fn historical(
+    pub async fn historical(
         &self,
         options: ListingsHistoricalOptions,
     ) -> Result<ListingsHistoricalResponse> {
@@ -3096,6 +3169,7 @@ impl Listing {
         }
         self.client
             .get("/api/v1/listings/historical", Some(parameters))
+            .await
     }
 }
 
@@ -3119,7 +3193,7 @@ impl ListingsHistoricalOptions {
 
 #[derive(Clone)]
 pub struct MarginBorrow {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for MarginBorrow {
@@ -3144,11 +3218,18 @@ impl Datamaxi for MarginBorrow {
 }
 
 impl MarginBorrow {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get the margin borrow data.
-    pub fn get(&self, asset: impl Into<String>) -> Result<MarginBorrowResponse> {
+    pub async fn get(&self, asset: impl Into<String>) -> Result<MarginBorrowResponse> {
         let mut parameters = HashMap::new();
         parameters.insert("asset".to_string(), asset.into());
-        self.client.get("/api/v1/margin-borrow", Some(parameters))
+        self.client
+            .get("/api/v1/margin-borrow", Some(parameters))
+            .await
     }
 }
 
@@ -3156,7 +3237,7 @@ impl MarginBorrow {
 
 #[derive(Clone)]
 pub struct NaverTrend {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for NaverTrend {
@@ -3181,16 +3262,23 @@ impl Datamaxi for NaverTrend {
 }
 
 impl NaverTrend {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get Naver trend data with a daily frequency for a project that is associated with a given [symbol](./symbols). The values in response are normalized into a range from 0 to 100, where 0 corresponds to a minimum interest, and 100 corresponds to a maximum interest of users in Naver search engine.
-    pub fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
+    pub async fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
         let mut parameters = HashMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/naver-trend", Some(parameters))
+        self.client
+            .get("/api/v1/naver-trend", Some(parameters))
+            .await
     }
 
     /// Get crypto symbols that are accepted by [Naver trend endpoint](./trend).
-    pub fn symbols(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/naver-trend/symbols", None)
+    pub async fn symbols(&self) -> Result<Vec<String>> {
+        self.client.get("/api/v1/naver-trend/symbols", None).await
     }
 }
 
@@ -3254,7 +3342,7 @@ impl std::fmt::Display for OpenInterestOverviewSort {
 
 #[derive(Clone)]
 pub struct OpenInterest {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for OpenInterest {
@@ -3279,8 +3367,13 @@ impl Datamaxi for OpenInterest {
 }
 
 impl OpenInterest {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Fetch the most recent Open Interest snapshot for a futures symbol on a given exchange.
-    pub fn get(
+    pub async fn get(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -3288,11 +3381,13 @@ impl OpenInterest {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
-        self.client.get("/api/v1/open-interest", Some(parameters))
+        self.client
+            .get("/api/v1/open-interest", Some(parameters))
+            .await
     }
 
     /// Historical Open Interest time series for a single token, broken down per exchange and aggregated to a fixed bucket (avg within bucket). The default lookback depends on the requested interval — 7 days for 1h, 30 days for 4h, 1 year for 1d — so callers don't have to hand-tune `from`/`to` for typical queries. The response also includes token metadata (icon, symbol, name) so a single call paints the whole header strip.
-    pub fn history_aggregated(
+    pub async fn history_aggregated(
         &self,
         token_id: impl Into<String>,
         options: OpenInterestHistoryAggregatedOptions,
@@ -3310,20 +3405,22 @@ impl OpenInterest {
         }
         self.client
             .get("/api/v1/open-interest/history-aggregated", Some(parameters))
+            .await
     }
 
     /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
-    pub fn list(&self, options: OpenInterestListOptions) -> Result<OpenInterestListResponse> {
+    pub async fn list(&self, options: OpenInterestListOptions) -> Result<OpenInterestListResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
         self.client
             .get("/api/v1/open-interest/list", Some(parameters))
+            .await
     }
 
     /// Paginated token × exchange Open Interest matrix. For each base asset we list the per-exchange notional OI in USD (when a venue carries the token) and `null` when it doesn't trade there. The matrix is sortable by any exchange column and searchable by base symbol — same shape the DataMaxi+ dashboard uses on `/open-interest`. Cached snapshot rebuilds every few seconds, so back-to-back requests are cheap.
-    pub fn overview(
+    pub async fn overview(
         &self,
         options: OpenInterestOverviewOptions,
     ) -> Result<OpenInterestOverviewResponse> {
@@ -3345,10 +3442,11 @@ impl OpenInterest {
         }
         self.client
             .get("/api/v1/open-interest/overview", Some(parameters))
+            .await
     }
 
     /// Top-line aggregates over the current Open Interest snapshot — total OI USD, top tokens by OI, top exchanges by OI, and the count of venues currently reporting any base. Powers the OI page's KPI strip and breakdown card without forcing the caller to fetch the full token list.
-    pub fn summary(
+    pub async fn summary(
         &self,
         options: OpenInterestSummaryOptions,
     ) -> Result<OpenInterestSummaryResponse> {
@@ -3358,6 +3456,7 @@ impl OpenInterest {
         }
         self.client
             .get("/api/v1/open-interest/summary", Some(parameters))
+            .await
     }
 }
 
@@ -3577,7 +3676,7 @@ impl std::fmt::Display for PremiumSort {
 
 #[derive(Clone)]
 pub struct Premium {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Premium {
@@ -3602,8 +3701,13 @@ impl Datamaxi for Premium {
 }
 
 impl Premium {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get real-time premium (price difference) data across exchanges.
-    pub fn get(&self, options: PremiumOptions) -> Result<PremiumResponse> {
+    pub async fn get(&self, options: PremiumOptions) -> Result<PremiumResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.source_exchange {
             parameters.insert("source_exchange".to_string(), v.to_string());
@@ -3668,12 +3772,12 @@ impl Premium {
         if let Some(v) = options.token_exclude {
             parameters.insert("token_exclude".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/premium", Some(parameters))
+        self.client.get("/api/v1/premium", Some(parameters)).await
     }
 
     /// Get supported source exchanges for premium data.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/premium/exchanges", None)
+    pub async fn exchanges(&self) -> Result<Vec<String>> {
+        self.client.get("/api/v1/premium/exchanges", None).await
     }
 }
 
@@ -3974,7 +4078,7 @@ impl std::fmt::Display for TelegramMessagesCategory {
 
 #[derive(Clone)]
 pub struct Telegram {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Telegram {
@@ -3999,8 +4103,16 @@ impl Datamaxi for Telegram {
 }
 
 impl Telegram {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get Telegram channels
-    pub fn channels(&self, options: TelegramChannelsOptions) -> Result<TelegramChannelsResponse> {
+    pub async fn channels(
+        &self,
+        options: TelegramChannelsOptions,
+    ) -> Result<TelegramChannelsResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
@@ -4019,10 +4131,14 @@ impl Telegram {
         }
         self.client
             .get("/api/v1/telegram/channels", Some(parameters))
+            .await
     }
 
     /// Get Telegram messages.
-    pub fn messages(&self, options: TelegramMessagesOptions) -> Result<TelegramMessagesResponse> {
+    pub async fn messages(
+        &self,
+        options: TelegramMessagesOptions,
+    ) -> Result<TelegramMessagesResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.channel {
             parameters.insert("channel".to_string(), v.to_string());
@@ -4047,6 +4163,7 @@ impl Telegram {
         }
         self.client
             .get("/api/v1/telegram/messages", Some(parameters))
+            .await
     }
 }
 
@@ -4285,7 +4402,7 @@ impl std::fmt::Display for TickerSymbolsMarket {
 
 #[derive(Clone)]
 pub struct Ticker {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Ticker {
@@ -4310,8 +4427,13 @@ impl Datamaxi for Ticker {
 }
 
 impl Ticker {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Fetch the latest ticker for symbol from given exchange.
-    pub fn get(
+    pub async fn get(
         &self,
         exchange: impl Into<String>,
         symbol: impl Into<String>,
@@ -4331,19 +4453,20 @@ impl Ticker {
         if let Some(v) = options.include_source {
             parameters.insert("include_source".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/ticker", Some(parameters))
+        self.client.get("/api/v1/ticker", Some(parameters)).await
     }
 
     /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
-    pub fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
+    pub async fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
             .get("/api/v1/ticker/exchanges", Some(parameters))
+            .await
     }
 
     /// Get supported symbols accepted by `/api/v1/ticker` endpoint.
-    pub fn symbols(
+    pub async fn symbols(
         &self,
         exchange: impl Into<String>,
         market: TickerSymbolsMarket,
@@ -4351,7 +4474,9 @@ impl Ticker {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("market".to_string(), market.to_string());
-        self.client.get("/api/v1/ticker/symbols", Some(parameters))
+        self.client
+            .get("/api/v1/ticker/symbols", Some(parameters))
+            .await
     }
 }
 
@@ -4416,7 +4541,7 @@ impl std::fmt::Display for CexTokenUpdatesType {
 
 #[derive(Clone)]
 pub struct Token {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for Token {
@@ -4441,8 +4566,16 @@ impl Datamaxi for Token {
 }
 
 impl Token {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Fetch latest token updates
-    pub fn updates(&self, options: CexTokenUpdatesOptions) -> Result<CexTokenUpdatesResponse> {
+    pub async fn updates(
+        &self,
+        options: CexTokenUpdatesOptions,
+    ) -> Result<CexTokenUpdatesResponse> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
@@ -4455,6 +4588,7 @@ impl Token {
         }
         self.client
             .get("/api/v1/cex/token/updates", Some(parameters))
+            .await
     }
 }
 
@@ -4494,7 +4628,7 @@ impl CexTokenUpdatesOptions {
 
 #[derive(Clone)]
 pub struct TradingFees {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for TradingFees {
@@ -4519,8 +4653,13 @@ impl Datamaxi for TradingFees {
 }
 
 impl TradingFees {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get trading fees.
-    pub fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
+    pub async fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -4528,20 +4667,21 @@ impl TradingFees {
         if let Some(v) = options.symbol {
             parameters.insert("symbol".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/cex/fees", Some(parameters))
+        self.client.get("/api/v1/cex/fees", Some(parameters)).await
     }
 
     /// Get supported exchanges accepted by `/api/v1/trading-fees` endpoint.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/cex/fees/exchanges", None)
+    pub async fn exchanges(&self) -> Result<Vec<String>> {
+        self.client.get("/api/v1/cex/fees/exchanges", None).await
     }
 
     /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
-    pub fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
+    pub async fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
             .get("/api/v1/cex/fees/symbols", Some(parameters))
+            .await
     }
 }
 
@@ -4574,7 +4714,7 @@ impl CexFeesOptions {
 
 #[derive(Clone)]
 pub struct WalletStatus {
-    pub client: Client,
+    client: Client,
 }
 
 impl Datamaxi for WalletStatus {
@@ -4599,8 +4739,13 @@ impl Datamaxi for WalletStatus {
 }
 
 impl WalletStatus {
+    /// Wraps an already-built client (e.g. from `ClientBuilder`).
+    pub fn from_client(client: Client) -> Self {
+        Self { client }
+    }
+
     /// Get the latest wallet status for asset from given exchange.
-    pub fn get(
+    pub async fn get(
         &self,
         asset: impl Into<String>,
         options: WalletStatusOptions,
@@ -4610,20 +4755,25 @@ impl WalletStatus {
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
-        self.client.get("/api/v1/wallet-status", Some(parameters))
+        self.client
+            .get("/api/v1/wallet-status", Some(parameters))
+            .await
     }
 
     /// Get assets accepted by `/api/v1/wallet-status` endpoint.
-    pub fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
+    pub async fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
             .get("/api/v1/wallet-status/assets", Some(parameters))
+            .await
     }
 
     /// Get exchanges accepted by `/api/v1/wallet-status` endpoint.
-    pub fn exchanges(&self) -> Result<Vec<String>> {
-        self.client.get("/api/v1/wallet-status/exchanges", None)
+    pub async fn exchanges(&self) -> Result<Vec<String>> {
+        self.client
+            .get("/api/v1/wallet-status/exchanges", None)
+            .await
     }
 }
 
@@ -4640,5 +4790,1432 @@ impl WalletStatusOptions {
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
+    }
+}
+
+#[cfg(feature = "blocking")]
+pub mod blocking {
+    //! Synchronous mirror of the endpoint wrappers (feature `blocking`).
+    //!
+    //! Identical API to the async surface minus `async`/`.await`, backed by
+    //! [`crate::api::blocking::Client`]. Enums, Options, and response structs
+    //! are shared with the async surface via the glob import below.
+    use super::*;
+    use crate::api::blocking::Client;
+    use crate::api::{Config, Datamaxi, Result};
+    use std::collections::HashMap;
+
+    // --- Announcements ---
+
+    #[derive(Clone)]
+    pub struct Announcements {
+        client: Client,
+    }
+
+    impl Datamaxi for Announcements {
+        fn new(api_key: String) -> Announcements {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Announcements {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Announcements {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Announcements {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Announcements {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get latest announcements from centralized exchanges
+        pub fn announcements(
+            &self,
+            options: CexAnnouncementsOptions,
+        ) -> Result<CexAnnouncementsResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            if let Some(v) = options.key {
+                parameters.insert("key".to_string(), v.to_string());
+            }
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.category {
+                parameters.insert("category".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/announcements", Some(parameters))
+        }
+    }
+
+    // --- CexCandle ---
+
+    #[derive(Clone)]
+    pub struct CexCandle {
+        client: Client,
+    }
+
+    impl Datamaxi for CexCandle {
+        fn new(api_key: String) -> CexCandle {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            CexCandle {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> CexCandle {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            CexCandle {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl CexCandle {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`.
+        pub fn get(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+            options: CexCandleOptions,
+        ) -> Result<CexCandleResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.currency {
+                parameters.insert("currency".to_string(), v.to_string());
+            }
+            if let Some(v) = options.interval {
+                parameters.insert("interval".to_string(), v.to_string());
+            }
+            if let Some(v) = options.from {
+                parameters.insert("from".to_string(), v.to_string());
+            }
+            if let Some(v) = options.to {
+                parameters.insert("to".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/cex/candle", Some(parameters))
+        }
+
+        /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
+        pub fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("market".to_string(), market.to_string());
+            self.client
+                .get("/api/v1/cex/candle/exchanges", Some(parameters))
+        }
+
+        /// Fetch supported intervals accepted by `/api/v1/cex/candle` endpoint.
+        pub fn intervals(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/cex/candle/intervals", None)
+        }
+
+        /// Fetch supported symbols accepted by `/api/v1/cex/candle` endpoint.
+        pub fn symbols(
+            &self,
+            exchange: impl Into<String>,
+            options: CexCandleSymbolsOptions,
+        ) -> Result<Vec<CexCandleSymbolsView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/candle/symbols", Some(parameters))
+        }
+    }
+
+    // --- CexSymbol ---
+
+    #[derive(Clone)]
+    pub struct CexSymbol {
+        client: Client,
+    }
+
+    impl Datamaxi for CexSymbol {
+        fn new(api_key: String) -> CexSymbol {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            CexSymbol {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> CexSymbol {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            CexSymbol {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl CexSymbol {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Return currently-active caution/warning/danger flagged symbols. Bithumb provides an expiry (end_at); other exchanges are open-ended until the next collector poll clears them.
+        pub fn cautions(
+            &self,
+            options: CexSymbolCautionsOptions,
+        ) -> Result<Vec<CexSymbolCautionsView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_level {
+                parameters.insert("min_level".to_string(), v.to_string());
+            }
+            if let Some(v) = options.active_only {
+                parameters.insert("active_only".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/cautions", Some(parameters))
+        }
+
+        /// Return symbols with a known delisting_at timestamp or trading_status in {delisting, delisted}. Filter by time window to get upcoming delistings.
+        pub fn delistings(
+            &self,
+            options: CexSymbolDelistingsOptions,
+        ) -> Result<Vec<CexSymbolDelistingsView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.from_ms {
+                parameters.insert("from_ms".to_string(), v.to_string());
+            }
+            if let Some(v) = options.to_ms {
+                parameters.insert("to_ms".to_string(), v.to_string());
+            }
+            if let Some(v) = options.include_past {
+                parameters.insert("include_past".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/delistings", Some(parameters))
+        }
+
+        /// Sums long/short liquidation volume across all events in a rolling window for every exchange × quote pairing of the base asset. Window max 30d; default 24h.
+        pub fn liquidation(
+            &self,
+            base: impl Into<String>,
+            options: CexSymbolLiquidationOptions,
+        ) -> Result<Vec<CexSymbolLiquidationView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("base".to_string(), base.into());
+            if let Some(v) = options.window {
+                parameters.insert("window".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/liquidation", Some(parameters))
+        }
+
+        /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
+        pub fn metadata(
+            &self,
+            options: CexSymbolMetadataOptions,
+        ) -> Result<Vec<CexSymbolMetadataView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.base {
+                parameters.insert("base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.quote {
+                parameters.insert("quote".to_string(), v.to_string());
+            }
+            if let Some(v) = options.status {
+                parameters.insert("status".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/metadata", Some(parameters))
+        }
+
+        /// Latest Open Interest snapshot across every futures venue carrying the given base. Sorted by USD value descending, NULLs last.
+        pub fn oi(
+            &self,
+            base: impl Into<String>,
+            options: CexSymbolOiOptions,
+        ) -> Result<Vec<CexSymbolOiView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("base".to_string(), base.into());
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/cex/symbol/oi", Some(parameters))
+        }
+
+        /// Enriched snapshot combining the latest OI (USD) with 1h/4h/24h change percentages and OI/24h volume ratio. Backed by the tfopeninterest taskflow's Redis HASH.
+        pub fn oi_stats(
+            &self,
+            base: impl Into<String>,
+            options: CexSymbolOiStatsOptions,
+        ) -> Result<Vec<CexSymbolOiStatsView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("base".to_string(), base.into());
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.currency {
+                parameters.insert("currency".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/oi-stats", Some(parameters))
+        }
+
+        /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
+        pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.tag {
+                parameters.insert("tag".to_string(), v.to_string());
+            }
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.base {
+                parameters.insert("base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.source {
+                parameters.insert("source".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_confidence {
+                parameters.insert("min_confidence".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/cex/symbol/tags", Some(parameters))
+        }
+
+        /// Latest 24h trading volume across every (exchange, market, quote) a token lists on. Backed by cache.latest_volume.
+        pub fn volume(
+            &self,
+            base: impl Into<String>,
+            options: CexSymbolVolumeOptions,
+        ) -> Result<Vec<CexSymbolVolumeView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("base".to_string(), base.into());
+            if let Some(v) = options.market {
+                parameters.insert("market".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/symbol/volume", Some(parameters))
+        }
+    }
+
+    // --- Forex ---
+
+    #[derive(Clone)]
+    pub struct Forex {
+        client: Client,
+    }
+
+    impl Datamaxi for Forex {
+        fn new(api_key: String) -> Forex {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Forex {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Forex {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Forex {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Forex {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get the latest forex rate for given symbol.
+        pub fn get(&self, symbol: impl Into<String>) -> Result<ForexResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("symbol".to_string(), symbol.into());
+            self.client.get("/api/v1/forex", Some(parameters))
+        }
+
+        /// Get supported forex symbols.
+        pub fn symbols(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/forex/symbols", None)
+        }
+    }
+
+    // --- FundingRate ---
+
+    #[derive(Clone)]
+    pub struct FundingRate {
+        client: Client,
+    }
+
+    impl Datamaxi for FundingRate {
+        fn new(api_key: String) -> FundingRate {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            FundingRate {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> FundingRate {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            FundingRate {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl FundingRate {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get supported exchanges accepted by `/api/v1/funding-rate` endpoint.
+        pub fn exchanges(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/funding-rate/exchanges", None)
+        }
+
+        /// Get historical funding rate data for a given `exchange` and `symbol`.
+        pub fn history(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+            options: FundingRateHistoryOptions,
+        ) -> Result<FundingRateHistoryResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.from {
+                parameters.insert("from".to_string(), v.to_string());
+            }
+            if let Some(v) = options.to {
+                parameters.insert("to".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/funding-rate/history", Some(parameters))
+        }
+
+        /// Fetch the latest funding rate data for a given `exchange` and `symbol`.
+        pub fn latest(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+        ) -> Result<FundingRateLatestResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            self.client
+                .get("/api/v1/funding-rate/latest", Some(parameters))
+        }
+
+        /// Fetch supported symbols accepted by `/api/v1/funding-rate` endpoint.
+        pub fn symbols(
+            &self,
+            options: FundingRateSymbolsOptions,
+        ) -> Result<Vec<FundingRateSymbolsView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/funding-rate/symbols", Some(parameters))
+        }
+    }
+
+    // --- IndexPrice ---
+
+    #[derive(Clone)]
+    pub struct IndexPrice {
+        client: Client,
+    }
+
+    impl Datamaxi for IndexPrice {
+        fn new(api_key: String) -> IndexPrice {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            IndexPrice {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> IndexPrice {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            IndexPrice {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl IndexPrice {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get index price
+        pub fn get(
+            &self,
+            asset: impl Into<String>,
+            options: IndexPriceOptions,
+        ) -> Result<IndexPriceResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("asset".to_string(), asset.into());
+            if let Some(v) = options.from {
+                parameters.insert("from".to_string(), v.to_string());
+            }
+            if let Some(v) = options.to {
+                parameters.insert("to".to_string(), v.to_string());
+            }
+            if let Some(v) = options.interval {
+                parameters.insert("interval".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/index-price", Some(parameters))
+        }
+    }
+
+    // --- Liquidation ---
+
+    #[derive(Clone)]
+    pub struct Liquidation {
+        client: Client,
+    }
+
+    impl Datamaxi for Liquidation {
+        fn new(api_key: String) -> Liquidation {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Liquidation {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Liquidation {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Liquidation {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Liquidation {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Fetch recent liquidation events for a futures symbol on a given exchange, newest first.
+        pub fn get(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+            options: LiquidationOptions,
+        ) -> Result<LiquidationResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/liquidation", Some(parameters))
+        }
+
+        /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
+        pub fn feed(&self, options: LiquidationFeedOptions) -> Result<LiquidationFeedResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.base {
+                parameters.insert("base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_volume_usd {
+                parameters.insert("min_volume_usd".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/liquidation/feed", Some(parameters))
+        }
+
+        /// Aggregated long/short liquidation USD by (token, exchange) over a rolling window. Result is cached for ~10s. Sub-1h windows are not supported; use the WS feed for finer granularity.
+        pub fn heatmap(
+            &self,
+            options: LiquidationHeatmapOptions,
+        ) -> Result<LiquidationHeatmapResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.window {
+                parameters.insert("window".to_string(), v.to_string());
+            }
+            if let Some(v) = options.top_n {
+                parameters.insert("top_n".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/liquidation/heatmap", Some(parameters))
+        }
+
+        /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
+        pub fn map(&self, options: LiquidationMapOptions) -> Result<LiquidationMapResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.base {
+                parameters.insert("base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.quote {
+                parameters.insert("quote".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/liquidation/map", Some(parameters))
+        }
+
+        /// Aggregate liquidation stats (total, long/short split, count, venue count, biggest single event) over a 1h/4h/24h window. Backs the liquidation page KPI strip for windows the live feed buffer can't cover.
+        pub fn stats(&self, options: LiquidationStatsOptions) -> Result<LiquidationStatsResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.window {
+                parameters.insert("window".to_string(), v.to_string());
+            }
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_volume_usd {
+                parameters.insert("min_volume_usd".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/liquidation/stats", Some(parameters))
+        }
+
+        /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
+        pub fn symbol_history(
+            &self,
+            symbol: impl Into<String>,
+            options: LiquidationSymbolHistoryOptions,
+        ) -> Result<LiquidationSymbolHistoryResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("symbol".to_string(), symbol.into());
+            if let Some(v) = options.quote {
+                parameters.insert("quote".to_string(), v.to_string());
+            }
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.interval {
+                parameters.insert("interval".to_string(), v.to_string());
+            }
+            if let Some(v) = options.window {
+                parameters.insert("window".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/liquidation/symbol-history", Some(parameters))
+        }
+    }
+
+    // --- Listing ---
+
+    #[derive(Clone)]
+    pub struct Listing {
+        client: Client,
+    }
+
+    impl Datamaxi for Listing {
+        fn new(api_key: String) -> Listing {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Listing {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Listing {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Listing {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Listing {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get historical token listings for Upbit and Bithumb for KRW market
+        pub fn historical(
+            &self,
+            options: ListingsHistoricalOptions,
+        ) -> Result<ListingsHistoricalResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.refresh {
+                parameters.insert("refresh".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/listings/historical", Some(parameters))
+        }
+    }
+
+    // --- MarginBorrow ---
+
+    #[derive(Clone)]
+    pub struct MarginBorrow {
+        client: Client,
+    }
+
+    impl Datamaxi for MarginBorrow {
+        fn new(api_key: String) -> MarginBorrow {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            MarginBorrow {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> MarginBorrow {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            MarginBorrow {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl MarginBorrow {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get the margin borrow data.
+        pub fn get(&self, asset: impl Into<String>) -> Result<MarginBorrowResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("asset".to_string(), asset.into());
+            self.client.get("/api/v1/margin-borrow", Some(parameters))
+        }
+    }
+
+    // --- NaverTrend ---
+
+    #[derive(Clone)]
+    pub struct NaverTrend {
+        client: Client,
+    }
+
+    impl Datamaxi for NaverTrend {
+        fn new(api_key: String) -> NaverTrend {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            NaverTrend {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> NaverTrend {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            NaverTrend {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl NaverTrend {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get Naver trend data with a daily frequency for a project that is associated with a given [symbol](./symbols). The values in response are normalized into a range from 0 to 100, where 0 corresponds to a minimum interest, and 100 corresponds to a maximum interest of users in Naver search engine.
+        pub fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("symbol".to_string(), symbol.into());
+            self.client.get("/api/v1/naver-trend", Some(parameters))
+        }
+
+        /// Get crypto symbols that are accepted by [Naver trend endpoint](./trend).
+        pub fn symbols(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/naver-trend/symbols", None)
+        }
+    }
+
+    // --- OpenInterest ---
+
+    #[derive(Clone)]
+    pub struct OpenInterest {
+        client: Client,
+    }
+
+    impl Datamaxi for OpenInterest {
+        fn new(api_key: String) -> OpenInterest {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            OpenInterest {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> OpenInterest {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            OpenInterest {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl OpenInterest {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Fetch the most recent Open Interest snapshot for a futures symbol on a given exchange.
+        pub fn get(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+        ) -> Result<OpenInterestResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            self.client.get("/api/v1/open-interest", Some(parameters))
+        }
+
+        /// Historical Open Interest time series for a single token, broken down per exchange and aggregated to a fixed bucket (avg within bucket). The default lookback depends on the requested interval — 7 days for 1h, 30 days for 4h, 1 year for 1d — so callers don't have to hand-tune `from`/`to` for typical queries. The response also includes token metadata (icon, symbol, name) so a single call paints the whole header strip.
+        pub fn history_aggregated(
+            &self,
+            token_id: impl Into<String>,
+            options: OpenInterestHistoryAggregatedOptions,
+        ) -> Result<OpenInterestHistoryAggregatedResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("token_id".to_string(), token_id.into());
+            if let Some(v) = options.interval {
+                parameters.insert("interval".to_string(), v.to_string());
+            }
+            if let Some(v) = options.from {
+                parameters.insert("from".to_string(), v.to_string());
+            }
+            if let Some(v) = options.to {
+                parameters.insert("to".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/open-interest/history-aggregated", Some(parameters))
+        }
+
+        /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
+        pub fn list(&self, options: OpenInterestListOptions) -> Result<OpenInterestListResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/open-interest/list", Some(parameters))
+        }
+
+        /// Paginated token × exchange Open Interest matrix. For each base asset we list the per-exchange notional OI in USD (when a venue carries the token) and `null` when it doesn't trade there. The matrix is sortable by any exchange column and searchable by base symbol — same shape the DataMaxi+ dashboard uses on `/open-interest`. Cached snapshot rebuilds every few seconds, so back-to-back requests are cheap.
+        pub fn overview(
+            &self,
+            options: OpenInterestOverviewOptions,
+        ) -> Result<OpenInterestOverviewResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.key {
+                parameters.insert("key".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            if let Some(v) = options.query {
+                parameters.insert("query".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/open-interest/overview", Some(parameters))
+        }
+
+        /// Top-line aggregates over the current Open Interest snapshot — total OI USD, top tokens by OI, top exchanges by OI, and the count of venues currently reporting any base. Powers the OI page's KPI strip and breakdown card without forcing the caller to fetch the full token list.
+        pub fn summary(
+            &self,
+            options: OpenInterestSummaryOptions,
+        ) -> Result<OpenInterestSummaryResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.top_n {
+                parameters.insert("top_n".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/open-interest/summary", Some(parameters))
+        }
+    }
+
+    // --- Premium ---
+
+    #[derive(Clone)]
+    pub struct Premium {
+        client: Client,
+    }
+
+    impl Datamaxi for Premium {
+        fn new(api_key: String) -> Premium {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Premium {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Premium {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Premium {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Premium {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get real-time premium (price difference) data across exchanges.
+        pub fn get(&self, options: PremiumOptions) -> Result<PremiumResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.source_exchange {
+                parameters.insert("source_exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.target_exchange {
+                parameters.insert("target_exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.asset {
+                parameters.insert("asset".to_string(), v.to_string());
+            }
+            if let Some(v) = options.source_quote {
+                parameters.insert("source_quote".to_string(), v.to_string());
+            }
+            if let Some(v) = options.target_quote {
+                parameters.insert("target_quote".to_string(), v.to_string());
+            }
+            if let Some(v) = options.source_market {
+                parameters.insert("source_market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.target_market {
+                parameters.insert("target_market".to_string(), v.to_string());
+            }
+            if let Some(v) = options.premium_type {
+                parameters.insert("premium_type".to_string(), v.to_string());
+            }
+            if let Some(v) = options.currency {
+                parameters.insert("currency".to_string(), v.to_string());
+            }
+            if let Some(v) = options.conversion_base {
+                parameters.insert("conversion_base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            if let Some(v) = options.key {
+                parameters.insert("key".to_string(), v.to_string());
+            }
+            if let Some(v) = options.query {
+                parameters.insert("query".to_string(), v.to_string());
+            }
+            if let Some(v) = options.only_transferable {
+                parameters.insert("only_transferable".to_string(), v.to_string());
+            }
+            if let Some(v) = options.network {
+                parameters.insert("network".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_sv {
+                parameters.insert("min_sv".to_string(), v.to_string());
+            }
+            if let Some(v) = options.min_tv {
+                parameters.insert("min_tv".to_string(), v.to_string());
+            }
+            if let Some(v) = options.token_include {
+                parameters.insert("token_include".to_string(), v.to_string());
+            }
+            if let Some(v) = options.token_exclude {
+                parameters.insert("token_exclude".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/premium", Some(parameters))
+        }
+
+        /// Get supported source exchanges for premium data.
+        pub fn exchanges(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/premium/exchanges", None)
+        }
+    }
+
+    // --- Telegram ---
+
+    #[derive(Clone)]
+    pub struct Telegram {
+        client: Client,
+    }
+
+    impl Datamaxi for Telegram {
+        fn new(api_key: String) -> Telegram {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Telegram {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Telegram {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Telegram {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Telegram {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get Telegram channels
+        pub fn channels(
+            &self,
+            options: TelegramChannelsOptions,
+        ) -> Result<TelegramChannelsResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.category {
+                parameters.insert("category".to_string(), v.to_string());
+            }
+            if let Some(v) = options.key {
+                parameters.insert("key".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/telegram/channels", Some(parameters))
+        }
+
+        /// Get Telegram messages.
+        pub fn messages(
+            &self,
+            options: TelegramMessagesOptions,
+        ) -> Result<TelegramMessagesResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.channel {
+                parameters.insert("channel".to_string(), v.to_string());
+            }
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.key {
+                parameters.insert("key".to_string(), v.to_string());
+            }
+            if let Some(v) = options.sort {
+                parameters.insert("sort".to_string(), v.to_string());
+            }
+            if let Some(v) = options.category {
+                parameters.insert("category".to_string(), v.to_string());
+            }
+            if let Some(v) = options.search_query {
+                parameters.insert("search_query".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/telegram/messages", Some(parameters))
+        }
+    }
+
+    // --- Ticker ---
+
+    #[derive(Clone)]
+    pub struct Ticker {
+        client: Client,
+    }
+
+    impl Datamaxi for Ticker {
+        fn new(api_key: String) -> Ticker {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Ticker {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Ticker {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Ticker {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Ticker {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Fetch the latest ticker for symbol from given exchange.
+        pub fn get(
+            &self,
+            exchange: impl Into<String>,
+            symbol: impl Into<String>,
+            market: TickerMarket,
+            options: TickerOptions,
+        ) -> Result<TickerResponse> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("symbol".to_string(), symbol.into());
+            parameters.insert("market".to_string(), market.to_string());
+            if let Some(v) = options.currency {
+                parameters.insert("currency".to_string(), v.to_string());
+            }
+            if let Some(v) = options.conversion_base {
+                parameters.insert("conversion_base".to_string(), v.to_string());
+            }
+            if let Some(v) = options.include_source {
+                parameters.insert("include_source".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/ticker", Some(parameters))
+        }
+
+        /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
+        pub fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("market".to_string(), market.to_string());
+            self.client
+                .get("/api/v1/ticker/exchanges", Some(parameters))
+        }
+
+        /// Get supported symbols accepted by `/api/v1/ticker` endpoint.
+        pub fn symbols(
+            &self,
+            exchange: impl Into<String>,
+            market: TickerSymbolsMarket,
+        ) -> Result<Vec<String>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            parameters.insert("market".to_string(), market.to_string());
+            self.client.get("/api/v1/ticker/symbols", Some(parameters))
+        }
+    }
+
+    // --- Token ---
+
+    #[derive(Clone)]
+    pub struct Token {
+        client: Client,
+    }
+
+    impl Datamaxi for Token {
+        fn new(api_key: String) -> Token {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            Token {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> Token {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            Token {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl Token {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Fetch latest token updates
+        pub fn updates(&self, options: CexTokenUpdatesOptions) -> Result<CexTokenUpdatesResponse> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.page {
+                parameters.insert("page".to_string(), v.to_string());
+            }
+            if let Some(v) = options.limit {
+                parameters.insert("limit".to_string(), v.to_string());
+            }
+            if let Some(v) = options.r#type {
+                parameters.insert("type".to_string(), v.to_string());
+            }
+            self.client
+                .get("/api/v1/cex/token/updates", Some(parameters))
+        }
+    }
+
+    // --- TradingFees ---
+
+    #[derive(Clone)]
+    pub struct TradingFees {
+        client: Client,
+    }
+
+    impl Datamaxi for TradingFees {
+        fn new(api_key: String) -> TradingFees {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            TradingFees {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> TradingFees {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            TradingFees {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl TradingFees {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get trading fees.
+        pub fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
+            let mut parameters = HashMap::new();
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            if let Some(v) = options.symbol {
+                parameters.insert("symbol".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/cex/fees", Some(parameters))
+        }
+
+        /// Get supported exchanges accepted by `/api/v1/trading-fees` endpoint.
+        pub fn exchanges(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/cex/fees/exchanges", None)
+        }
+
+        /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
+        pub fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            self.client
+                .get("/api/v1/cex/fees/symbols", Some(parameters))
+        }
+    }
+
+    // --- WalletStatus ---
+
+    #[derive(Clone)]
+    pub struct WalletStatus {
+        client: Client,
+    }
+
+    impl Datamaxi for WalletStatus {
+        fn new(api_key: String) -> WalletStatus {
+            let config = Config {
+                base_url: None,
+                api_key,
+            };
+            WalletStatus {
+                client: Client::new(config),
+            }
+        }
+        fn new_with_base_url(api_key: String, base_url: String) -> WalletStatus {
+            let config = Config {
+                base_url: Some(base_url),
+                api_key,
+            };
+            WalletStatus {
+                client: Client::new(config),
+            }
+        }
+    }
+
+    impl WalletStatus {
+        /// Wraps an already-built client (e.g. from `ClientBuilder`).
+        pub fn from_client(client: Client) -> Self {
+            Self { client }
+        }
+
+        /// Get the latest wallet status for asset from given exchange.
+        pub fn get(
+            &self,
+            asset: impl Into<String>,
+            options: WalletStatusOptions,
+        ) -> Result<Vec<WalletStatusView>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("asset".to_string(), asset.into());
+            if let Some(v) = options.exchange {
+                parameters.insert("exchange".to_string(), v.to_string());
+            }
+            self.client.get("/api/v1/wallet-status", Some(parameters))
+        }
+
+        /// Get assets accepted by `/api/v1/wallet-status` endpoint.
+        pub fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
+            let mut parameters = HashMap::new();
+            parameters.insert("exchange".to_string(), exchange.into());
+            self.client
+                .get("/api/v1/wallet-status/assets", Some(parameters))
+        }
+
+        /// Get exchanges accepted by `/api/v1/wallet-status` endpoint.
+        pub fn exchanges(&self) -> Result<Vec<String>> {
+            self.client.get("/api/v1/wallet-status/exchanges", None)
+        }
     }
 }

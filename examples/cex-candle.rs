@@ -4,33 +4,34 @@ use datamaxi::generated::{
 };
 use std::env;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenvy::dotenv().ok();
     let api_key = env::var("DATAMAXI_API_KEY").expect("DATAMAXI_API_KEY not found");
     let candle: CexCandle = Datamaxi::new(api_key);
 
     // CEX Candle Exchanges
-    match candle.exchanges(CexCandleExchangesMarket::Futures) {
+    match candle.exchanges(CexCandleExchangesMarket::Futures).await {
         Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Symbols
     let symbols_options = CexCandleSymbolsOptions::new();
-    match candle.symbols("binance", symbols_options) {
+    match candle.symbols("binance", symbols_options).await {
         Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Intervals
-    match candle.intervals() {
+    match candle.intervals().await {
         Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Data — `get` returns the typed `CexCandleResponse`.
     let candle_options = CexCandleOptions::new().market(CexCandleMarket::Spot);
-    match candle.get("binance", "ETH-USDT", candle_options) {
+    match candle.get("binance", "ETH-USDT", candle_options).await {
         Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }

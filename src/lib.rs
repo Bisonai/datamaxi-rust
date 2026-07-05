@@ -31,6 +31,10 @@
 //!
 //! ### CEX Candle
 //!
+//! The client is async by default (requires a runtime such as `tokio`). For a
+//! synchronous client, enable the `blocking` feature and use the mirrored
+//! wrappers under `datamaxi::generated::blocking` with `datamaxi::api::blocking`.
+//!
 //! ```no_run
 //! use datamaxi::api::Datamaxi;
 //! use datamaxi::generated::{
@@ -38,19 +42,24 @@
 //!     CexCandleSymbolsOptions,
 //! };
 //!
+//! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
 //! let candle: CexCandle = Datamaxi::new("my_api_key".to_string());
 //!
 //! // Supported exchanges, symbols and intervals
-//! let _ = candle.exchanges(CexCandleExchangesMarket::Spot);
-//! let _ = candle.symbols("binance", CexCandleSymbolsOptions::new());
-//! let _ = candle.intervals();
+//! let _ = candle.exchanges(CexCandleExchangesMarket::Spot).await?;
+//! let _ = candle.symbols("binance", CexCandleSymbolsOptions::new()).await?;
+//! let _ = candle.intervals().await?;
 //!
 //! // Fetch CEX candle data
-//! let _ = candle.get(
-//!     "binance",
-//!     "BTC-USDT",
-//!     CexCandleOptions::new().market(CexCandleMarket::Spot),
-//! );
+//! let _ = candle
+//!     .get(
+//!         "binance",
+//!         "BTC-USDT",
+//!         CexCandleOptions::new().market(CexCandleMarket::Spot),
+//!     )
+//!     .await?;
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! ## Links
@@ -81,7 +90,7 @@ pub mod api;
 ///
 /// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
 /// let opts = LiquidationHeatmapOptions::new();
-/// let heatmap = liq.heatmap(opts)?;
+/// let heatmap = liq.heatmap(opts).await?;
 /// ```
 // `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
 // generator's unconditional imports and its `new()`-only option constructors,

@@ -10,6 +10,16 @@ Fetch both historical and real-time cryptocurrency data using the [DataMaxi+ API
 ```toml
 [dependencies]
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+```
+
+The client is **async** by default and needs an async runtime (e.g. `tokio`).
+For a synchronous client, enable the `blocking` feature and use the mirrored
+wrappers under `datamaxi::generated::blocking`:
+
+```toml
+[dependencies]
+datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["blocking"] }
 ```
 
 ## Configuration
@@ -40,17 +50,22 @@ let api_key = "my_api_key".to_string();
 let candle: CexCandle = Datamaxi::new(api_key);
 
 // Supported exchanges, symbols and intervals
-candle.exchanges(CexCandleExchangesMarket::Spot);
-candle.symbols("binance", CexCandleSymbolsOptions::new());
-candle.intervals();
+candle.exchanges(CexCandleExchangesMarket::Spot).await?;
+candle.symbols("binance", CexCandleSymbolsOptions::new()).await?;
+candle.intervals().await?;
 
 // Fetch candle data (exchange, symbol); market is an option
-candle.get(
-    "binance",
-    "ETH-USDT",
-    CexCandleOptions::new().market(CexCandleMarket::Spot),
-);
+candle
+    .get(
+        "binance",
+        "ETH-USDT",
+        CexCandleOptions::new().market(CexCandleMarket::Spot),
+    )
+    .await?;
 ```
+
+With the `blocking` feature the same calls are synchronous (no `.await`), via
+`datamaxi::generated::blocking::CexCandle` and `datamaxi::api::blocking`.
 
 Data endpoints deserialize into typed response structs generated from the API
 spec: object responses into a struct (e.g. `candle.get(..)` → `CexCandleResponse`)
