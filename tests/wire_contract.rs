@@ -10,13 +10,12 @@
 //! snake_case (`top_n`, `min_volume_usd`). The query-key assertions below fail
 //! if a future codegen regen reintroduces that bug.
 
-use datamaxi::api::{ClientBuilder, Datamaxi, Error};
+use datamaxi::api::{ClientBuilder, Error};
 use datamaxi::{
     CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexSymbol, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Liquidation,
-    LiquidationHeatmapOptions, LiquidationHeatmapResponse, LiquidationHeatmapWindow,
-    LiquidationStatsOptions, LiquidationStatsWindow, OpenInterest, OpenInterestSummaryOptions,
-    Premium, PremiumOptions, PremiumPremiumType,
+    CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Datamaxi, LiquidationHeatmapOptions,
+    LiquidationHeatmapResponse, LiquidationHeatmapWindow, LiquidationStatsOptions,
+    LiquidationStatsWindow, OpenInterestSummaryOptions, PremiumOptions, PremiumPremiumType,
 };
 use mockito::Matcher;
 
@@ -42,7 +41,7 @@ async fn liquidation_heatmap_sends_top_n_window_and_apikey() {
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).liquidation();
     let opts = LiquidationHeatmapOptions::new()
         .window(LiquidationHeatmapWindow::_1h)
         .top_n(10);
@@ -70,7 +69,7 @@ async fn liquidation_stats_sends_min_volume_usd() {
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).liquidation();
     let opts = LiquidationStatsOptions::new()
         .window(LiquidationStatsWindow::_24h)
         .min_volume_usd(5.0);
@@ -101,7 +100,7 @@ async fn cex_candle_sends_required_and_optional_keys() {
         .create_async()
         .await;
 
-    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).cex_candle();
     let opts = CexCandleOptions::new()
         .market(CexCandleMarket::Spot)
         .interval("1h")
@@ -139,7 +138,7 @@ async fn query_params_are_percent_encoded() {
         .create_async()
         .await;
 
-    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).cex_candle();
     let res = candle
         .get(
             "binance",
@@ -166,7 +165,7 @@ async fn call_with_status(
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).liquidation();
     liq.heatmap(LiquidationHeatmapOptions::new()).await
 }
 
@@ -252,7 +251,7 @@ async fn open_interest_summary_sends_top_n() {
         .create_async()
         .await;
 
-    let oi: OpenInterest = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let oi = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).open_interest();
     let res = oi.summary(OpenInterestSummaryOptions::new().top_n(5)).await;
 
     mock.assert_async().await;
@@ -281,7 +280,7 @@ async fn cex_symbol_cautions_sends_snake_keys() {
         .create_async()
         .await;
 
-    let sym: CexSymbol = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let sym = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).cex_symbol();
     let opts = CexSymbolCautionsOptions::new()
         .exchange("binance")
         .min_level(CexSymbolCautionsMinLevel::Danger)
@@ -313,7 +312,7 @@ async fn premium_sends_snake_keys() {
         .create_async()
         .await;
 
-    let premium: Premium = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let premium = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url()).premium();
     let opts = PremiumOptions::new()
         .source_exchange("binance")
         .target_exchange("upbit")
@@ -383,7 +382,7 @@ fn client_builder_without_key_errors() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_cex_candle_exchanges_smoke() {
-    use datamaxi::blocking::CexCandle as BlockingCexCandle;
+    use datamaxi::blocking::Datamaxi as BlockingDatamaxi;
 
     let mut server = mockito::Server::new();
     let mock = server
@@ -396,7 +395,8 @@ fn blocking_cex_candle_exchanges_smoke() {
         .expect(1)
         .create();
 
-    let candle: BlockingCexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle =
+        BlockingDatamaxi::new_with_base_url(API_KEY.to_string(), server.url()).cex_candle();
     let res = candle.exchanges(CexCandleExchangesMarket::Spot);
 
     mock.assert();
@@ -408,7 +408,7 @@ fn blocking_cex_candle_exchanges_smoke() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_liquidation_heatmap_smoke() {
-    use datamaxi::blocking::Liquidation as BlockingLiquidation;
+    use datamaxi::blocking::Datamaxi as BlockingDatamaxi;
 
     let mut server = mockito::Server::new();
     let mock = server
@@ -421,7 +421,7 @@ fn blocking_liquidation_heatmap_smoke() {
         .expect(1)
         .create();
 
-    let liq: BlockingLiquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = BlockingDatamaxi::new_with_base_url(API_KEY.to_string(), server.url()).liquidation();
     let res = liq.heatmap(LiquidationHeatmapOptions::new().window(LiquidationHeatmapWindow::_1h));
 
     mock.assert();

@@ -36,14 +36,14 @@
 //! wrappers under `datamaxi::blocking` with `datamaxi::api::blocking`.
 //!
 //! ```no_run
-//! use datamaxi::api::Datamaxi;
 //! use datamaxi::{
-//!     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-//!     CexCandleSymbolsOptions,
+//!     CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
+//!     Datamaxi,
 //! };
 //!
 //! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
-//! let candle: CexCandle = Datamaxi::new("my_api_key".to_string());
+//! let dm = Datamaxi::new("my_api_key".to_string());
+//! let candle = dm.cex_candle();
 //!
 //! // Supported exchanges, symbols and intervals
 //! let _ = candle.exchanges(CexCandleExchangesMarket::Spot).await?;
@@ -94,10 +94,9 @@ pub mod generated;
 /// equivalents.
 ///
 /// ```ignore
-/// use datamaxi::api::Datamaxi;
-/// use datamaxi::{Liquidation, LiquidationHeatmapOptions};
+/// use datamaxi::{Datamaxi, LiquidationHeatmapOptions};
 ///
-/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
-/// let heatmap = liq.heatmap(LiquidationHeatmapOptions::new()).await?;
+/// let dm = Datamaxi::new("YOUR_API_KEY".into());
+/// let heatmap = dm.liquidation().heatmap(LiquidationHeatmapOptions::new()).await?;
 /// ```
 pub use generated::*;

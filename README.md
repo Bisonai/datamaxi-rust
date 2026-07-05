@@ -40,14 +40,14 @@ Set `DATAMAXI_API_KEY` to avoid passing the key inline.
 ### CEX Candle
 
 ```rust
-use datamaxi::api::Datamaxi;
 use datamaxi::{
-    CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexCandleSymbolsOptions,
+    CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
+    Datamaxi,
 };
 
 let api_key = "my_api_key".to_string();
-let candle: CexCandle = Datamaxi::new(api_key);
+let dm = Datamaxi::new(api_key);
+let candle = dm.cex_candle();
 
 // Supported exchanges, symbols and intervals
 candle.exchanges(CexCandleExchangesMarket::Spot).await?;
@@ -65,7 +65,7 @@ candle
 ```
 
 With the `blocking` feature the same calls are synchronous (no `.await`), via
-`datamaxi::blocking::CexCandle` and `datamaxi::api::blocking`.
+`datamaxi::blocking::Datamaxi` and `datamaxi::api::blocking`.
 
 Data endpoints deserialize into typed response structs generated from the API
 spec: object responses into a struct (e.g. `candle.get(..)` → `CexCandleResponse`)

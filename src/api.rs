@@ -33,15 +33,6 @@ fn truncate_body(mut s: String) -> String {
     s
 }
 
-/// A trait that defines the required methods for interacting with the Datamaxi+ API.
-pub trait Datamaxi {
-    /// Creates a new instance of the implementing type using the provided API key.
-    fn new(api_key: String) -> Self;
-
-    /// Creates a new instance of the implementing type using the provided API key and base URL.
-    fn new_with_base_url(api_key: String, base_url: String) -> Self;
-}
-
 /// The configuration for the Datamaxi+ API client.
 pub struct Config {
     /// The base URL for the API.

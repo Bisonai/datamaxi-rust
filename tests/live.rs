@@ -22,17 +22,17 @@
 //! DATAMAXI_API_KEY=... cargo test --test live
 //! ```
 
-use datamaxi::api::{Datamaxi, Error};
+use datamaxi::api::Error;
 use datamaxi::{
-    Announcements, CexAnnouncementsOptions, CexCandle, CexCandleExchangesMarket, CexCandleMarket,
-    CexCandleOptions, CexTokenUpdatesOptions, Forex, FundingRate, FundingRateHistoryOptions,
-    IndexPrice, IndexPriceOptions, Liquidation, LiquidationFeedOptions, LiquidationHeatmapOptions,
-    LiquidationHeatmapWindow, LiquidationMapOptions, LiquidationOptions, LiquidationStatsOptions,
-    LiquidationStatsWindow, LiquidationSymbolHistoryInterval, LiquidationSymbolHistoryOptions,
-    LiquidationSymbolHistoryWindow, Listing, ListingsHistoricalOptions, MarginBorrow, OpenInterest,
+    CexAnnouncementsOptions, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
+    CexTokenUpdatesOptions, Datamaxi, FundingRateHistoryOptions, IndexPriceOptions,
+    LiquidationFeedOptions, LiquidationHeatmapOptions, LiquidationHeatmapWindow,
+    LiquidationMapOptions, LiquidationOptions, LiquidationStatsOptions, LiquidationStatsWindow,
+    LiquidationSymbolHistoryInterval, LiquidationSymbolHistoryOptions,
+    LiquidationSymbolHistoryWindow, ListingsHistoricalOptions,
     OpenInterestHistoryAggregatedOptions, OpenInterestListOptions, OpenInterestOverviewOptions,
-    OpenInterestSummaryOptions, Premium, PremiumOptions, Telegram, TelegramChannelsOptions,
-    TelegramMessagesOptions, Ticker, TickerMarket, TickerOptions, Token,
+    OpenInterestSummaryOptions, PremiumOptions, TelegramChannelsOptions, TelegramMessagesOptions,
+    TickerMarket, TickerOptions,
 };
 
 /// Resolve the API key from the environment, preferring `DTMX_API_KEY` and
@@ -62,7 +62,7 @@ macro_rules! key_or_skip {
 #[tokio::test]
 async fn live_cex_candle_exchanges() {
     let key = key_or_skip!("live_cex_candle_exchanges");
-    let candle: CexCandle = Datamaxi::new(key);
+    let candle = Datamaxi::new(key).cex_candle();
 
     let v = candle
         .exchanges(CexCandleExchangesMarket::Spot)
@@ -81,7 +81,7 @@ async fn live_cex_candle_exchanges() {
 #[tokio::test]
 async fn live_cex_candle_get() {
     let key = key_or_skip!("live_cex_candle_get");
-    let candle: CexCandle = Datamaxi::new(key);
+    let candle = Datamaxi::new(key).cex_candle();
 
     let opts = CexCandleOptions::new()
         .market(CexCandleMarket::Spot)
@@ -98,7 +98,7 @@ async fn live_cex_candle_get() {
 #[tokio::test]
 async fn live_cex_announcements() {
     let key = key_or_skip!("live_cex_announcements");
-    let ann: Announcements = Datamaxi::new(key);
+    let ann = Datamaxi::new(key).announcements();
 
     let resp = ann
         .announcements(CexAnnouncementsOptions::new())
@@ -116,7 +116,7 @@ async fn live_cex_announcements() {
 #[tokio::test]
 async fn live_cex_token_updates() {
     let key = key_or_skip!("live_cex_token_updates");
-    let token: Token = Datamaxi::new(key);
+    let token = Datamaxi::new(key).token();
 
     let resp = token
         .updates(CexTokenUpdatesOptions::new())
@@ -133,7 +133,7 @@ async fn live_cex_token_updates() {
 #[tokio::test]
 async fn live_forex_get() {
     let key = key_or_skip!("live_forex_get");
-    let forex: Forex = Datamaxi::new(key);
+    let forex = Datamaxi::new(key).forex();
 
     let resp = forex
         .get("USD-KRW")
@@ -151,7 +151,7 @@ async fn live_forex_get() {
 #[tokio::test]
 async fn live_funding_rate_history() {
     let key = key_or_skip!("live_funding_rate_history");
-    let fr: FundingRate = Datamaxi::new(key);
+    let fr = Datamaxi::new(key).funding_rate();
 
     let opts = FundingRateHistoryOptions::new().limit(5);
     let resp = fr
@@ -169,7 +169,7 @@ async fn live_funding_rate_history() {
 #[tokio::test]
 async fn live_funding_rate_latest() {
     let key = key_or_skip!("live_funding_rate_latest");
-    let fr: FundingRate = Datamaxi::new(key);
+    let fr = Datamaxi::new(key).funding_rate();
 
     let resp = fr
         .latest("binance", "BTC-USDT")
@@ -186,7 +186,7 @@ async fn live_funding_rate_latest() {
 #[tokio::test]
 async fn live_index_price_get() {
     let key = key_or_skip!("live_index_price_get");
-    let idx: IndexPrice = Datamaxi::new(key);
+    let idx = Datamaxi::new(key).index_price();
 
     let resp = idx
         .get("BTC", IndexPriceOptions::new())
@@ -203,7 +203,7 @@ async fn live_index_price_get() {
 #[tokio::test]
 async fn live_liquidation_get() {
     let key = key_or_skip!("live_liquidation_get");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationOptions::new().limit(5);
     let resp = liq
@@ -222,7 +222,7 @@ async fn live_liquidation_get() {
 #[tokio::test]
 async fn live_liquidation_feed() {
     let key = key_or_skip!("live_liquidation_feed");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationFeedOptions::new().exchange("binance").limit(5);
     let resp = liq
@@ -242,7 +242,7 @@ async fn live_liquidation_feed() {
 #[tokio::test]
 async fn live_liquidation_heatmap() {
     let key = key_or_skip!("live_liquidation_heatmap");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationHeatmapOptions::new()
         .window(LiquidationHeatmapWindow::_1h)
@@ -262,7 +262,7 @@ async fn live_liquidation_heatmap() {
 #[tokio::test]
 async fn live_liquidation_map() {
     let key = key_or_skip!("live_liquidation_map");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationMapOptions::new()
         .exchange("binance")
@@ -284,7 +284,7 @@ async fn live_liquidation_map() {
 #[tokio::test]
 async fn live_liquidation_stats() {
     let key = key_or_skip!("live_liquidation_stats");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationStatsOptions::new().window(LiquidationStatsWindow::_24h);
     let resp = liq
@@ -302,7 +302,7 @@ async fn live_liquidation_stats() {
 #[tokio::test]
 async fn live_liquidation_symbol_history() {
     let key = key_or_skip!("live_liquidation_symbol_history");
-    let liq: Liquidation = Datamaxi::new(key);
+    let liq = Datamaxi::new(key).liquidation();
 
     let opts = LiquidationSymbolHistoryOptions::new()
         .quote("USDT")
@@ -328,7 +328,7 @@ async fn live_liquidation_symbol_history() {
 #[tokio::test]
 async fn live_listings_historical() {
     let key = key_or_skip!("live_listings_historical");
-    let listing: Listing = Datamaxi::new(key);
+    let listing = Datamaxi::new(key).listing();
 
     match listing.historical(ListingsHistoricalOptions::new()).await {
         Ok(resp) => assert!(
@@ -350,7 +350,7 @@ async fn live_listings_historical() {
 #[tokio::test]
 async fn live_margin_borrow_get() {
     let key = key_or_skip!("live_margin_borrow_get");
-    let mb: MarginBorrow = Datamaxi::new(key);
+    let mb = Datamaxi::new(key).margin_borrow();
 
     let resp = mb
         .get("BTC")
@@ -367,7 +367,7 @@ async fn live_margin_borrow_get() {
 #[tokio::test]
 async fn live_open_interest_get() {
     let key = key_or_skip!("live_open_interest_get");
-    let oi: OpenInterest = Datamaxi::new(key);
+    let oi = Datamaxi::new(key).open_interest();
 
     let resp = oi
         .get("binance", "BTC-USDT")
@@ -385,7 +385,7 @@ async fn live_open_interest_get() {
 #[tokio::test]
 async fn live_open_interest_history_aggregated() {
     let key = key_or_skip!("live_open_interest_history_aggregated");
-    let oi: OpenInterest = Datamaxi::new(key);
+    let oi = Datamaxi::new(key).open_interest();
 
     let resp = oi
         .history_aggregated("bitcoin", OpenInterestHistoryAggregatedOptions::new())
@@ -402,7 +402,7 @@ async fn live_open_interest_history_aggregated() {
 #[tokio::test]
 async fn live_open_interest_list() {
     let key = key_or_skip!("live_open_interest_list");
-    let oi: OpenInterest = Datamaxi::new(key);
+    let oi = Datamaxi::new(key).open_interest();
 
     let opts = OpenInterestListOptions::new().exchange("binance");
     let resp = oi
@@ -420,7 +420,7 @@ async fn live_open_interest_list() {
 #[tokio::test]
 async fn live_open_interest_overview() {
     let key = key_or_skip!("live_open_interest_overview");
-    let oi: OpenInterest = Datamaxi::new(key);
+    let oi = Datamaxi::new(key).open_interest();
 
     let resp = oi
         .overview(OpenInterestOverviewOptions::new())
@@ -438,7 +438,7 @@ async fn live_open_interest_overview() {
 #[tokio::test]
 async fn live_open_interest_summary() {
     let key = key_or_skip!("live_open_interest_summary");
-    let oi: OpenInterest = Datamaxi::new(key);
+    let oi = Datamaxi::new(key).open_interest();
 
     let opts = OpenInterestSummaryOptions::new().top_n(5);
     let resp = oi
@@ -456,7 +456,7 @@ async fn live_open_interest_summary() {
 #[tokio::test]
 async fn live_premium_get() {
     let key = key_or_skip!("live_premium_get");
-    let premium: Premium = Datamaxi::new(key);
+    let premium = Datamaxi::new(key).premium();
 
     match premium.get(PremiumOptions::new().limit(10)).await {
         Ok(resp) => assert!(!resp.data.is_empty(), "premium `data` should not be empty"),
@@ -475,7 +475,7 @@ async fn live_premium_get() {
 #[tokio::test]
 async fn live_telegram_channels() {
     let key = key_or_skip!("live_telegram_channels");
-    let tg: Telegram = Datamaxi::new(key);
+    let tg = Datamaxi::new(key).telegram();
 
     let resp = tg
         .channels(TelegramChannelsOptions::new())
@@ -492,7 +492,7 @@ async fn live_telegram_channels() {
 #[tokio::test]
 async fn live_telegram_messages() {
     let key = key_or_skip!("live_telegram_messages");
-    let tg: Telegram = Datamaxi::new(key);
+    let tg = Datamaxi::new(key).telegram();
 
     let resp = tg
         .messages(TelegramMessagesOptions::new())
@@ -509,7 +509,7 @@ async fn live_telegram_messages() {
 #[tokio::test]
 async fn live_ticker_get() {
     let key = key_or_skip!("live_ticker_get");
-    let ticker: Ticker = Datamaxi::new(key);
+    let ticker = Datamaxi::new(key).ticker();
 
     let resp = ticker
         .get(
