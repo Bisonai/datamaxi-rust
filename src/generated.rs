@@ -358,9 +358,6 @@ pub struct FundingRateLatestResponse {
     /// Specifies the token id
     #[serde(rename = "id")]
     pub token_id: String,
-    /// Specifies the processed at
-    #[serde(rename = "p")]
-    pub processed_at: i64,
     /// Specifies the quote
     #[serde(rename = "q")]
     pub quote: String,
