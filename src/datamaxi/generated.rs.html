@@ -674,10 +674,10 @@
 <a href=#674 id=674 data-nosnippet>674</a></span><span class="kw">pub struct </span>ListingsHistoricalView {
 <a href=#675 id=675 data-nosnippet>675</a>    <span class="kw">pub </span>announced_at: i64,
 <a href=#676 id=676 data-nosnippet>676</a>    <span class="kw">pub </span>base: String,
-<a href=#677 id=677 data-nosnippet>677</a>    <span class="kw">pub </span>deposit_at: i64,
+<a href=#677 id=677 data-nosnippet>677</a>    <span class="kw">pub </span>deposit_at: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#678 id=678 data-nosnippet>678</a>    <span class="kw">pub </span>exchange: String,
 <a href=#679 id=679 data-nosnippet>679</a>    <span class="kw">pub </span>network: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#680 id=680 data-nosnippet>680</a>    <span class="kw">pub </span>trade_at: i64,
+<a href=#680 id=680 data-nosnippet>680</a>    <span class="kw">pub </span>trade_at: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#681 id=681 data-nosnippet>681</a>    <span class="kw">pub </span>url: String,
 <a href=#682 id=682 data-nosnippet>682</a>}
 <a href=#683 id=683 data-nosnippet>683</a>
@@ -821,144 +821,144 @@
 <a href=#821 id=821 data-nosnippet>821</a>    <span class="doccomment">/// specifies the date and the time in UTC milliseconds
 <a href=#822 id=822 data-nosnippet>822</a>    </span><span class="kw">pub </span>d: i64,
 <a href=#823 id=823 data-nosnippet>823</a>    <span class="doccomment">/// funding gap which is difference between source and target fundingrate without funding interval consideration
-<a href=#824 id=824 data-nosnippet>824</a>    </span><span class="kw">pub </span>fg: f64,
+<a href=#824 id=824 data-nosnippet>824</a>    </span><span class="kw">pub </span>fg: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#825 id=825 data-nosnippet>825</a>    <span class="doccomment">/// net fundingrate which takes funding interval into account
-<a href=#826 id=826 data-nosnippet>826</a>    </span><span class="kw">pub </span>nfr: f64,
+<a href=#826 id=826 data-nosnippet>826</a>    </span><span class="kw">pub </span>nfr: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#827 id=827 data-nosnippet>827</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges
-<a href=#828 id=828 data-nosnippet>828</a>    </span><span class="kw">pub </span>pdp: f64,
+<a href=#828 id=828 data-nosnippet>828</a>    </span><span class="kw">pub </span>pdp: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#829 id=829 data-nosnippet>829</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 15m ago
-<a href=#830 id=830 data-nosnippet>830</a>    </span><span class="kw">pub </span>pdp15m: f64,
+<a href=#830 id=830 data-nosnippet>830</a>    </span><span class="kw">pub </span>pdp15m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#831 id=831 data-nosnippet>831</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 1h ago
-<a href=#832 id=832 data-nosnippet>832</a>    </span><span class="kw">pub </span>pdp1h: f64,
+<a href=#832 id=832 data-nosnippet>832</a>    </span><span class="kw">pub </span>pdp1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#833 id=833 data-nosnippet>833</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 24h ago
-<a href=#834 id=834 data-nosnippet>834</a>    </span><span class="kw">pub </span>pdp24h: f64,
+<a href=#834 id=834 data-nosnippet>834</a>    </span><span class="kw">pub </span>pdp24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#835 id=835 data-nosnippet>835</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 30m ago
-<a href=#836 id=836 data-nosnippet>836</a>    </span><span class="kw">pub </span>pdp30m: f64,
+<a href=#836 id=836 data-nosnippet>836</a>    </span><span class="kw">pub </span>pdp30m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#837 id=837 data-nosnippet>837</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 4h ago
-<a href=#838 id=838 data-nosnippet>838</a>    </span><span class="kw">pub </span>pdp4h: f64,
+<a href=#838 id=838 data-nosnippet>838</a>    </span><span class="kw">pub </span>pdp4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#839 id=839 data-nosnippet>839</a>    <span class="doccomment">/// specifies the price difference percentage between the source and target exchanges 5m ago
-<a href=#840 id=840 data-nosnippet>840</a>    </span><span class="kw">pub </span>pdp5m: f64,
+<a href=#840 id=840 data-nosnippet>840</a>    </span><span class="kw">pub </span>pdp5m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#841 id=841 data-nosnippet>841</a>    <span class="doccomment">/// sepcifies premium duration
-<a href=#842 id=842 data-nosnippet>842</a>    </span><span class="kw">pub </span>pmd: i64,
+<a href=#842 id=842 data-nosnippet>842</a>    </span><span class="kw">pub </span>pmd: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#843 id=843 data-nosnippet>843</a>    <span class="doccomment">/// source ask depth within +2% base
-<a href=#844 id=844 data-nosnippet>844</a>    </span><span class="kw">pub </span>sad: f64,
+<a href=#844 id=844 data-nosnippet>844</a>    </span><span class="kw">pub </span>sad: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#845 id=845 data-nosnippet>845</a>    <span class="doccomment">/// specifies -2% volume depth from source exchange
-<a href=#846 id=846 data-nosnippet>846</a>    </span><span class="kw">pub </span>sad2p: f64,
+<a href=#846 id=846 data-nosnippet>846</a>    </span><span class="kw">pub </span>sad2p: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#847 id=847 data-nosnippet>847</a>    <span class="doccomment">/// source ask depth within +2% quote
-<a href=#848 id=848 data-nosnippet>848</a>    </span><span class="kw">pub </span>sadf: f64,
+<a href=#848 id=848 data-nosnippet>848</a>    </span><span class="kw">pub </span>sadf: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#849 id=849 data-nosnippet>849</a>    <span class="doccomment">/// specifies the base token of the source exchange
 <a href=#850 id=850 data-nosnippet>850</a>    </span><span class="kw">pub </span>sb: String,
 <a href=#851 id=851 data-nosnippet>851</a>    <span class="doccomment">/// specifies +2% volume depth from source exchange
-<a href=#852 id=852 data-nosnippet>852</a>    </span><span class="kw">pub </span>sbd2p: f64,
+<a href=#852 id=852 data-nosnippet>852</a>    </span><span class="kw">pub </span>sbd2p: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#853 id=853 data-nosnippet>853</a>    <span class="doccomment">/// for amm source ticker, amm source chain
 <a href=#854 id=854 data-nosnippet>854</a>    </span><span class="kw">pub </span>sc: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#855 id=855 data-nosnippet>855</a>    <span class="doccomment">/// specifies the source exchange name
 <a href=#856 id=856 data-nosnippet>856</a>    </span><span class="kw">pub </span>se: String,
 <a href=#857 id=857 data-nosnippet>857</a>    <span class="doccomment">/// source funding rate
-<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">pub </span>sfr: f64,
+<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">pub </span>sfr: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#859 id=859 data-nosnippet>859</a>    <span class="doccomment">/// source funding rate interval, 1 stands for 1 hour
-<a href=#860 id=860 data-nosnippet>860</a>    </span><span class="kw">pub </span>sfri: i64,
+<a href=#860 id=860 data-nosnippet>860</a>    </span><span class="kw">pub </span>sfri: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#861 id=861 data-nosnippet>861</a>    <span class="doccomment">/// source fundingrate info timestamp in UTC millisecond
-<a href=#862 id=862 data-nosnippet>862</a>    </span><span class="kw">pub </span>sfrt: i64,
+<a href=#862 id=862 data-nosnippet>862</a>    </span><span class="kw">pub </span>sfrt: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#863 id=863 data-nosnippet>863</a>    <span class="doccomment">/// specifies highest bid from source exchange
-<a href=#864 id=864 data-nosnippet>864</a>    </span><span class="kw">pub </span>shb: f64,
+<a href=#864 id=864 data-nosnippet>864</a>    </span><span class="kw">pub </span>shb: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#865 id=865 data-nosnippet>865</a>    <span class="doccomment">/// specifies lowest bid from source exchange
-<a href=#866 id=866 data-nosnippet>866</a>    </span><span class="kw">pub </span>sla: f64,
+<a href=#866 id=866 data-nosnippet>866</a>    </span><span class="kw">pub </span>sla: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#867 id=867 data-nosnippet>867</a>    <span class="doccomment">/// specifies the source market type
 <a href=#868 id=868 data-nosnippet>868</a>    </span><span class="kw">pub </span>sm: String,
 <a href=#869 id=869 data-nosnippet>869</a>    <span class="doccomment">/// boolean if source exchange margin is supported, returned only for spot market
-<a href=#870 id=870 data-nosnippet>870</a>    </span><span class="kw">pub </span>sms: bool,
+<a href=#870 id=870 data-nosnippet>870</a>    </span><span class="kw">pub </span>sms: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 <a href=#871 id=871 data-nosnippet>871</a>    <span class="doccomment">/// source next distribution time in UTC milliseconds
-<a href=#872 id=872 data-nosnippet>872</a>    </span><span class="kw">pub </span>snd: i64,
+<a href=#872 id=872 data-nosnippet>872</a>    </span><span class="kw">pub </span>snd: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#873 id=873 data-nosnippet>873</a>    <span class="doccomment">/// Open Interest snapshot — USD-denominated. Source and target sides.
-<a href=#874 id=874 data-nosnippet>874</a>    </span><span class="kw">pub </span>soi: f64,
+<a href=#874 id=874 data-nosnippet>874</a>    </span><span class="kw">pub </span>soi: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#875 id=875 data-nosnippet>875</a>    <span class="doccomment">/// OI % change over rolling 1h / 4h / 24h windows.
-<a href=#876 id=876 data-nosnippet>876</a>    </span><span class="kw">pub </span>soich1h: f64,
-<a href=#877 id=877 data-nosnippet>877</a>    <span class="kw">pub </span>soich24h: f64,
-<a href=#878 id=878 data-nosnippet>878</a>    <span class="kw">pub </span>soich4h: f64,
+<a href=#876 id=876 data-nosnippet>876</a>    </span><span class="kw">pub </span>soich1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#877 id=877 data-nosnippet>877</a>    <span class="kw">pub </span>soich24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#878 id=878 data-nosnippet>878</a>    <span class="kw">pub </span>soich4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#879 id=879 data-nosnippet>879</a>    <span class="doccomment">/// OI / 24h USD quote volume. Crude "leverage per turnover" metric.
-<a href=#880 id=880 data-nosnippet>880</a>    </span><span class="kw">pub </span>soivr: f64,
+<a href=#880 id=880 data-nosnippet>880</a>    </span><span class="kw">pub </span>soivr: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#881 id=881 data-nosnippet>881</a>    <span class="doccomment">/// specifies the latest price of the source exchange in requested currency
-<a href=#882 id=882 data-nosnippet>882</a>    </span><span class="kw">pub </span>sp: f64,
+<a href=#882 id=882 data-nosnippet>882</a>    </span><span class="kw">pub </span>sp: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#883 id=883 data-nosnippet>883</a>    <span class="doccomment">/// for amm source ticker, amm pool address
 <a href=#884 id=884 data-nosnippet>884</a>    </span><span class="kw">pub </span>spa: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#885 id=885 data-nosnippet>885</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 15m
-<a href=#886 id=886 data-nosnippet>886</a>    </span><span class="kw">pub </span>spdp15m: f64,
+<a href=#886 id=886 data-nosnippet>886</a>    </span><span class="kw">pub </span>spdp15m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#887 id=887 data-nosnippet>887</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 1h
-<a href=#888 id=888 data-nosnippet>888</a>    </span><span class="kw">pub </span>spdp1h: f64,
+<a href=#888 id=888 data-nosnippet>888</a>    </span><span class="kw">pub </span>spdp1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#889 id=889 data-nosnippet>889</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 24h
-<a href=#890 id=890 data-nosnippet>890</a>    </span><span class="kw">pub </span>spdp24h: f64,
+<a href=#890 id=890 data-nosnippet>890</a>    </span><span class="kw">pub </span>spdp24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#891 id=891 data-nosnippet>891</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 30m
-<a href=#892 id=892 data-nosnippet>892</a>    </span><span class="kw">pub </span>spdp30m: f64,
+<a href=#892 id=892 data-nosnippet>892</a>    </span><span class="kw">pub </span>spdp30m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#893 id=893 data-nosnippet>893</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 4h
-<a href=#894 id=894 data-nosnippet>894</a>    </span><span class="kw">pub </span>spdp4h: f64,
+<a href=#894 id=894 data-nosnippet>894</a>    </span><span class="kw">pub </span>spdp4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#895 id=895 data-nosnippet>895</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 5m
-<a href=#896 id=896 data-nosnippet>896</a>    </span><span class="kw">pub </span>spdp5m: f64,
+<a href=#896 id=896 data-nosnippet>896</a>    </span><span class="kw">pub </span>spdp5m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#897 id=897 data-nosnippet>897</a>    <span class="doccomment">/// specifies the quote token of the source exchange
 <a href=#898 id=898 data-nosnippet>898</a>    </span><span class="kw">pub </span>sq: String,
 <a href=#899 id=899 data-nosnippet>899</a>    <span class="doccomment">/// specifies the date and the time of source ticker in UTC milliseconds
 <a href=#900 id=900 data-nosnippet>900</a>    </span><span class="kw">pub </span>st: i64,
 <a href=#901 id=901 data-nosnippet>901</a>    <span class="doccomment">/// specifies the trading volume of the source exchange in the last 24 hours in requested currency
-<a href=#902 id=902 data-nosnippet>902</a>    </span><span class="kw">pub </span>sv: f64,
+<a href=#902 id=902 data-nosnippet>902</a>    </span><span class="kw">pub </span>sv: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#903 id=903 data-nosnippet>903</a>    <span class="doccomment">/// transferable, null if unknown
-<a href=#904 id=904 data-nosnippet>904</a>    </span><span class="kw">pub </span>t: bool,
+<a href=#904 id=904 data-nosnippet>904</a>    </span><span class="kw">pub </span>t: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 <a href=#905 id=905 data-nosnippet>905</a>    <span class="doccomment">/// specifies -2% volume depth from target exchange
-<a href=#906 id=906 data-nosnippet>906</a>    </span><span class="kw">pub </span>tad2p: f64,
+<a href=#906 id=906 data-nosnippet>906</a>    </span><span class="kw">pub </span>tad2p: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#907 id=907 data-nosnippet>907</a>    <span class="doccomment">/// specifies the base token of the target exchange
 <a href=#908 id=908 data-nosnippet>908</a>    </span><span class="kw">pub </span>tb: String,
 <a href=#909 id=909 data-nosnippet>909</a>    <span class="doccomment">/// target bid depth within -2% base
-<a href=#910 id=910 data-nosnippet>910</a>    </span><span class="kw">pub </span>tbd: f64,
+<a href=#910 id=910 data-nosnippet>910</a>    </span><span class="kw">pub </span>tbd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#911 id=911 data-nosnippet>911</a>    <span class="doccomment">/// specifies +2% volume depth from target exchange
-<a href=#912 id=912 data-nosnippet>912</a>    </span><span class="kw">pub </span>tbd2p: f64,
+<a href=#912 id=912 data-nosnippet>912</a>    </span><span class="kw">pub </span>tbd2p: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#913 id=913 data-nosnippet>913</a>    <span class="doccomment">/// target bid depth within -2% quote
-<a href=#914 id=914 data-nosnippet>914</a>    </span><span class="kw">pub </span>tbdf: f64,
+<a href=#914 id=914 data-nosnippet>914</a>    </span><span class="kw">pub </span>tbdf: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#915 id=915 data-nosnippet>915</a>    <span class="doccomment">/// for amm target ticker, amm target chain
 <a href=#916 id=916 data-nosnippet>916</a>    </span><span class="kw">pub </span>tc: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#917 id=917 data-nosnippet>917</a>    <span class="doccomment">/// specifies the target exchange name
 <a href=#918 id=918 data-nosnippet>918</a>    </span><span class="kw">pub </span>te: String,
 <a href=#919 id=919 data-nosnippet>919</a>    <span class="doccomment">/// target funding rate
-<a href=#920 id=920 data-nosnippet>920</a>    </span><span class="kw">pub </span>tfr: f64,
+<a href=#920 id=920 data-nosnippet>920</a>    </span><span class="kw">pub </span>tfr: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#921 id=921 data-nosnippet>921</a>    <span class="doccomment">/// target funding rate interval, 1 stands for 1 hour
-<a href=#922 id=922 data-nosnippet>922</a>    </span><span class="kw">pub </span>tfri: i64,
+<a href=#922 id=922 data-nosnippet>922</a>    </span><span class="kw">pub </span>tfri: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#923 id=923 data-nosnippet>923</a>    <span class="doccomment">/// target fundingrate info timestamp in UTC millisecond
-<a href=#924 id=924 data-nosnippet>924</a>    </span><span class="kw">pub </span>tfrt: i64,
+<a href=#924 id=924 data-nosnippet>924</a>    </span><span class="kw">pub </span>tfrt: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#925 id=925 data-nosnippet>925</a>    <span class="doccomment">/// specifies highest bid from target exchange
-<a href=#926 id=926 data-nosnippet>926</a>    </span><span class="kw">pub </span>thb: f64,
+<a href=#926 id=926 data-nosnippet>926</a>    </span><span class="kw">pub </span>thb: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#927 id=927 data-nosnippet>927</a>    <span class="doccomment">/// specifies lowest bid from target exchange
-<a href=#928 id=928 data-nosnippet>928</a>    </span><span class="kw">pub </span>tla: f64,
+<a href=#928 id=928 data-nosnippet>928</a>    </span><span class="kw">pub </span>tla: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#929 id=929 data-nosnippet>929</a>    <span class="doccomment">/// specifies the target market type
 <a href=#930 id=930 data-nosnippet>930</a>    </span><span class="kw">pub </span>tm: String,
 <a href=#931 id=931 data-nosnippet>931</a>    <span class="doccomment">/// boolean if target exchange margin is supported, returned only for spot market
-<a href=#932 id=932 data-nosnippet>932</a>    </span><span class="kw">pub </span>tms: bool,
+<a href=#932 id=932 data-nosnippet>932</a>    </span><span class="kw">pub </span>tms: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 <a href=#933 id=933 data-nosnippet>933</a>    <span class="doccomment">/// target next distribution time in UTC millisconds
-<a href=#934 id=934 data-nosnippet>934</a>    </span><span class="kw">pub </span>tnd: i64,
-<a href=#935 id=935 data-nosnippet>935</a>    <span class="kw">pub </span>toi: f64,
-<a href=#936 id=936 data-nosnippet>936</a>    <span class="kw">pub </span>toich1h: f64,
-<a href=#937 id=937 data-nosnippet>937</a>    <span class="kw">pub </span>toich24h: f64,
-<a href=#938 id=938 data-nosnippet>938</a>    <span class="kw">pub </span>toich4h: f64,
-<a href=#939 id=939 data-nosnippet>939</a>    <span class="kw">pub </span>toivr: f64,
+<a href=#934 id=934 data-nosnippet>934</a>    </span><span class="kw">pub </span>tnd: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+<a href=#935 id=935 data-nosnippet>935</a>    <span class="kw">pub </span>toi: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#936 id=936 data-nosnippet>936</a>    <span class="kw">pub </span>toich1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#937 id=937 data-nosnippet>937</a>    <span class="kw">pub </span>toich24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#938 id=938 data-nosnippet>938</a>    <span class="kw">pub </span>toich4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#939 id=939 data-nosnippet>939</a>    <span class="kw">pub </span>toivr: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#940 id=940 data-nosnippet>940</a>    <span class="doccomment">/// specifies the latest price of the target exchange
-<a href=#941 id=941 data-nosnippet>941</a>    </span><span class="kw">pub </span>tp: f64,
+<a href=#941 id=941 data-nosnippet>941</a>    </span><span class="kw">pub </span>tp: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#942 id=942 data-nosnippet>942</a>    <span class="doccomment">/// for amm target ticker, amm pool address
 <a href=#943 id=943 data-nosnippet>943</a>    </span><span class="kw">pub </span>tpa: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#944 id=944 data-nosnippet>944</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 15m
-<a href=#945 id=945 data-nosnippet>945</a>    </span><span class="kw">pub </span>tpdp15m: f64,
+<a href=#945 id=945 data-nosnippet>945</a>    </span><span class="kw">pub </span>tpdp15m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#946 id=946 data-nosnippet>946</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 1h
-<a href=#947 id=947 data-nosnippet>947</a>    </span><span class="kw">pub </span>tpdp1h: f64,
+<a href=#947 id=947 data-nosnippet>947</a>    </span><span class="kw">pub </span>tpdp1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#948 id=948 data-nosnippet>948</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 24h
-<a href=#949 id=949 data-nosnippet>949</a>    </span><span class="kw">pub </span>tpdp24h: f64,
+<a href=#949 id=949 data-nosnippet>949</a>    </span><span class="kw">pub </span>tpdp24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#950 id=950 data-nosnippet>950</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 30m
-<a href=#951 id=951 data-nosnippet>951</a>    </span><span class="kw">pub </span>tpdp30m: f64,
+<a href=#951 id=951 data-nosnippet>951</a>    </span><span class="kw">pub </span>tpdp30m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#952 id=952 data-nosnippet>952</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 4h
-<a href=#953 id=953 data-nosnippet>953</a>    </span><span class="kw">pub </span>tpdp4h: f64,
+<a href=#953 id=953 data-nosnippet>953</a>    </span><span class="kw">pub </span>tpdp4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#954 id=954 data-nosnippet>954</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 5m
-<a href=#955 id=955 data-nosnippet>955</a>    </span><span class="kw">pub </span>tpdp5m: f64,
+<a href=#955 id=955 data-nosnippet>955</a>    </span><span class="kw">pub </span>tpdp5m: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#956 id=956 data-nosnippet>956</a>    <span class="doccomment">/// specifies the quote token of the target exchange
 <a href=#957 id=957 data-nosnippet>957</a>    </span><span class="kw">pub </span>tq: String,
 <a href=#958 id=958 data-nosnippet>958</a>    <span class="doccomment">/// specifies the date and the time of target ticker in UTC milliseconds
 <a href=#959 id=959 data-nosnippet>959</a>    </span><span class="kw">pub </span>tt: i64,
 <a href=#960 id=960 data-nosnippet>960</a>    <span class="doccomment">/// specifies the trading volume of the target exchange in the last 24 hours in requested currency
-<a href=#961 id=961 data-nosnippet>961</a>    </span><span class="kw">pub </span>tv: f64,
+<a href=#961 id=961 data-nosnippet>961</a>    </span><span class="kw">pub </span>tv: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#962 id=962 data-nosnippet>962</a>}
 <a href=#963 id=963 data-nosnippet>963</a>
 <a href=#964 id=964 data-nosnippet>964</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -980,8 +980,8 @@
 <a href=#980 id=980 data-nosnippet>980</a>#[non_exhaustive]
 <a href=#981 id=981 data-nosnippet>981</a></span><span class="kw">pub struct </span>PremiumView {
 <a href=#982 id=982 data-nosnippet>982</a>    <span class="kw">pub </span>detail: PremiumDetail,
-<a href=#983 id=983 data-nosnippet>983</a>    <span class="kw">pub </span>source_annualized_funding_rate: f64,
-<a href=#984 id=984 data-nosnippet>984</a>    <span class="kw">pub </span>target_annualized_funding_rate: f64,
+<a href=#983 id=983 data-nosnippet>983</a>    <span class="kw">pub </span>source_annualized_funding_rate: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#984 id=984 data-nosnippet>984</a>    <span class="kw">pub </span>target_annualized_funding_rate: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#985 id=985 data-nosnippet>985</a>}
 <a href=#986 id=986 data-nosnippet>986</a>
 <a href=#987 id=987 data-nosnippet>987</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
