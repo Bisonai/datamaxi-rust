@@ -1,0 +1,75 @@
+# Scheduled integration tests against the production DataMaxi+ API.
+#
+# `tests/live.rs` exercises real endpoints but is skipped in the regular
+# `rust.yml` test job unless DATAMAXI_API_KEY is set. This workflow runs it on
+# a schedule so spec-derived response types stay validated against real
+# payloads.
+#
+# Triggers:
+#   - schedule: daily at 07:00 UTC (low-traffic window).
+#   - workflow_dispatch: run on demand from the Actions tab.
+# Not on push/pull_request: real API calls, needs a secret, can be
+# rate-limited/flaky.
+
+name: live
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo test --test live
+        env:
+          DATAMAXI_API_KEY: ${{ secrets.DATAMAXI_API_KEY }}
+        run: cargo test --test live
+
+  # The live job runs unattended on a schedule, so a red run (expired/missing
+  # key, endpoint drift, etc.) could go unnoticed. On failure, open or update a
+  # tracking issue in this repo so the breakage surfaces. Uses the built-in
+  # GITHUB_TOKEN — no new secret.
+  notify-failure:
+    needs: [live]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the live-failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TRIGGER: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          gh label create live-failure \
+            --color B60205 \
+            --description "Automated: live workflow failed" \
+            2>/dev/null || true
+
+          body="live workflow failed.
+
+          - Trigger: ${TRIGGER}
+          - Failed run: ${RUN_URL}
+          - Time (UTC): $(date -u '+%Y-%m-%d %H:%M:%S')"
+
+          existing=$(gh issue list --label live-failure --state open \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create \
+              --label live-failure \
+              --title "live workflow is failing" \
+              --body "$body"
+          fi

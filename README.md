@@ -73,6 +73,12 @@ Most of the SDK is auto-generated from the OpenAPI spec via `datamaxi-codegen`. 
 
 We welcome contributions. If you discover a bug, please open an issue to discuss proposed changes.
 
+`tests/live.rs` runs a small suite against the production API and is skipped
+locally/in CI without a key. The `live` workflow (`.github/workflows/live.yml`)
+runs it daily against production; a maintainer must provision the
+`DATAMAXI_API_KEY` repo secret for it to do anything — without it the run is a
+soft no-op (each test SKIPs).
+
 ## License
 
 [MIT License](./LICENSE)
