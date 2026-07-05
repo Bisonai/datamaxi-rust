@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexAnnouncementsResponse {
     /// specifies the exchanges of the announcements
     pub category: Vec<String>,
@@ -24,6 +25,7 @@ pub struct CexAnnouncementsResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexAnnouncementsView {
     /// specifies the category of the announcement
     #[serde(rename = "c")]
@@ -47,6 +49,7 @@ pub struct CexAnnouncementsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexCandleResponse {
     pub currency: String,
     pub data: Vec<CexCandleView>,
@@ -58,6 +61,7 @@ pub struct CexCandleResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexCandleSymbolsView {
     /// specifies the base symbol
     pub b: String,
@@ -75,6 +79,7 @@ pub struct CexCandleSymbolsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexCandleView {
     /// specifies close price of the candle
     #[serde(rename = "c")]
@@ -98,6 +103,7 @@ pub struct CexCandleView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexFeesView {
     /// specifies base symbol
     pub base: String,
@@ -119,6 +125,7 @@ pub struct CexFeesView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolCautionsView {
     pub b: String,
     /// caution | warning | danger
@@ -133,6 +140,7 @@ pub struct CexSymbolCautionsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolDelistingsView {
     pub b: String,
     /// ms (scheduled or past)
@@ -148,6 +156,7 @@ pub struct CexSymbolDelistingsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolLiquidationView {
     pub b: String,
     pub e: String,
@@ -165,6 +174,7 @@ pub struct CexSymbolLiquidationView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolMetadataView {
     pub b: String,
     /// ms
@@ -185,6 +195,7 @@ pub struct CexSymbolMetadataView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolOiStatsView {
     pub b: String,
     /// %
@@ -207,6 +218,7 @@ pub struct CexSymbolOiStatsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolOiView {
     pub b: String,
     pub e: String,
@@ -220,6 +232,7 @@ pub struct CexSymbolOiView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolTagsView {
     pub b: String,
     pub confidence: i64,
@@ -232,6 +245,7 @@ pub struct CexSymbolTagsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexSymbolVolumeView {
     pub b: String,
     pub e: String,
@@ -248,6 +262,7 @@ pub struct CexSymbolVolumeView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexTokenUpdatesResponse {
     /// `data` specifies an array of the token updates
     pub data: Vec<CexTokenUpdatesView>,
@@ -260,6 +275,7 @@ pub struct CexTokenUpdatesResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct CexTokenUpdatesView {
     /// Specifies the base token
     #[serde(rename = "b")]
@@ -283,6 +299,7 @@ pub struct CexTokenUpdatesView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct ForexResponse {
     /// specifies the unix timestamp of the forex rate
     #[serde(rename = "d")]
@@ -297,6 +314,7 @@ pub struct ForexResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct FundingRateHistoryResponse {
     pub data: Vec<FundingRateHistoryView>,
     pub exchange: String,
@@ -308,6 +326,7 @@ pub struct FundingRateHistoryResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct FundingRateHistoryView {
     /// specifies the date and time in UNIX timestamp format
     #[serde(rename = "d")]
@@ -319,6 +338,7 @@ pub struct FundingRateHistoryView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct FundingRateLatestResponse {
     /// Specifies the base
     #[serde(rename = "b")]
@@ -351,6 +371,7 @@ pub struct FundingRateLatestResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct FundingRateSymbolsView {
     /// specifies the base symbol
     pub b: String,
@@ -368,12 +389,14 @@ pub struct FundingRateSymbolsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct IndexPriceResponse {
     pub data: Vec<IndexPriceView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct IndexPriceView {
     pub price: f64,
     pub timestamp: i64,
@@ -382,6 +405,7 @@ pub struct IndexPriceView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationEntry {
     pub base: String,
     pub exchange: String,
@@ -401,6 +425,7 @@ pub struct LiquidationEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationFeedEntry {
     pub base: String,
     pub exchange: String,
@@ -420,12 +445,14 @@ pub struct LiquidationFeedEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationFeedResponse {
     pub data: Vec<LiquidationFeedEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationHeatmapCell {
     pub base: String,
     pub exchange: String,
@@ -441,6 +468,7 @@ pub struct LiquidationHeatmapCell {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationHeatmapExchangesummary {
     pub exchange: String,
     #[serde(rename = "longUsd")]
@@ -453,6 +481,7 @@ pub struct LiquidationHeatmapExchangesummary {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationHeatmapResponse {
     /// (top tokens) × (all exchanges with data)
     pub cells: Vec<LiquidationHeatmapCell>,
@@ -471,6 +500,7 @@ pub struct LiquidationHeatmapResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationHeatmapTokensummary {
     pub base: String,
     #[serde(rename = "longUsd")]
@@ -487,6 +517,7 @@ pub struct LiquidationHeatmapTokensummary {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationMapAssumptions {
     #[serde(rename = "entrySamples")]
     pub entry_samples: i64,
@@ -500,6 +531,7 @@ pub struct LiquidationMapAssumptions {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationMapBucket {
     #[serde(rename = "l100xUsd")]
     pub l100x_usd: f64,
@@ -517,6 +549,7 @@ pub struct LiquidationMapBucket {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationMapResponse {
     pub assumptions: LiquidationMapAssumptions,
     pub base: String,
@@ -539,6 +572,7 @@ pub struct LiquidationMapResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationMapTierassumption {
     pub leverage: i64,
     pub share: f64,
@@ -546,12 +580,14 @@ pub struct LiquidationMapTierassumption {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationResponse {
     pub data: Vec<LiquidationEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationStatsBiggest {
     pub base: String,
     pub exchange: String,
@@ -562,6 +598,7 @@ pub struct LiquidationStatsBiggest {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationStatsResponse {
     pub biggest: LiquidationStatsBiggest,
     /// number of events
@@ -588,6 +625,7 @@ pub struct LiquidationStatsResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationSymbolHistoryBucket {
     /// Liquidated long positions in USD over this bucket (Side='sell').
     #[serde(rename = "longUsd")]
@@ -606,6 +644,7 @@ pub struct LiquidationSymbolHistoryBucket {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct LiquidationSymbolHistoryResponse {
     pub buckets: Vec<LiquidationSymbolHistoryBucket>,
     pub exchange: String,
@@ -624,12 +663,14 @@ pub struct LiquidationSymbolHistoryResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct ListingsHistoricalResponse {
     pub data: Vec<ListingsHistoricalView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct ListingsHistoricalView {
     pub announced_at: i64,
     pub base: String,
@@ -642,6 +683,7 @@ pub struct ListingsHistoricalView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct MarginBorrowResponse {
     pub cross: serde_json::Value,
     pub isolated: serde_json::Value,
@@ -649,6 +691,7 @@ pub struct MarginBorrowResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct NaverTrendView {
     pub d: i64,
     pub v: f64,
@@ -656,6 +699,7 @@ pub struct NaverTrendView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestHistoryAggregatedResponse {
     /// Data is keyed by exchange id → time-series points ordered by t asc.
     pub data: serde_json::Value,
@@ -665,6 +709,7 @@ pub struct OpenInterestHistoryAggregatedResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestListEntry {
     pub base: String,
     pub exchange: String,
@@ -681,12 +726,14 @@ pub struct OpenInterestListEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestListResponse {
     pub data: Vec<OpenInterestListEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestOverviewResponse {
     pub data: Vec<OpenInterestOverviewView>,
     pub key: String,
@@ -698,6 +745,7 @@ pub struct OpenInterestOverviewResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestOverviewView {
     pub exchanges: serde_json::Value,
     pub id: String,
@@ -706,6 +754,7 @@ pub struct OpenInterestOverviewView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestResponse {
     pub base: String,
     pub exchange: String,
@@ -722,6 +771,7 @@ pub struct OpenInterestResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestSummaryExchangesummary {
     pub exchange: String,
     #[serde(rename = "openInterestUsd")]
@@ -732,6 +782,7 @@ pub struct OpenInterestSummaryExchangesummary {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestSummaryResponse {
     /// sorted desc, all venues with data
     pub exchanges: Vec<OpenInterestSummaryExchangesummary>,
@@ -748,6 +799,7 @@ pub struct OpenInterestSummaryResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct OpenInterestSummaryTokensummary {
     pub base: String,
     pub icon: String,
@@ -763,6 +815,7 @@ pub struct OpenInterestSummaryTokensummary {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct PremiumDetail {
     pub bid: String,
     /// specifies the date and the time in UTC milliseconds
@@ -910,6 +963,7 @@ pub struct PremiumDetail {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct PremiumResponse {
     pub conversion_base: String,
     pub currency: String,
@@ -923,6 +977,7 @@ pub struct PremiumResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct PremiumView {
     pub detail: PremiumDetail,
     pub source_annualized_funding_rate: f64,
@@ -931,6 +986,7 @@ pub struct PremiumView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TelegramChannelsResponse {
     pub category: String,
     pub data: Vec<TelegramChannelsView>,
@@ -943,6 +999,7 @@ pub struct TelegramChannelsResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TelegramChannelsView {
     /// specifies the channel category
     pub category: String,
@@ -965,6 +1022,7 @@ pub struct TelegramChannelsView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TelegramMessagesResponse {
     pub category: String,
     /// specifies an array of the Telegram messages
@@ -978,6 +1036,7 @@ pub struct TelegramMessagesResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TelegramMessagesView {
     /// specifies the channel handle
     #[serde(rename = "channelHandle")]
@@ -1009,6 +1068,7 @@ pub struct TelegramMessagesView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TickerResponse {
     pub currency: String,
     pub data: TickerView,
@@ -1019,6 +1079,7 @@ pub struct TickerResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TickerView {
     /// specifies the base token
     #[serde(rename = "b")]
@@ -1066,6 +1127,7 @@ pub struct TickerView {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct TokenDetail {
     /// specifies cmc id of the token
     pub cmc_id: String,
@@ -1081,6 +1143,7 @@ pub struct TokenDetail {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct WalletStatusView {
     pub currency: String,
     pub deposit_message: String,
@@ -1097,6 +1160,7 @@ pub struct WalletStatusView {
 /// Specifies sort
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexAnnouncementsSort {
     Asc,
     Desc,
@@ -1121,6 +1185,7 @@ impl std::fmt::Display for CexAnnouncementsSort {
 /// Specifies key to sort by
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexAnnouncementsKey {
     Exchange,
     Category,
@@ -1149,6 +1214,7 @@ impl std::fmt::Display for CexAnnouncementsKey {
 /// Specifies category(s), separated by ,
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexAnnouncementsCategory {
     Notice,
     Listing,
@@ -1288,6 +1354,7 @@ impl CexAnnouncementsOptions {
 /// Specifies market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexCandleMarket {
     Spot,
     Futures,
@@ -1312,6 +1379,7 @@ impl std::fmt::Display for CexCandleMarket {
 /// Specifies currency
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexCandleCurrency {
     USD,
     KRW,
@@ -1336,6 +1404,7 @@ impl std::fmt::Display for CexCandleCurrency {
 /// Specifies market type
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexCandleExchangesMarket {
     Spot,
     Futures,
@@ -1360,6 +1429,7 @@ impl std::fmt::Display for CexCandleExchangesMarket {
 /// Specifies market type
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexCandleSymbolsMarket {
     Spot,
     Futures,
@@ -1532,6 +1602,7 @@ impl CexCandleSymbolsOptions {
 /// spot or futures
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolCautionsMarket {
     Spot,
     Futures,
@@ -1556,6 +1627,7 @@ impl std::fmt::Display for CexSymbolCautionsMarket {
 /// Minimum severity
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolCautionsMinLevel {
     Caution,
     Warning,
@@ -1582,6 +1654,7 @@ impl std::fmt::Display for CexSymbolCautionsMinLevel {
 /// spot or futures
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolDelistingsMarket {
     Spot,
     Futures,
@@ -1606,6 +1679,7 @@ impl std::fmt::Display for CexSymbolDelistingsMarket {
 /// spot or futures (empty = both)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolMetadataMarket {
     Spot,
     Futures,
@@ -1630,6 +1704,7 @@ impl std::fmt::Display for CexSymbolMetadataMarket {
 /// Convert *_usd fields to target currency (USD or KRW)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolOiStatsCurrency {
     USD,
     KRW,
@@ -1654,6 +1729,7 @@ impl std::fmt::Display for CexSymbolOiStatsCurrency {
 /// spot or futures
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolTagsMarket {
     Spot,
     Futures,
@@ -1678,6 +1754,7 @@ impl std::fmt::Display for CexSymbolTagsMarket {
 /// Tag source filter
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolTagsSource {
     RestNative,
     Announcement,
@@ -1706,6 +1783,7 @@ impl std::fmt::Display for CexSymbolTagsSource {
 /// Filter to spot or futures
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexSymbolVolumeMarket {
     Spot,
     Futures,
@@ -2297,6 +2375,7 @@ impl Forex {
 /// Specifies sort
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum FundingRateHistorySort {
     Asc,
     Desc,
@@ -2555,6 +2634,7 @@ impl IndexPriceOptions {
 /// Rolling window
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum LiquidationHeatmapWindow {
     _1h,
     _4h,
@@ -2581,6 +2661,7 @@ impl std::fmt::Display for LiquidationHeatmapWindow {
 /// Rolling window
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum LiquidationStatsWindow {
     _1h,
     _4h,
@@ -2607,6 +2688,7 @@ impl std::fmt::Display for LiquidationStatsWindow {
 /// Bucket interval
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum LiquidationSymbolHistoryInterval {
     _5m,
     _15m,
@@ -2633,6 +2715,7 @@ impl std::fmt::Display for LiquidationSymbolHistoryInterval {
 /// Lookback window
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum LiquidationSymbolHistoryWindow {
     _24h,
     _72h,
@@ -3116,6 +3199,7 @@ impl NaverTrend {
 /// Aggregation interval
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum OpenInterestHistoryAggregatedInterval {
     _5m,
     _15m,
@@ -3146,6 +3230,7 @@ impl std::fmt::Display for OpenInterestHistoryAggregatedInterval {
 /// Sort direction
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum OpenInterestOverviewSort {
     Asc,
     Desc,
@@ -3391,6 +3476,7 @@ impl OpenInterestSummaryOptions {
 /// Specifies source market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum PremiumSourceMarket {
     Spot,
     Futures,
@@ -3415,6 +3501,7 @@ impl std::fmt::Display for PremiumSourceMarket {
 /// Specifies target market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum PremiumTargetMarket {
     Spot,
     Futures,
@@ -3439,6 +3526,7 @@ impl std::fmt::Display for PremiumTargetMarket {
 /// Specifies premium type(s), separated by ,
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum PremiumPremiumType {
     SpotSpot,
     FuturesFutures,
@@ -3465,6 +3553,7 @@ impl std::fmt::Display for PremiumPremiumType {
 /// Specifies sort order
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum PremiumSort {
     Asc,
     Desc,
@@ -3751,6 +3840,7 @@ impl PremiumOptions {
 /// Specifies key to sort by
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TelegramChannelsKey {
     ChannelName,
     Handle,
@@ -3779,6 +3869,7 @@ impl std::fmt::Display for TelegramChannelsKey {
 /// Specifies sort
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TelegramChannelsSort {
     Asc,
     Desc,
@@ -3803,6 +3894,7 @@ impl std::fmt::Display for TelegramChannelsSort {
 /// Specifies key to sort by
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TelegramMessagesKey {
     ChannelName,
     Views,
@@ -3833,6 +3925,7 @@ impl std::fmt::Display for TelegramMessagesKey {
 /// Specifies sort
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TelegramMessagesSort {
     Asc,
     Desc,
@@ -3857,6 +3950,7 @@ impl std::fmt::Display for TelegramMessagesSort {
 /// Specifies category
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TelegramMessagesCategory {
     English,
     Korean,
@@ -4067,6 +4161,7 @@ impl TelegramMessagesOptions {
 /// Specifies market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TickerMarket {
     Spot,
     Futures,
@@ -4091,6 +4186,7 @@ impl std::fmt::Display for TickerMarket {
 /// Specifies currency applied to price values
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TickerCurrency {
     KRW,
     USD,
@@ -4115,6 +4211,7 @@ impl std::fmt::Display for TickerCurrency {
 /// Specifies conversion base applied to price values
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TickerConversionBase {
     USD,
     USDT,
@@ -4139,6 +4236,7 @@ impl std::fmt::Display for TickerConversionBase {
 /// Specifies market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TickerExchangesMarket {
     Spot,
     Futures,
@@ -4163,6 +4261,7 @@ impl std::fmt::Display for TickerExchangesMarket {
 /// Specifies market
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum TickerSymbolsMarket {
     Spot,
     Futures,
@@ -4293,6 +4392,7 @@ impl TickerOptions {
 /// Specifies type of token update
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum CexTokenUpdatesType {
     Listed,
     Delisted,

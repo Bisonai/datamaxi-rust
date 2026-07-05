@@ -215,6 +215,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Errors returned by the Datamaxi+ API client.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     /// No API key was provided explicitly and `DATAMAXI_API_KEY` is unset or empty.
     #[error("missing API key: pass it to ClientBuilder::api_key or set DATAMAXI_API_KEY")]
