@@ -15,7 +15,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 The client is **async** by default and needs an async runtime (e.g. `tokio`).
 For a synchronous client, enable the `blocking` feature and use the mirrored
-wrappers under `datamaxi::generated::blocking`:
+wrappers under `datamaxi::blocking`:
 
 ```toml
 [dependencies]
@@ -41,7 +41,7 @@ Set `DATAMAXI_API_KEY` to avoid passing the key inline.
 
 ```rust
 use datamaxi::api::Datamaxi;
-use datamaxi::generated::{
+use datamaxi::{
     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
     CexCandleSymbolsOptions,
 };
@@ -65,7 +65,7 @@ candle
 ```
 
 With the `blocking` feature the same calls are synchronous (no `.await`), via
-`datamaxi::generated::blocking::CexCandle` and `datamaxi::api::blocking`.
+`datamaxi::blocking::CexCandle` and `datamaxi::api::blocking`.
 
 Data endpoints deserialize into typed response structs generated from the API
 spec: object responses into a struct (e.g. `candle.get(..)` → `CexCandleResponse`)

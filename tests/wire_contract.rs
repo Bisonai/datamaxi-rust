@@ -11,7 +11,7 @@
 //! if a future codegen regen reintroduces that bug.
 
 use datamaxi::api::{ClientBuilder, Datamaxi, Error};
-use datamaxi::generated::{
+use datamaxi::{
     CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
     CexSymbol, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Liquidation,
     LiquidationHeatmapOptions, LiquidationHeatmapResponse, LiquidationHeatmapWindow,
@@ -383,7 +383,7 @@ fn client_builder_without_key_errors() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_cex_candle_exchanges_smoke() {
-    use datamaxi::generated::blocking::CexCandle as BlockingCexCandle;
+    use datamaxi::blocking::CexCandle as BlockingCexCandle;
 
     let mut server = mockito::Server::new();
     let mock = server
@@ -408,7 +408,7 @@ fn blocking_cex_candle_exchanges_smoke() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_liquidation_heatmap_smoke() {
-    use datamaxi::generated::blocking::Liquidation as BlockingLiquidation;
+    use datamaxi::blocking::Liquidation as BlockingLiquidation;
 
     let mut server = mockito::Server::new();
     let mock = server
