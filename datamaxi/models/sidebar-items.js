@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CandleDetail","CandleOptions","CandleResponse","SymbolsOptions","SymbolsResponse"]};

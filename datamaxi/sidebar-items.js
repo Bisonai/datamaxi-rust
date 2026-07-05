@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["api","cex","generated","models"]};
+window.SIDEBAR_ITEMS = {"mod":["api","generated"]};
