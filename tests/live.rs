@@ -76,11 +76,7 @@ fn live_cex_candle_get() {
         .get("binance", "BTC-USDT", opts)
         .expect("live /cex/candle request failed");
 
-    let data = v
-        .get("data")
-        .and_then(|d| d.as_array())
-        .expect("expected a `data` array in the candle response");
-    assert!(!data.is_empty(), "candle `data` should not be empty");
+    assert!(!v.data.is_empty(), "candle `data` should not be empty");
 }
 
 /// `/liquidation/heatmap` returns an object with a `tokens` array. Also
@@ -98,8 +94,8 @@ fn live_liquidation_heatmap() {
         .heatmap(opts)
         .expect("live /liquidation/heatmap request failed");
 
-    assert!(
-        v.get("tokens").and_then(|t| t.as_array()).is_some(),
-        "expected a `tokens` array in the heatmap response, got {v}"
+    assert_eq!(
+        v.window, "1h",
+        "heatmap response should echo the requested window"
     );
 }
