@@ -1,5 +1,7 @@
 use datamaxi::api::Datamaxi;
-use datamaxi::generated::{CexCandle, CexCandleOptions, CexCandleSymbolsOptions};
+use datamaxi::generated::{
+    CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
+};
 use std::env;
 
 fn main() {
@@ -8,14 +10,14 @@ fn main() {
     let candle: CexCandle = Datamaxi::new(api_key);
 
     // CEX Candle Exchanges
-    match candle.exchanges("futures") {
+    match candle.exchanges(CexCandleExchangesMarket::Futures) {
         Ok(answer) => println!("{}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Symbols
-    let symbols_options = CexCandleSymbolsOptions::new().exchange("binance");
-    match candle.symbols(symbols_options) {
+    let symbols_options = CexCandleSymbolsOptions::new();
+    match candle.symbols("binance", symbols_options) {
         Ok(answer) => println!("{}", answer),
         Err(e) => println!("Error: {}", e),
     }
@@ -27,8 +29,8 @@ fn main() {
     }
 
     // CEX Candle Data
-    let candle_options = CexCandleOptions::new();
-    match candle.get("binance", "spot", "ETH-USDT", candle_options) {
+    let candle_options = CexCandleOptions::new().market(CexCandleMarket::Spot);
+    match candle.get("binance", "ETH-USDT", candle_options) {
         Ok(answer) => println!("{}", answer),
         Err(e) => println!("Error: {}", e),
     }

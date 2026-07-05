@@ -12,9 +12,11 @@
 
 use datamaxi::api::{ClientBuilder, Datamaxi, Error};
 use datamaxi::generated::{
-    CexCandle, CexCandleOptions, CexSymbol, CexSymbolCautionsOptions, Liquidation,
-    LiquidationHeatmapOptions, LiquidationStatsOptions, OpenInterest, OpenInterestSummaryOptions,
-    Premium, PremiumOptions,
+    CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
+    CexSymbol, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Liquidation,
+    LiquidationHeatmapOptions, LiquidationHeatmapWindow, LiquidationStatsOptions,
+    LiquidationStatsWindow, OpenInterest, OpenInterestSummaryOptions, Premium, PremiumOptions,
+    PremiumPremiumType,
 };
 use mockito::Matcher;
 
@@ -27,7 +29,7 @@ fn liquidation_heatmap_sends_top_n_window_and_apikey() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/liquidation/heatmap")
+        .mock("GET", "/api/v1/liquidation/heatmap")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("top_n".into(), "10".into()),
@@ -40,7 +42,9 @@ fn liquidation_heatmap_sends_top_n_window_and_apikey() {
         .create();
 
     let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
-    let opts = LiquidationHeatmapOptions::new().window("1h").topN(10);
+    let opts = LiquidationHeatmapOptions::new()
+        .window(LiquidationHeatmapWindow::_1h)
+        .top_n(10);
     let res = liq.heatmap(opts);
 
     mock.assert();
@@ -53,7 +57,7 @@ fn liquidation_stats_sends_min_volume_usd() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/liquidation/stats")
+        .mock("GET", "/api/v1/liquidation/stats")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("min_volume_usd".into(), "5".into()),
@@ -66,8 +70,8 @@ fn liquidation_stats_sends_min_volume_usd() {
 
     let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
     let opts = LiquidationStatsOptions::new()
-        .window("24h")
-        .minVolumeUsd(5.0);
+        .window(LiquidationStatsWindow::_24h)
+        .min_volume_usd(5.0);
     let res = liq.stats(opts);
 
     mock.assert();
@@ -80,7 +84,7 @@ fn cex_candle_sends_required_and_optional_keys() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/cex/candle")
+        .mock("GET", "/api/v1/cex/candle")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("exchange".into(), "binance".into()),
@@ -95,8 +99,11 @@ fn cex_candle_sends_required_and_optional_keys() {
         .create();
 
     let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
-    let opts = CexCandleOptions::new().interval("1h").currency("USD");
-    let res = candle.get("binance", "spot", "BTC-USDT", opts);
+    let opts = CexCandleOptions::new()
+        .market(CexCandleMarket::Spot)
+        .interval("1h")
+        .currency(CexCandleCurrency::USD);
+    let res = candle.get("binance", "BTC-USDT", opts);
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
@@ -115,7 +122,7 @@ fn query_params_are_percent_encoded() {
     let raw_symbol = "A&B=C D\u{e9}";
 
     let mock = server
-        .mock("GET", "/cex/candle")
+        .mock("GET", "/api/v1/cex/candle")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("exchange".into(), "binance".into()),
@@ -129,7 +136,11 @@ fn query_params_are_percent_encoded() {
         .create();
 
     let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
-    let res = candle.get("binance", "spot", raw_symbol, CexCandleOptions::new());
+    let res = candle.get(
+        "binance",
+        raw_symbol,
+        CexCandleOptions::new().market(CexCandleMarket::Spot),
+    );
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
@@ -140,7 +151,7 @@ fn query_params_are_percent_encoded() {
 fn call_with_status(status: usize, body: &str) -> datamaxi::api::Result<serde_json::Value> {
     let mut server = mockito::Server::new();
     let _mock = server
-        .mock("GET", "/liquidation/heatmap")
+        .mock("GET", "/api/v1/liquidation/heatmap")
         .with_status(status)
         .with_body(body)
         .create();
@@ -199,17 +210,19 @@ fn status_404_maps_to_unexpected_status_code() {
 //
 // These extend the heatmap/stats guards to more endpoints most at risk of a
 // camelCase-builder → snake_case-wire-key regression on a codegen regen (the
-// PR #8 failure mode). Each also locks the request path (no `/api/v1` prefix
-// duplication, per 7c84bae) since `base_url` is the mock server.
+// PR #8 failure mode). Each also locks the request path (the generated paths
+// carry the `/api/v1` prefix exactly once — no duplication with `base_url`,
+// which is the bare mock-server host).
 
-/// `/open-interest/summary`: the `topN` builder must serialize to the `top_n`
-/// wire key — the same camelCase→snake_case case PR #8 got wrong on liquidation.
+/// `/api/v1/open-interest/summary`: the `top_n` builder must serialize to the
+/// `top_n` wire key — the same camelCase→snake_case case PR #8 got wrong on
+/// liquidation.
 #[test]
 fn open_interest_summary_sends_top_n() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/open-interest/summary")
+        .mock("GET", "/api/v1/open-interest/summary")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::UrlEncoded("top_n".into(), "5".into()))
         .with_status(200)
@@ -219,7 +232,7 @@ fn open_interest_summary_sends_top_n() {
         .create();
 
     let oi: OpenInterest = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
-    let res = oi.summary(OpenInterestSummaryOptions::new().topN(5));
+    let res = oi.summary(OpenInterestSummaryOptions::new().top_n(5));
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
@@ -232,11 +245,11 @@ fn cex_symbol_cautions_sends_snake_keys() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/cex/symbol/cautions")
+        .mock("GET", "/api/v1/cex/symbol/cautions")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("exchange".into(), "binance".into()),
-            Matcher::UrlEncoded("min_level".into(), "high".into()),
+            Matcher::UrlEncoded("min_level".into(), "danger".into()),
             Matcher::UrlEncoded("active_only".into(), "true".into()),
         ]))
         .with_status(200)
@@ -248,7 +261,7 @@ fn cex_symbol_cautions_sends_snake_keys() {
     let sym: CexSymbol = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
     let opts = CexSymbolCautionsOptions::new()
         .exchange("binance")
-        .min_level("high")
+        .min_level(CexSymbolCautionsMinLevel::Danger)
         .active_only(true);
     let res = sym.cautions(opts);
 
@@ -257,18 +270,18 @@ fn cex_symbol_cautions_sends_snake_keys() {
 }
 
 /// `/premium`: several multi-word snake_case keys (`source_exchange`,
-/// `target_exchange`, `premium_type`) and the un-prefixed path.
+/// `target_exchange`, `premium_type`) and the `/api/v1`-prefixed path.
 #[test]
 fn premium_sends_snake_keys() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/premium")
+        .mock("GET", "/api/v1/premium")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::AllOf(vec![
             Matcher::UrlEncoded("source_exchange".into(), "binance".into()),
             Matcher::UrlEncoded("target_exchange".into(), "upbit".into()),
-            Matcher::UrlEncoded("premium_type".into(), "kimchi".into()),
+            Matcher::UrlEncoded("premium_type".into(), "spot-futures".into()),
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
@@ -280,7 +293,7 @@ fn premium_sends_snake_keys() {
     let opts = PremiumOptions::new()
         .source_exchange("binance")
         .target_exchange("upbit")
-        .premium_type("kimchi");
+        .premium_type(PremiumPremiumType::SpotFutures);
     let res = premium.get(opts);
 
     mock.assert();
@@ -296,7 +309,7 @@ fn client_builder_sets_user_agent_and_auth() {
     let mut server = mockito::Server::new();
 
     let mock = server
-        .mock("GET", "/cex/candle/exchanges")
+        .mock("GET", "/api/v1/cex/candle/exchanges")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_header(
             "user-agent",
@@ -315,7 +328,7 @@ fn client_builder_sets_user_agent_and_auth() {
         .build()
         .expect("explicit api key should build");
     let candle = CexCandle { client };
-    let res = candle.exchanges("spot");
+    let res = candle.exchanges(CexCandleExchangesMarket::Spot);
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);

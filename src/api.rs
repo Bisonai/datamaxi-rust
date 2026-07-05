@@ -6,7 +6,11 @@ use std::io::Read;
 use std::time::Duration;
 use thiserror::Error;
 
-const BASE_URL: &str = "https://api.datamaxiplus.com/api/v1";
+// Host only: the generated endpoint paths are fully qualified and already
+// carry the `/api/v1` prefix, so the base URL must not repeat it (otherwise
+// requests double-prefix to `/api/v1/api/v1/...`). Matches the documented
+// default in the crate docs.
+const BASE_URL: &str = "https://api.datamaxiplus.com";
 
 /// Default per-request timeout, matching the Python SDK's default.
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);

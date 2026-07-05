@@ -33,17 +33,24 @@
 //!
 //! ```no_run
 //! use datamaxi::api::Datamaxi;
-//! use datamaxi::generated::{CexCandle, CexCandleOptions, CexCandleSymbolsOptions};
+//! use datamaxi::generated::{
+//!     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
+//!     CexCandleSymbolsOptions,
+//! };
 //!
 //! let candle: CexCandle = Datamaxi::new("my_api_key".to_string());
 //!
 //! // Supported exchanges, symbols and intervals
-//! let _ = candle.exchanges("spot");
-//! let _ = candle.symbols(CexCandleSymbolsOptions::new().exchange("binance"));
+//! let _ = candle.exchanges(CexCandleExchangesMarket::Spot);
+//! let _ = candle.symbols("binance", CexCandleSymbolsOptions::new());
 //! let _ = candle.intervals();
 //!
 //! // Fetch CEX candle data
-//! let _ = candle.get("binance", "spot", "BTC-USDT", CexCandleOptions::new());
+//! let _ = candle.get(
+//!     "binance",
+//!     "BTC-USDT",
+//!     CexCandleOptions::new().market(CexCandleMarket::Spot),
+//! );
 //! ```
 //!
 //! ## Links
