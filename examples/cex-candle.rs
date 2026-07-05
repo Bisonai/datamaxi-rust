@@ -1,5 +1,5 @@
 use datamaxi::api::Datamaxi;
-use datamaxi::generated::{
+use datamaxi::{
     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
 };
 use std::env;

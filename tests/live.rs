@@ -23,7 +23,7 @@
 //! ```
 
 use datamaxi::api::{Datamaxi, Error};
-use datamaxi::generated::{
+use datamaxi::{
     Announcements, CexAnnouncementsOptions, CexCandle, CexCandleExchangesMarket, CexCandleMarket,
     CexCandleOptions, CexTokenUpdatesOptions, Forex, FundingRate, FundingRateHistoryOptions,
     IndexPrice, IndexPriceOptions, Liquidation, LiquidationFeedOptions, LiquidationHeatmapOptions,

@@ -33,11 +33,11 @@
 //!
 //! The client is async by default (requires a runtime such as `tokio`). For a
 //! synchronous client, enable the `blocking` feature and use the mirrored
-//! wrappers under `datamaxi::generated::blocking` with `datamaxi::api::blocking`.
+//! wrappers under `datamaxi::blocking` with `datamaxi::api::blocking`.
 //!
 //! ```no_run
 //! use datamaxi::api::Datamaxi;
-//! use datamaxi::generated::{
+//! use datamaxi::{
 //!     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
 //!     CexCandleSymbolsOptions,
 //! };
@@ -79,22 +79,25 @@
 /// API definitions and related utilities.
 pub mod api;
 
-/// Auto-generated typed wrappers for every public REST endpoint on the data
-/// API. This is the canonical surface for every endpoint group (CEX candle,
-/// OI, Liquidation, cex-symbol, …).
-///
-/// Usage:
-/// ```ignore
-/// use datamaxi::api::Datamaxi;
-/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
-///
-/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
-/// let opts = LiquidationHeatmapOptions::new();
-/// let heatmap = liq.heatmap(opts).await?;
-/// ```
-// `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
-// generator's unconditional imports and its `new()`-only option constructors,
-// so they are suppressed at the module boundary rather than hand-edited in
-// generated output.
+// `generated.rs` is code-generated (DO NOT EDIT). Its contents are re-exported
+// at the crate root (below), so callers write `datamaxi::CexCandle` rather than
+// through this module path. Hidden from the docs but kept `pub` for backward
+// compatibility. The lint allows reflect the generator's unconditional imports
+// and its `new()`-only option constructors.
+#[doc(hidden)]
 #[allow(unused_imports, clippy::new_without_default)]
 pub mod generated;
+
+/// Typed wrappers for every REST endpoint on the data API — the canonical
+/// surface (CEX candle, OI, Liquidation, cex-symbol, …). Async by default; with
+/// the `blocking` feature, a parallel [`blocking`] module offers synchronous
+/// equivalents.
+///
+/// ```ignore
+/// use datamaxi::api::Datamaxi;
+/// use datamaxi::{Liquidation, LiquidationHeatmapOptions};
+///
+/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
+/// let heatmap = liq.heatmap(LiquidationHeatmapOptions::new()).await?;
+/// ```
+pub use generated::*;
