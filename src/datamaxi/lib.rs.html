@@ -33,11 +33,11 @@
 <a href=#33 id=33 data-nosnippet>33</a>//!
 <a href=#34 id=34 data-nosnippet>34</a>//! The client is async by default (requires a runtime such as `tokio`). For a
 <a href=#35 id=35 data-nosnippet>35</a>//! synchronous client, enable the `blocking` feature and use the mirrored
-<a href=#36 id=36 data-nosnippet>36</a>//! wrappers under `datamaxi::generated::blocking` with `datamaxi::api::blocking`.
+<a href=#36 id=36 data-nosnippet>36</a>//! wrappers under `datamaxi::blocking` with `datamaxi::api::blocking`.
 <a href=#37 id=37 data-nosnippet>37</a>//!
 <a href=#38 id=38 data-nosnippet>38</a>//! ```no_run
 <a href=#39 id=39 data-nosnippet>39</a>//! use datamaxi::api::Datamaxi;
-<a href=#40 id=40 data-nosnippet>40</a>//! use datamaxi::generated::{
+<a href=#40 id=40 data-nosnippet>40</a>//! use datamaxi::{
 <a href=#41 id=41 data-nosnippet>41</a>//!     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
 <a href=#42 id=42 data-nosnippet>42</a>//!     CexCandleSymbolsOptions,
 <a href=#43 id=43 data-nosnippet>43</a>//! };
@@ -79,23 +79,26 @@
 <a href=#79 id=79 data-nosnippet>79</a>/// API definitions and related utilities.
 <a href=#80 id=80 data-nosnippet>80</a></span><span class="kw">pub mod </span>api;
 <a href=#81 id=81 data-nosnippet>81</a>
-<a href=#82 id=82 data-nosnippet>82</a><span class="doccomment">/// Auto-generated typed wrappers for every public REST endpoint on the data
-<a href=#83 id=83 data-nosnippet>83</a>/// API. This is the canonical surface for every endpoint group (CEX candle,
-<a href=#84 id=84 data-nosnippet>84</a>/// OI, Liquidation, cex-symbol, …).
-<a href=#85 id=85 data-nosnippet>85</a>///
-<a href=#86 id=86 data-nosnippet>86</a>/// Usage:
-<a href=#87 id=87 data-nosnippet>87</a>/// ```ignore
-<a href=#88 id=88 data-nosnippet>88</a>/// use datamaxi::api::Datamaxi;
-<a href=#89 id=89 data-nosnippet>89</a>/// use datamaxi::generated::{Liquidation, LiquidationHeatmapOptions};
-<a href=#90 id=90 data-nosnippet>90</a>///
-<a href=#91 id=91 data-nosnippet>91</a>/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
-<a href=#92 id=92 data-nosnippet>92</a>/// let opts = LiquidationHeatmapOptions::new();
-<a href=#93 id=93 data-nosnippet>93</a>/// let heatmap = liq.heatmap(opts).await?;
-<a href=#94 id=94 data-nosnippet>94</a>/// ```
-<a href=#95 id=95 data-nosnippet>95</a></span><span class="comment">// `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
-<a href=#96 id=96 data-nosnippet>96</a>// generator's unconditional imports and its `new()`-only option constructors,
-<a href=#97 id=97 data-nosnippet>97</a>// so they are suppressed at the module boundary rather than hand-edited in
-<a href=#98 id=98 data-nosnippet>98</a>// generated output.
-<a href=#99 id=99 data-nosnippet>99</a></span><span class="attr">#[allow(unused_imports, clippy::new_without_default)]
-<a href=#100 id=100 data-nosnippet>100</a></span><span class="kw">pub mod </span>generated;
+<a href=#82 id=82 data-nosnippet>82</a><span class="comment">// `generated.rs` is code-generated (DO NOT EDIT). Its contents are re-exported
+<a href=#83 id=83 data-nosnippet>83</a>// at the crate root (below), so callers write `datamaxi::CexCandle` rather than
+<a href=#84 id=84 data-nosnippet>84</a>// through this module path. Hidden from the docs but kept `pub` for backward
+<a href=#85 id=85 data-nosnippet>85</a>// compatibility. The lint allows reflect the generator's unconditional imports
+<a href=#86 id=86 data-nosnippet>86</a>// and its `new()`-only option constructors.
+<a href=#87 id=87 data-nosnippet>87</a></span><span class="attr">#[doc(hidden)]
+<a href=#88 id=88 data-nosnippet>88</a>#[allow(unused_imports, clippy::new_without_default)]
+<a href=#89 id=89 data-nosnippet>89</a></span><span class="kw">pub mod </span>generated;
+<a href=#90 id=90 data-nosnippet>90</a>
+<a href=#91 id=91 data-nosnippet>91</a><span class="doccomment">/// Typed wrappers for every REST endpoint on the data API — the canonical
+<a href=#92 id=92 data-nosnippet>92</a>/// surface (CEX candle, OI, Liquidation, cex-symbol, …). Async by default; with
+<a href=#93 id=93 data-nosnippet>93</a>/// the `blocking` feature, a parallel [`blocking`] module offers synchronous
+<a href=#94 id=94 data-nosnippet>94</a>/// equivalents.
+<a href=#95 id=95 data-nosnippet>95</a>///
+<a href=#96 id=96 data-nosnippet>96</a>/// ```ignore
+<a href=#97 id=97 data-nosnippet>97</a>/// use datamaxi::api::Datamaxi;
+<a href=#98 id=98 data-nosnippet>98</a>/// use datamaxi::{Liquidation, LiquidationHeatmapOptions};
+<a href=#99 id=99 data-nosnippet>99</a>///
+<a href=#100 id=100 data-nosnippet>100</a>/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
+<a href=#101 id=101 data-nosnippet>101</a>/// let heatmap = liq.heatmap(LiquidationHeatmapOptions::new()).await?;
+<a href=#102 id=102 data-nosnippet>102</a>/// ```
+<a href=#103 id=103 data-nosnippet>103</a></span><span class="kw">pub use </span>generated::<span class="kw-2">*</span>;
 </code></pre></div></section></main></body></html>
