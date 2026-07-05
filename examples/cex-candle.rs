@@ -1,6 +1,5 @@
-use datamaxi::api::Datamaxi;
 use datamaxi::{
-    CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
+    CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions, Client,
 };
 use std::env;
 
@@ -8,7 +7,7 @@ use std::env;
 async fn main() {
     dotenvy::dotenv().ok();
     let api_key = env::var("DATAMAXI_API_KEY").expect("DATAMAXI_API_KEY not found");
-    let candle: CexCandle = Datamaxi::new(api_key);
+    let candle = Client::new(api_key).cex_candle();
 
     // CEX Candle Exchanges
     match candle.exchanges(CexCandleExchangesMarket::Futures).await {
