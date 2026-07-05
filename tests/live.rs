@@ -59,13 +59,14 @@ macro_rules! key_or_skip {
 
 /// `/cex/candle/exchanges` returns a non-empty list including a well-known
 /// exchange. Locks the path, auth, and top-level array shape against prod.
-#[test]
-fn live_cex_candle_exchanges() {
+#[tokio::test]
+async fn live_cex_candle_exchanges() {
     let key = key_or_skip!("live_cex_candle_exchanges");
     let candle: CexCandle = Datamaxi::new(key);
 
     let v = candle
         .exchanges(CexCandleExchangesMarket::Spot)
+        .await
         .expect("live /cex/candle/exchanges request failed");
 
     assert!(!v.is_empty(), "exchange list should not be empty");
@@ -77,8 +78,8 @@ fn live_cex_candle_exchanges() {
 
 /// `/cex/candle` returns an object carrying a `data` array. Locks the primary
 /// candle endpoint and its response envelope against prod.
-#[test]
-fn live_cex_candle_get() {
+#[tokio::test]
+async fn live_cex_candle_get() {
     let key = key_or_skip!("live_cex_candle_get");
     let candle: CexCandle = Datamaxi::new(key);
 
@@ -87,19 +88,21 @@ fn live_cex_candle_get() {
         .interval("1h");
     let v = candle
         .get("binance", "BTC-USDT", opts)
+        .await
         .expect("live /cex/candle request failed");
 
     assert!(!v.data.is_empty(), "candle `data` should not be empty");
 }
 
 /// `/cex/announcements` returns a paginated `data` array of announcements.
-#[test]
-fn live_cex_announcements() {
+#[tokio::test]
+async fn live_cex_announcements() {
     let key = key_or_skip!("live_cex_announcements");
     let ann: Announcements = Datamaxi::new(key);
 
     let resp = ann
         .announcements(CexAnnouncementsOptions::new())
+        .await
         .expect("live /cex/announcements request failed");
 
     assert!(
@@ -110,13 +113,14 @@ fn live_cex_announcements() {
 
 /// `/cex/token/updates` returns a paginated `data` array of listed/delisted
 /// token updates.
-#[test]
-fn live_cex_token_updates() {
+#[tokio::test]
+async fn live_cex_token_updates() {
     let key = key_or_skip!("live_cex_token_updates");
     let token: Token = Datamaxi::new(key);
 
     let resp = token
         .updates(CexTokenUpdatesOptions::new())
+        .await
         .expect("live /cex/token/updates request failed");
 
     assert!(
@@ -126,12 +130,15 @@ fn live_cex_token_updates() {
 }
 
 /// `/forex` echoes the requested `symbol` in the typed response.
-#[test]
-fn live_forex_get() {
+#[tokio::test]
+async fn live_forex_get() {
     let key = key_or_skip!("live_forex_get");
     let forex: Forex = Datamaxi::new(key);
 
-    let resp = forex.get("USD-KRW").expect("live /forex request failed");
+    let resp = forex
+        .get("USD-KRW")
+        .await
+        .expect("live /forex request failed");
 
     assert_eq!(
         resp.symbol, "USD-KRW",
@@ -141,14 +148,15 @@ fn live_forex_get() {
 
 /// `/funding-rate/history` returns a non-empty `data` array for a liquid
 /// perpetual pair.
-#[test]
-fn live_funding_rate_history() {
+#[tokio::test]
+async fn live_funding_rate_history() {
     let key = key_or_skip!("live_funding_rate_history");
     let fr: FundingRate = Datamaxi::new(key);
 
     let opts = FundingRateHistoryOptions::new().limit(5);
     let resp = fr
         .history("binance", "BTC-USDT", opts)
+        .await
         .expect("live /funding-rate/history request failed");
 
     assert!(
@@ -158,13 +166,14 @@ fn live_funding_rate_history() {
 }
 
 /// `/funding-rate/latest` echoes the requested `exchange`.
-#[test]
-fn live_funding_rate_latest() {
+#[tokio::test]
+async fn live_funding_rate_latest() {
     let key = key_or_skip!("live_funding_rate_latest");
     let fr: FundingRate = Datamaxi::new(key);
 
     let resp = fr
         .latest("binance", "BTC-USDT")
+        .await
         .expect("live /funding-rate/latest request failed");
 
     assert_eq!(
@@ -174,13 +183,14 @@ fn live_funding_rate_latest() {
 }
 
 /// `/index-price` returns a non-empty `data` array of price points.
-#[test]
-fn live_index_price_get() {
+#[tokio::test]
+async fn live_index_price_get() {
     let key = key_or_skip!("live_index_price_get");
     let idx: IndexPrice = Datamaxi::new(key);
 
     let resp = idx
         .get("BTC", IndexPriceOptions::new())
+        .await
         .expect("live /index-price request failed");
 
     assert!(
@@ -190,14 +200,15 @@ fn live_index_price_get() {
 }
 
 /// `/liquidation` returns at most `limit` recent liquidation events.
-#[test]
-fn live_liquidation_get() {
+#[tokio::test]
+async fn live_liquidation_get() {
     let key = key_or_skip!("live_liquidation_get");
     let liq: Liquidation = Datamaxi::new(key);
 
     let opts = LiquidationOptions::new().limit(5);
     let resp = liq
         .get("binance", "BTC-USDT", opts)
+        .await
         .expect("live /liquidation request failed");
 
     assert!(
@@ -208,14 +219,15 @@ fn live_liquidation_get() {
 
 /// `/liquidation/feed` returns at most `limit` recent liquidation events
 /// across all symbols.
-#[test]
-fn live_liquidation_feed() {
+#[tokio::test]
+async fn live_liquidation_feed() {
     let key = key_or_skip!("live_liquidation_feed");
     let liq: Liquidation = Datamaxi::new(key);
 
     let opts = LiquidationFeedOptions::new().exchange("binance").limit(5);
     let resp = liq
         .feed(opts)
+        .await
         .expect("live /liquidation/feed request failed");
 
     assert!(
@@ -227,8 +239,8 @@ fn live_liquidation_feed() {
 /// `/liquidation/heatmap` returns an object with a `tokens` array. Also
 /// exercises the `top_n` snake_case wire key over the real API (the PR #8
 /// regression surface).
-#[test]
-fn live_liquidation_heatmap() {
+#[tokio::test]
+async fn live_liquidation_heatmap() {
     let key = key_or_skip!("live_liquidation_heatmap");
     let liq: Liquidation = Datamaxi::new(key);
 
@@ -237,6 +249,7 @@ fn live_liquidation_heatmap() {
         .top_n(3);
     let v = liq
         .heatmap(opts)
+        .await
         .expect("live /liquidation/heatmap request failed");
 
     assert_eq!(
@@ -246,8 +259,8 @@ fn live_liquidation_heatmap() {
 }
 
 /// `/liquidation/map` echoes the requested `exchange` for a liquid pair.
-#[test]
-fn live_liquidation_map() {
+#[tokio::test]
+async fn live_liquidation_map() {
     let key = key_or_skip!("live_liquidation_map");
     let liq: Liquidation = Datamaxi::new(key);
 
@@ -255,7 +268,10 @@ fn live_liquidation_map() {
         .exchange("binance")
         .base("BTC")
         .quote("USDT");
-    let resp = liq.map(opts).expect("live /liquidation/map request failed");
+    let resp = liq
+        .map(opts)
+        .await
+        .expect("live /liquidation/map request failed");
 
     assert_eq!(
         resp.exchange, "binance",
@@ -265,14 +281,15 @@ fn live_liquidation_map() {
 
 /// `/liquidation/stats` echoes the requested `window` (also the `min_volume_usd`
 /// snake_case wire key from the PR #8 regression surface).
-#[test]
-fn live_liquidation_stats() {
+#[tokio::test]
+async fn live_liquidation_stats() {
     let key = key_or_skip!("live_liquidation_stats");
     let liq: Liquidation = Datamaxi::new(key);
 
     let opts = LiquidationStatsOptions::new().window(LiquidationStatsWindow::_24h);
     let resp = liq
         .stats(opts)
+        .await
         .expect("live /liquidation/stats request failed");
 
     assert_eq!(
@@ -282,8 +299,8 @@ fn live_liquidation_stats() {
 }
 
 /// `/liquidation/symbol-history` echoes the requested `symbol` and `window`.
-#[test]
-fn live_liquidation_symbol_history() {
+#[tokio::test]
+async fn live_liquidation_symbol_history() {
     let key = key_or_skip!("live_liquidation_symbol_history");
     let liq: Liquidation = Datamaxi::new(key);
 
@@ -294,6 +311,7 @@ fn live_liquidation_symbol_history() {
         .window(LiquidationSymbolHistoryWindow::_24h);
     let resp = liq
         .symbol_history("BTC", opts)
+        .await
         .expect("live /liquidation/symbol-history request failed");
 
     assert_eq!(
@@ -307,12 +325,12 @@ fn live_liquidation_symbol_history() {
 }
 
 /// `/listings/historical` returns a non-empty `data` array.
-#[test]
-fn live_listings_historical() {
+#[tokio::test]
+async fn live_listings_historical() {
     let key = key_or_skip!("live_listings_historical");
     let listing: Listing = Datamaxi::new(key);
 
-    match listing.historical(ListingsHistoricalOptions::new()) {
+    match listing.historical(ListingsHistoricalOptions::new()).await {
         Ok(resp) => assert!(
             !resp.data.is_empty(),
             "listings historical `data` should not be empty"
@@ -329,12 +347,15 @@ fn live_listings_historical() {
 
 /// `/margin-borrow` returns non-null `cross`/`isolated` objects for a widely
 /// listed asset.
-#[test]
-fn live_margin_borrow_get() {
+#[tokio::test]
+async fn live_margin_borrow_get() {
     let key = key_or_skip!("live_margin_borrow_get");
     let mb: MarginBorrow = Datamaxi::new(key);
 
-    let resp = mb.get("BTC").expect("live /margin-borrow request failed");
+    let resp = mb
+        .get("BTC")
+        .await
+        .expect("live /margin-borrow request failed");
 
     assert!(
         !resp.cross.is_null(),
@@ -343,13 +364,14 @@ fn live_margin_borrow_get() {
 }
 
 /// `/open-interest` echoes the requested `exchange`/`symbol`.
-#[test]
-fn live_open_interest_get() {
+#[tokio::test]
+async fn live_open_interest_get() {
     let key = key_or_skip!("live_open_interest_get");
     let oi: OpenInterest = Datamaxi::new(key);
 
     let resp = oi
         .get("binance", "BTC-USDT")
+        .await
         .expect("live /open-interest request failed");
 
     assert_eq!(
@@ -360,13 +382,14 @@ fn live_open_interest_get() {
 
 /// `/open-interest/history-aggregated` returns token metadata for the
 /// requested `token_id`.
-#[test]
-fn live_open_interest_history_aggregated() {
+#[tokio::test]
+async fn live_open_interest_history_aggregated() {
     let key = key_or_skip!("live_open_interest_history_aggregated");
     let oi: OpenInterest = Datamaxi::new(key);
 
     let resp = oi
         .history_aggregated("bitcoin", OpenInterestHistoryAggregatedOptions::new())
+        .await
         .expect("live /open-interest/history-aggregated request failed");
 
     assert_eq!(
@@ -376,14 +399,15 @@ fn live_open_interest_history_aggregated() {
 }
 
 /// `/open-interest/list` returns a non-empty `data` array.
-#[test]
-fn live_open_interest_list() {
+#[tokio::test]
+async fn live_open_interest_list() {
     let key = key_or_skip!("live_open_interest_list");
     let oi: OpenInterest = Datamaxi::new(key);
 
     let opts = OpenInterestListOptions::new().exchange("binance");
     let resp = oi
         .list(opts)
+        .await
         .expect("live /open-interest/list request failed");
 
     assert!(
@@ -393,13 +417,14 @@ fn live_open_interest_list() {
 }
 
 /// `/open-interest/overview` returns a non-empty `data` array.
-#[test]
-fn live_open_interest_overview() {
+#[tokio::test]
+async fn live_open_interest_overview() {
     let key = key_or_skip!("live_open_interest_overview");
     let oi: OpenInterest = Datamaxi::new(key);
 
     let resp = oi
         .overview(OpenInterestOverviewOptions::new())
+        .await
         .expect("live /open-interest/overview request failed");
 
     assert!(
@@ -410,14 +435,15 @@ fn live_open_interest_overview() {
 
 /// `/open-interest/summary` returns a non-empty `tokens` array. Also exercises
 /// the `top_n` snake_case wire key from the PR #8 regression surface.
-#[test]
-fn live_open_interest_summary() {
+#[tokio::test]
+async fn live_open_interest_summary() {
     let key = key_or_skip!("live_open_interest_summary");
     let oi: OpenInterest = Datamaxi::new(key);
 
     let opts = OpenInterestSummaryOptions::new().top_n(5);
     let resp = oi
         .summary(opts)
+        .await
         .expect("live /open-interest/summary request failed");
 
     assert!(
@@ -427,12 +453,12 @@ fn live_open_interest_summary() {
 }
 
 /// `/premium` returns a non-empty `data` array with default pagination.
-#[test]
-fn live_premium_get() {
+#[tokio::test]
+async fn live_premium_get() {
     let key = key_or_skip!("live_premium_get");
     let premium: Premium = Datamaxi::new(key);
 
-    match premium.get(PremiumOptions::new().limit(10)) {
+    match premium.get(PremiumOptions::new().limit(10)).await {
         Ok(resp) => assert!(!resp.data.is_empty(), "premium `data` should not be empty"),
         // `sc`/`tc`/`spa`/`tpa` (String) are now Option; but `PremiumDetail`
         // also has conditionally-present numeric (f64) fields that are null
@@ -446,13 +472,14 @@ fn live_premium_get() {
 
 /// `/telegram/channels` returns a non-empty `data` array with default
 /// pagination.
-#[test]
-fn live_telegram_channels() {
+#[tokio::test]
+async fn live_telegram_channels() {
     let key = key_or_skip!("live_telegram_channels");
     let tg: Telegram = Datamaxi::new(key);
 
     let resp = tg
         .channels(TelegramChannelsOptions::new())
+        .await
         .expect("live /telegram/channels request failed");
     assert!(
         !resp.data.is_empty(),
@@ -462,13 +489,14 @@ fn live_telegram_channels() {
 
 /// `/telegram/messages` returns a non-empty `data` array with default
 /// pagination.
-#[test]
-fn live_telegram_messages() {
+#[tokio::test]
+async fn live_telegram_messages() {
     let key = key_or_skip!("live_telegram_messages");
     let tg: Telegram = Datamaxi::new(key);
 
     let resp = tg
         .messages(TelegramMessagesOptions::new())
+        .await
         .expect("live /telegram/messages request failed");
 
     assert!(
@@ -478,8 +506,8 @@ fn live_telegram_messages() {
 }
 
 /// `/ticker` echoes the requested `symbol` in the nested typed `data` view.
-#[test]
-fn live_ticker_get() {
+#[tokio::test]
+async fn live_ticker_get() {
     let key = key_or_skip!("live_ticker_get");
     let ticker: Ticker = Datamaxi::new(key);
 
@@ -490,6 +518,7 @@ fn live_ticker_get() {
             TickerMarket::Spot,
             TickerOptions::new(),
         )
+        .await
         .expect("live /ticker request failed");
 
     assert_eq!(
