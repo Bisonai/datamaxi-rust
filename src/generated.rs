@@ -674,10 +674,10 @@ pub struct ListingsHistoricalResponse {
 pub struct ListingsHistoricalView {
     pub announced_at: i64,
     pub base: String,
-    pub deposit_at: i64,
+    pub deposit_at: Option<i64>,
     pub exchange: String,
     pub network: Option<String>,
-    pub trade_at: i64,
+    pub trade_at: Option<i64>,
     pub url: String,
 }
 
@@ -821,144 +821,144 @@ pub struct PremiumDetail {
     /// specifies the date and the time in UTC milliseconds
     pub d: i64,
     /// funding gap which is difference between source and target fundingrate without funding interval consideration
-    pub fg: f64,
+    pub fg: Option<f64>,
     /// net fundingrate which takes funding interval into account
-    pub nfr: f64,
+    pub nfr: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges
-    pub pdp: f64,
+    pub pdp: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 15m ago
-    pub pdp15m: f64,
+    pub pdp15m: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 1h ago
-    pub pdp1h: f64,
+    pub pdp1h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 24h ago
-    pub pdp24h: f64,
+    pub pdp24h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 30m ago
-    pub pdp30m: f64,
+    pub pdp30m: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 4h ago
-    pub pdp4h: f64,
+    pub pdp4h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 5m ago
-    pub pdp5m: f64,
+    pub pdp5m: Option<f64>,
     /// sepcifies premium duration
-    pub pmd: i64,
+    pub pmd: Option<i64>,
     /// source ask depth within +2% base
-    pub sad: f64,
+    pub sad: Option<f64>,
     /// specifies -2% volume depth from source exchange
-    pub sad2p: f64,
+    pub sad2p: Option<f64>,
     /// source ask depth within +2% quote
-    pub sadf: f64,
+    pub sadf: Option<f64>,
     /// specifies the base token of the source exchange
     pub sb: String,
     /// specifies +2% volume depth from source exchange
-    pub sbd2p: f64,
+    pub sbd2p: Option<f64>,
     /// for amm source ticker, amm source chain
     pub sc: Option<String>,
     /// specifies the source exchange name
     pub se: String,
     /// source funding rate
-    pub sfr: f64,
+    pub sfr: Option<f64>,
     /// source funding rate interval, 1 stands for 1 hour
-    pub sfri: i64,
+    pub sfri: Option<i64>,
     /// source fundingrate info timestamp in UTC millisecond
-    pub sfrt: i64,
+    pub sfrt: Option<i64>,
     /// specifies highest bid from source exchange
-    pub shb: f64,
+    pub shb: Option<f64>,
     /// specifies lowest bid from source exchange
-    pub sla: f64,
+    pub sla: Option<f64>,
     /// specifies the source market type
     pub sm: String,
     /// boolean if source exchange margin is supported, returned only for spot market
-    pub sms: bool,
+    pub sms: Option<bool>,
     /// source next distribution time in UTC milliseconds
-    pub snd: i64,
+    pub snd: Option<i64>,
     /// Open Interest snapshot — USD-denominated. Source and target sides.
-    pub soi: f64,
+    pub soi: Option<f64>,
     /// OI % change over rolling 1h / 4h / 24h windows.
-    pub soich1h: f64,
-    pub soich24h: f64,
-    pub soich4h: f64,
+    pub soich1h: Option<f64>,
+    pub soich24h: Option<f64>,
+    pub soich4h: Option<f64>,
     /// OI / 24h USD quote volume. Crude "leverage per turnover" metric.
-    pub soivr: f64,
+    pub soivr: Option<f64>,
     /// specifies the latest price of the source exchange in requested currency
-    pub sp: f64,
+    pub sp: Option<f64>,
     /// for amm source ticker, amm pool address
     pub spa: Option<String>,
     /// specifies the price difference percentage of the source exchange in the last 15m
-    pub spdp15m: f64,
+    pub spdp15m: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 1h
-    pub spdp1h: f64,
+    pub spdp1h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 24h
-    pub spdp24h: f64,
+    pub spdp24h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 30m
-    pub spdp30m: f64,
+    pub spdp30m: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 4h
-    pub spdp4h: f64,
+    pub spdp4h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 5m
-    pub spdp5m: f64,
+    pub spdp5m: Option<f64>,
     /// specifies the quote token of the source exchange
     pub sq: String,
     /// specifies the date and the time of source ticker in UTC milliseconds
     pub st: i64,
     /// specifies the trading volume of the source exchange in the last 24 hours in requested currency
-    pub sv: f64,
+    pub sv: Option<f64>,
     /// transferable, null if unknown
-    pub t: bool,
+    pub t: Option<bool>,
     /// specifies -2% volume depth from target exchange
-    pub tad2p: f64,
+    pub tad2p: Option<f64>,
     /// specifies the base token of the target exchange
     pub tb: String,
     /// target bid depth within -2% base
-    pub tbd: f64,
+    pub tbd: Option<f64>,
     /// specifies +2% volume depth from target exchange
-    pub tbd2p: f64,
+    pub tbd2p: Option<f64>,
     /// target bid depth within -2% quote
-    pub tbdf: f64,
+    pub tbdf: Option<f64>,
     /// for amm target ticker, amm target chain
     pub tc: Option<String>,
     /// specifies the target exchange name
     pub te: String,
     /// target funding rate
-    pub tfr: f64,
+    pub tfr: Option<f64>,
     /// target funding rate interval, 1 stands for 1 hour
-    pub tfri: i64,
+    pub tfri: Option<i64>,
     /// target fundingrate info timestamp in UTC millisecond
-    pub tfrt: i64,
+    pub tfrt: Option<i64>,
     /// specifies highest bid from target exchange
-    pub thb: f64,
+    pub thb: Option<f64>,
     /// specifies lowest bid from target exchange
-    pub tla: f64,
+    pub tla: Option<f64>,
     /// specifies the target market type
     pub tm: String,
     /// boolean if target exchange margin is supported, returned only for spot market
-    pub tms: bool,
+    pub tms: Option<bool>,
     /// target next distribution time in UTC millisconds
-    pub tnd: i64,
-    pub toi: f64,
-    pub toich1h: f64,
-    pub toich24h: f64,
-    pub toich4h: f64,
-    pub toivr: f64,
+    pub tnd: Option<i64>,
+    pub toi: Option<f64>,
+    pub toich1h: Option<f64>,
+    pub toich24h: Option<f64>,
+    pub toich4h: Option<f64>,
+    pub toivr: Option<f64>,
     /// specifies the latest price of the target exchange
-    pub tp: f64,
+    pub tp: Option<f64>,
     /// for amm target ticker, amm pool address
     pub tpa: Option<String>,
     /// specifies the price difference percentage of the target exchange in the last 15m
-    pub tpdp15m: f64,
+    pub tpdp15m: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 1h
-    pub tpdp1h: f64,
+    pub tpdp1h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 24h
-    pub tpdp24h: f64,
+    pub tpdp24h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 30m
-    pub tpdp30m: f64,
+    pub tpdp30m: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 4h
-    pub tpdp4h: f64,
+    pub tpdp4h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 5m
-    pub tpdp5m: f64,
+    pub tpdp5m: Option<f64>,
     /// specifies the quote token of the target exchange
     pub tq: String,
     /// specifies the date and the time of target ticker in UTC milliseconds
     pub tt: i64,
     /// specifies the trading volume of the target exchange in the last 24 hours in requested currency
-    pub tv: f64,
+    pub tv: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -980,8 +980,8 @@ pub struct PremiumResponse {
 #[non_exhaustive]
 pub struct PremiumView {
     pub detail: PremiumDetail,
-    pub source_annualized_funding_rate: f64,
-    pub target_annualized_funding_rate: f64,
+    pub source_annualized_funding_rate: Option<f64>,
+    pub target_annualized_funding_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

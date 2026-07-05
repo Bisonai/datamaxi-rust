@@ -22,7 +22,6 @@
 //! DATAMAXI_API_KEY=... cargo test --test live
 //! ```
 
-use datamaxi::api::Error;
 use datamaxi::Client;
 use datamaxi::{
     CexAnnouncementsOptions, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
@@ -330,19 +329,14 @@ async fn live_listings_historical() {
     let key = key_or_skip!("live_listings_historical");
     let listing = Client::new(key).listing();
 
-    match listing.historical(ListingsHistoricalOptions::new()).await {
-        Ok(resp) => assert!(
-            !resp.data.is_empty(),
-            "listings historical `data` should not be empty"
-        ),
-        // `network` (String) is now Option; but a timestamp i64 field
-        // (announced_at/deposit_at/trade_at) is also null on the wire for
-        // not-yet-listed tokens. Tracked for a further nullability pass.
-        Err(Error::Http(e)) if e.is_decode() => {
-            eprintln!("KNOWN NULL-DECODE /listings/historical (null i64 timestamp): {e}");
-        }
-        Err(e) => panic!("live /listings/historical request failed: {e}"),
-    }
+    let resp = listing
+        .historical(ListingsHistoricalOptions::new())
+        .await
+        .expect("live /listings/historical request failed");
+    assert!(
+        !resp.data.is_empty(),
+        "listings historical `data` should not be empty"
+    );
 }
 
 /// `/margin-borrow` returns non-null `cross`/`isolated` objects for a widely
@@ -458,16 +452,11 @@ async fn live_premium_get() {
     let key = key_or_skip!("live_premium_get");
     let premium = Client::new(key).premium();
 
-    match premium.get(PremiumOptions::new().limit(10)).await {
-        Ok(resp) => assert!(!resp.data.is_empty(), "premium `data` should not be empty"),
-        // `sc`/`tc`/`spa`/`tpa` (String) are now Option; but `PremiumDetail`
-        // also has conditionally-present numeric (f64) fields that are null
-        // depending on market type. Tracked for a further nullability pass.
-        Err(Error::Http(e)) if e.is_decode() => {
-            eprintln!("KNOWN NULL-DECODE /premium (null f64 field): {e}");
-        }
-        Err(e) => panic!("live /premium request failed: {e}"),
-    }
+    let resp = premium
+        .get(PremiumOptions::new().limit(10))
+        .await
+        .expect("live /premium request failed");
+    assert!(!resp.data.is_empty(), "premium `data` should not be empty");
 }
 
 /// `/telegram/channels` returns a non-empty `data` array with default
