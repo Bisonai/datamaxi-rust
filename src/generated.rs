@@ -676,7 +676,7 @@ pub struct ListingsHistoricalView {
     pub base: String,
     pub deposit_at: i64,
     pub exchange: String,
-    pub network: String,
+    pub network: Option<String>,
     pub trade_at: i64,
     pub url: String,
 }
@@ -851,7 +851,7 @@ pub struct PremiumDetail {
     /// specifies +2% volume depth from source exchange
     pub sbd2p: f64,
     /// for amm source ticker, amm source chain
-    pub sc: String,
+    pub sc: Option<String>,
     /// specifies the source exchange name
     pub se: String,
     /// source funding rate
@@ -881,7 +881,7 @@ pub struct PremiumDetail {
     /// specifies the latest price of the source exchange in requested currency
     pub sp: f64,
     /// for amm source ticker, amm pool address
-    pub spa: String,
+    pub spa: Option<String>,
     /// specifies the price difference percentage of the source exchange in the last 15m
     pub spdp15m: f64,
     /// specifies the price difference percentage of the source exchange in the last 1h
@@ -913,7 +913,7 @@ pub struct PremiumDetail {
     /// target bid depth within -2% quote
     pub tbdf: f64,
     /// for amm target ticker, amm target chain
-    pub tc: String,
+    pub tc: Option<String>,
     /// specifies the target exchange name
     pub te: String,
     /// target funding rate
@@ -940,7 +940,7 @@ pub struct PremiumDetail {
     /// specifies the latest price of the target exchange
     pub tp: f64,
     /// for amm target ticker, amm pool address
-    pub tpa: String,
+    pub tpa: Option<String>,
     /// specifies the price difference percentage of the target exchange in the last 15m
     pub tpdp15m: f64,
     /// specifies the price difference percentage of the target exchange in the last 1h
@@ -1011,7 +1011,7 @@ pub struct TelegramChannelsView {
     pub channel_title: String,
     /// specifies the creation time of the channel
     #[serde(rename = "createdAt")]
-    pub created_at: i64,
+    pub created_at: Option<i64>,
     /// specifies the channel description
     pub description: String,
     /// specifies the channel link
