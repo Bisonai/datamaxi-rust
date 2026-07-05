@@ -3,7 +3,8 @@
 //! These lock the outbound HTTP contract (path + query-string keys + auth
 //! header) that the typed builders produce, and exercise `handle_response`'s
 //! status-code mapping. They use `mockito` to stand up a local server and a
-//! client pointed at it via `new_with_base_url`.
+//! `Client` pointed at it (via the `mock_client` helper, i.e. `ClientBuilder`
+//! + `base_url`), then reach each endpoint group through a root-client accessor.
 //!
 //! Regression guard: PR #8 shipped a wrong snake_case query key. The builder
 //! methods are camelCase (`topN`, `minVolumeUsd`) but the wire keys MUST be
@@ -346,14 +347,15 @@ async fn premium_sends_snake_keys() {
 // --- Root client accessors -------------------------------------------------
 
 /// The root `Client` exposes each endpoint group via a generated accessor
-/// (`client.cex_candle()`, `client.liquidation()`, …). This drives a request
-/// through the accessor-returned handle, covering the construction idiom that
-/// replaced the old `Datamaxi::new` trait constructor.
+/// (`client.cex_candle()`, `client.liquidation()`, …), replacing the old
+/// `Datamaxi::new` per-endpoint constructor. This drives requests through TWO
+/// different accessors on the SAME client, proving one client (its auth + base
+/// URL) backs every endpoint group and each accessor yields a working handle.
 #[tokio::test]
-async fn root_client_accessor_routes_request() {
+async fn root_client_accessors_share_one_client() {
     let mut server = mockito::Server::new_async().await;
 
-    let mock = server
+    let heatmap = server
         .mock("GET", "/api/v1/liquidation/heatmap")
         .match_header("X-DTMX-APIKEY", API_KEY)
         .match_query(Matcher::UrlEncoded("window".into(), "1h".into()))
@@ -363,16 +365,40 @@ async fn root_client_accessor_routes_request() {
         .expect(1)
         .create_async()
         .await;
+    let exchanges = server
+        .mock("GET", "/api/v1/cex/candle/exchanges")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create_async()
+        .await;
 
+    // One client, two endpoint groups reached via accessors.
     let client = mock_client(server.url());
-    // A fresh handle per accessor call; each shares the underlying client.
-    let res = client
+    let liq = client
         .liquidation()
         .heatmap(LiquidationHeatmapOptions::new().window(LiquidationHeatmapWindow::_1h))
         .await;
+    let ex = client
+        .cex_candle()
+        .exchanges(CexCandleExchangesMarket::Spot)
+        .await;
 
-    mock.assert_async().await;
-    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+    heatmap.assert_async().await;
+    exchanges.assert_async().await;
+    assert!(
+        liq.is_ok(),
+        "liquidation via accessor: expected Ok, got {:?}",
+        liq
+    );
+    assert!(
+        ex.is_ok(),
+        "cex_candle via accessor: expected Ok, got {:?}",
+        ex
+    );
 }
 
 // --- ClientBuilder ---------------------------------------------------------
