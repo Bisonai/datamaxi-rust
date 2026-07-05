@@ -14,9 +14,9 @@ use datamaxi::api::{ClientBuilder, Datamaxi, Error};
 use datamaxi::generated::{
     CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
     CexSymbol, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Liquidation,
-    LiquidationHeatmapOptions, LiquidationHeatmapWindow, LiquidationStatsOptions,
-    LiquidationStatsWindow, OpenInterest, OpenInterestSummaryOptions, Premium, PremiumOptions,
-    PremiumPremiumType,
+    LiquidationHeatmapOptions, LiquidationHeatmapResponse, LiquidationHeatmapWindow,
+    LiquidationStatsOptions, LiquidationStatsWindow, OpenInterest, OpenInterestSummaryOptions,
+    Premium, PremiumOptions, PremiumPremiumType,
 };
 use mockito::Matcher;
 
@@ -94,7 +94,7 @@ fn cex_candle_sends_required_and_optional_keys() {
             Matcher::UrlEncoded("currency".into(), "USD".into()),
         ]))
         .with_status(200)
-        .with_body("[]")
+        .with_body("{}")
         .expect(1)
         .create();
 
@@ -131,7 +131,7 @@ fn query_params_are_percent_encoded() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("[]")
+        .with_body("{}")
         .expect(1)
         .create();
 
@@ -148,7 +148,10 @@ fn query_params_are_percent_encoded() {
 
 // --- handle_response status mapping ---------------------------------------
 
-fn call_with_status(status: usize, body: &str) -> datamaxi::api::Result<serde_json::Value> {
+fn call_with_status(
+    status: usize,
+    body: &str,
+) -> datamaxi::api::Result<LiquidationHeatmapResponse> {
     let mut server = mockito::Server::new();
     let _mock = server
         .mock("GET", "/api/v1/liquidation/heatmap")
@@ -162,7 +165,9 @@ fn call_with_status(status: usize, body: &str) -> datamaxi::api::Result<serde_js
 
 #[test]
 fn status_200_maps_to_ok() {
-    let res = call_with_status(200, "{\"ok\":true}");
+    // Body deserializes into the typed `LiquidationHeatmapResponse`; struct-level
+    // serde default lets an empty `{}` payload decode with zero-valued fields.
+    let res = call_with_status(200, "{}");
     assert!(res.is_ok(), "200 should map to Ok, got {:?}", res);
 }
 
@@ -254,7 +259,7 @@ fn cex_symbol_cautions_sends_snake_keys() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("[]")
+        .with_body("{}")
         .expect(1)
         .create();
 
@@ -318,7 +323,7 @@ fn client_builder_sets_user_agent_and_auth() {
         .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("[]")
+        .with_body("{}")
         .expect(1)
         .create();
 

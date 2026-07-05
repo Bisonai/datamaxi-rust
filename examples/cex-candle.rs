@@ -28,10 +28,10 @@ fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    // CEX Candle Data
+    // CEX Candle Data — `get` returns the typed `CexCandleResponse`.
     let candle_options = CexCandleOptions::new().market(CexCandleMarket::Spot);
     match candle.get("binance", "ETH-USDT", candle_options) {
-        Ok(answer) => println!("{}", answer),
+        Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 }
