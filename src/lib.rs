@@ -70,22 +70,9 @@
 /// API definitions and related utilities.
 pub mod api;
 
-/// **Deprecated** hand-written CEX candle surface.
-///
-/// Superseded by [`crate::generated::CexCandle`], which is generated from the
-/// API spec and stays in sync with it. This module is kept only for backward
-/// compatibility and will be removed in a future release; new code should use
-/// `generated::CexCandle`.
-pub mod cex;
-
-/// Data models representing API responses and optional parameters.
-pub mod models;
-
-/// Auto-generated typed wrappers for every public REST endpoint on
-/// the data API. This module is the canonical surface for the OI /
-/// Liquidation / cex-symbol surfaces; the older hand-written `cex`
-/// module covers only a subset of endpoints and is kept for
-/// backward compatibility.
+/// Auto-generated typed wrappers for every public REST endpoint on the data
+/// API. This is the canonical surface for every endpoint group (CEX candle,
+/// OI, Liquidation, cex-symbol, …).
 ///
 /// Usage:
 /// ```ignore
@@ -97,7 +84,8 @@ pub mod models;
 /// let heatmap = liq.heatmap(opts)?;
 /// ```
 // `generated.rs` is code-generated (DO NOT EDIT); these lints reflect the
-// upstream API's camelCase params and the generator's constructors, so they are
-// suppressed at the module boundary rather than hand-edited in generated output.
-#[allow(non_snake_case, unused_imports, clippy::new_without_default)]
+// generator's unconditional imports and its `new()`-only option constructors,
+// so they are suppressed at the module boundary rather than hand-edited in
+// generated output.
+#[allow(unused_imports, clippy::new_without_default)]
 pub mod generated;
