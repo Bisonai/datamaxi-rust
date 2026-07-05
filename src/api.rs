@@ -33,24 +33,6 @@ fn truncate_body(mut s: String) -> String {
     s
 }
 
-/// A trait that defines the required methods for interacting with the Datamaxi+ API.
-pub trait Datamaxi {
-    /// Creates a new instance of the implementing type using the provided API key.
-    fn new(api_key: String) -> Self;
-
-    /// Creates a new instance of the implementing type using the provided API key and base URL.
-    fn new_with_base_url(api_key: String, base_url: String) -> Self;
-}
-
-/// The configuration for the Datamaxi+ API client.
-pub struct Config {
-    /// The base URL for the API.
-    pub base_url: Option<String>,
-
-    /// The API key used for authentication.
-    pub api_key: String,
-}
-
 /// Build the underlying async HTTP client with our defaults (timeout,
 /// `User-Agent`, unbounded idle pool). Falls back to a default client if the
 /// builder fails, so client construction is infallible and never panics.
@@ -85,15 +67,16 @@ impl std::fmt::Debug for Client {
 }
 
 impl Client {
-    /// Creates a new instance of the `Client` struct with the provided configuration.
+    /// Creates a new client authenticating with the given API key.
     ///
-    /// Uses the default timeout ([`DEFAULT_TIMEOUT`]). For more control over
-    /// timeout or reading the API key from the environment, use
-    /// [`ClientBuilder`].
-    pub fn new(config: Config) -> Self {
+    /// Uses the production base URL and the default timeout
+    /// ([`DEFAULT_TIMEOUT`]). For control over the base URL, timeout, or
+    /// reading the API key from the environment, use [`ClientBuilder`]. Endpoint
+    /// groups are reached via accessors, e.g. [`Client::cex_candle`].
+    pub fn new(api_key: impl Into<String>) -> Self {
         Client {
-            base_url: config.base_url.unwrap_or(BASE_URL.to_string()),
-            api_key: config.api_key,
+            base_url: BASE_URL.to_string(),
+            api_key: api_key.into(),
             inner_client: build_inner_client(DEFAULT_TIMEOUT),
         }
     }
@@ -264,9 +247,7 @@ pub enum Error {
 /// generated endpoint wrappers under [`crate::generated::blocking`] use this.
 #[cfg(feature = "blocking")]
 pub mod blocking {
-    use super::{
-        truncate_body, user_agent, Config, Error, Result, API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT,
-    };
+    use super::{truncate_body, user_agent, Error, Result, API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT};
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
     use serde::de::DeserializeOwned;
@@ -304,12 +285,14 @@ pub mod blocking {
     }
 
     impl Client {
-        /// Creates a new blocking `Client` with the provided configuration and
-        /// the default timeout. For more control, use [`ClientBuilder`].
-        pub fn new(config: Config) -> Self {
+        /// Creates a new blocking `Client` authenticating with the given API
+        /// key, using the production base URL and the default timeout. For more
+        /// control, use [`ClientBuilder`]. Endpoint groups are reached via
+        /// accessors, e.g. [`Client::cex_candle`].
+        pub fn new(api_key: impl Into<String>) -> Self {
             Client {
-                base_url: config.base_url.unwrap_or(BASE_URL.to_string()),
-                api_key: config.api_key,
+                base_url: BASE_URL.to_string(),
+                api_key: api_key.into(),
                 inner_client: build_inner_client(DEFAULT_TIMEOUT),
             }
         }

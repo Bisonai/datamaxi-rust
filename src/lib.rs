@@ -36,14 +36,14 @@
 //! wrappers under `datamaxi::blocking` with `datamaxi::api::blocking`.
 //!
 //! ```no_run
-//! use datamaxi::api::Datamaxi;
 //! use datamaxi::{
-//!     CexCandle, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-//!     CexCandleSymbolsOptions,
+//!     CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions, CexCandleSymbolsOptions,
+//!     Client,
 //! };
 //!
 //! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
-//! let candle: CexCandle = Datamaxi::new("my_api_key".to_string());
+//! let client = Client::new("my_api_key");
+//! let candle = client.cex_candle();
 //!
 //! // Supported exchanges, symbols and intervals
 //! let _ = candle.exchanges(CexCandleExchangesMarket::Spot).await?;
@@ -89,15 +89,23 @@ pub mod api;
 pub mod generated;
 
 /// Typed wrappers for every REST endpoint on the data API — the canonical
-/// surface (CEX candle, OI, Liquidation, cex-symbol, …). Async by default; with
-/// the `blocking` feature, a parallel [`blocking`] module offers synchronous
+/// surface (CEX candle, OI, Liquidation, cex-symbol, …). Endpoint groups are
+/// reached through accessors on the root [`Client`]. Async by default; with the
+/// `blocking` feature, a parallel [`blocking`] module offers synchronous
 /// equivalents.
 ///
 /// ```ignore
-/// use datamaxi::api::Datamaxi;
-/// use datamaxi::{Liquidation, LiquidationHeatmapOptions};
+/// use datamaxi::{Client, LiquidationHeatmapOptions};
 ///
-/// let liq: Liquidation = Datamaxi::new("YOUR_API_KEY".into());
-/// let heatmap = liq.heatmap(LiquidationHeatmapOptions::new()).await?;
+/// let client = Client::new("YOUR_API_KEY");
+/// let heatmap = client
+///     .liquidation()
+///     .heatmap(LiquidationHeatmapOptions::new())
+///     .await?;
 /// ```
 pub use generated::*;
+
+/// The root client and its builder are re-exported at the crate root so callers
+/// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
+/// off the client via generated accessors, e.g. `client.cex_candle()`.
+pub use api::{Client, ClientBuilder};

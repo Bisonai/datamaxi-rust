@@ -3,24 +3,44 @@
 //! These lock the outbound HTTP contract (path + query-string keys + auth
 //! header) that the typed builders produce, and exercise `handle_response`'s
 //! status-code mapping. They use `mockito` to stand up a local server and a
-//! client pointed at it via `new_with_base_url`.
+//! `Client` pointed at it (via the `mock_client` helper, i.e. `ClientBuilder`
+//! + `base_url`), then reach each endpoint group through a root-client accessor.
 //!
 //! Regression guard: PR #8 shipped a wrong snake_case query key. The builder
 //! methods are camelCase (`topN`, `minVolumeUsd`) but the wire keys MUST be
 //! snake_case (`top_n`, `min_volume_usd`). The query-key assertions below fail
 //! if a future codegen regen reintroduces that bug.
 
-use datamaxi::api::{ClientBuilder, Datamaxi, Error};
+use datamaxi::api::{Client, ClientBuilder, Error};
 use datamaxi::{
     CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexSymbol, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, Liquidation,
-    LiquidationHeatmapOptions, LiquidationHeatmapResponse, LiquidationHeatmapWindow,
-    LiquidationStatsOptions, LiquidationStatsWindow, OpenInterest, OpenInterestSummaryOptions,
-    Premium, PremiumOptions, PremiumPremiumType,
+    CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, LiquidationHeatmapOptions,
+    LiquidationHeatmapResponse, LiquidationHeatmapWindow, LiquidationStatsOptions,
+    LiquidationStatsWindow, OpenInterestSummaryOptions, PremiumOptions, PremiumPremiumType,
 };
 use mockito::Matcher;
 
 const API_KEY: &str = "test-api-key";
+
+/// Build an async client pointed at the mock server (explicit key + base URL),
+/// exercising the new root-client construction + accessor path the SDK exposes.
+fn mock_client(base_url: String) -> Client {
+    ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(base_url)
+        .build()
+        .expect("mock client builds")
+}
+
+/// Blocking mirror of [`mock_client`], over `crate::api::blocking::Client`.
+#[cfg(feature = "blocking")]
+fn mock_blocking_client(base_url: String) -> datamaxi::api::blocking::Client {
+    datamaxi::api::blocking::ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(base_url)
+        .build()
+        .expect("mock blocking client builds")
+}
 
 /// `top_n` wire key (regression guard for PR #8) + `window`, plus path and the
 /// `X-DTMX-APIKEY` auth header.
@@ -42,7 +62,7 @@ async fn liquidation_heatmap_sends_top_n_window_and_apikey() {
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = mock_client(server.url()).liquidation();
     let opts = LiquidationHeatmapOptions::new()
         .window(LiquidationHeatmapWindow::_1h)
         .top_n(10);
@@ -70,7 +90,7 @@ async fn liquidation_stats_sends_min_volume_usd() {
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = mock_client(server.url()).liquidation();
     let opts = LiquidationStatsOptions::new()
         .window(LiquidationStatsWindow::_24h)
         .min_volume_usd(5.0);
@@ -101,7 +121,7 @@ async fn cex_candle_sends_required_and_optional_keys() {
         .create_async()
         .await;
 
-    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle = mock_client(server.url()).cex_candle();
     let opts = CexCandleOptions::new()
         .market(CexCandleMarket::Spot)
         .interval("1h")
@@ -139,7 +159,7 @@ async fn query_params_are_percent_encoded() {
         .create_async()
         .await;
 
-    let candle: CexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle = mock_client(server.url()).cex_candle();
     let res = candle
         .get(
             "binance",
@@ -166,7 +186,7 @@ async fn call_with_status(
         .create_async()
         .await;
 
-    let liq: Liquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = mock_client(server.url()).liquidation();
     liq.heatmap(LiquidationHeatmapOptions::new()).await
 }
 
@@ -252,7 +272,7 @@ async fn open_interest_summary_sends_top_n() {
         .create_async()
         .await;
 
-    let oi: OpenInterest = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let oi = mock_client(server.url()).open_interest();
     let res = oi.summary(OpenInterestSummaryOptions::new().top_n(5)).await;
 
     mock.assert_async().await;
@@ -281,7 +301,7 @@ async fn cex_symbol_cautions_sends_snake_keys() {
         .create_async()
         .await;
 
-    let sym: CexSymbol = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let sym = mock_client(server.url()).cex_symbol();
     let opts = CexSymbolCautionsOptions::new()
         .exchange("binance")
         .min_level(CexSymbolCautionsMinLevel::Danger)
@@ -313,7 +333,7 @@ async fn premium_sends_snake_keys() {
         .create_async()
         .await;
 
-    let premium: Premium = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let premium = mock_client(server.url()).premium();
     let opts = PremiumOptions::new()
         .source_exchange("binance")
         .target_exchange("upbit")
@@ -322,6 +342,63 @@ async fn premium_sends_snake_keys() {
 
     mock.assert_async().await;
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+// --- Root client accessors -------------------------------------------------
+
+/// The root `Client` exposes each endpoint group via a generated accessor
+/// (`client.cex_candle()`, `client.liquidation()`, …), replacing the old
+/// `Datamaxi::new` per-endpoint constructor. This drives requests through TWO
+/// different accessors on the SAME client, proving one client (its auth + base
+/// URL) backs every endpoint group and each accessor yields a working handle.
+#[tokio::test]
+async fn root_client_accessors_share_one_client() {
+    let mut server = mockito::Server::new_async().await;
+
+    let heatmap = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::UrlEncoded("window".into(), "1h".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create_async()
+        .await;
+    let exchanges = server
+        .mock("GET", "/api/v1/cex/candle/exchanges")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create_async()
+        .await;
+
+    // One client, two endpoint groups reached via accessors.
+    let client = mock_client(server.url());
+    let liq = client
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new().window(LiquidationHeatmapWindow::_1h))
+        .await;
+    let ex = client
+        .cex_candle()
+        .exchanges(CexCandleExchangesMarket::Spot)
+        .await;
+
+    heatmap.assert_async().await;
+    exchanges.assert_async().await;
+    assert!(
+        liq.is_ok(),
+        "liquidation via accessor: expected Ok, got {:?}",
+        liq
+    );
+    assert!(
+        ex.is_ok(),
+        "cex_candle via accessor: expected Ok, got {:?}",
+        ex
+    );
 }
 
 // --- ClientBuilder ---------------------------------------------------------
@@ -383,8 +460,6 @@ fn client_builder_without_key_errors() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_cex_candle_exchanges_smoke() {
-    use datamaxi::blocking::CexCandle as BlockingCexCandle;
-
     let mut server = mockito::Server::new();
     let mock = server
         .mock("GET", "/api/v1/cex/candle/exchanges")
@@ -396,7 +471,7 @@ fn blocking_cex_candle_exchanges_smoke() {
         .expect(1)
         .create();
 
-    let candle: BlockingCexCandle = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let candle = mock_blocking_client(server.url()).cex_candle();
     let res = candle.exchanges(CexCandleExchangesMarket::Spot);
 
     mock.assert();
@@ -408,8 +483,6 @@ fn blocking_cex_candle_exchanges_smoke() {
 #[cfg(feature = "blocking")]
 #[test]
 fn blocking_liquidation_heatmap_smoke() {
-    use datamaxi::blocking::Liquidation as BlockingLiquidation;
-
     let mut server = mockito::Server::new();
     let mock = server
         .mock("GET", "/api/v1/liquidation/heatmap")
@@ -421,7 +494,7 @@ fn blocking_liquidation_heatmap_smoke() {
         .expect(1)
         .create();
 
-    let liq: BlockingLiquidation = Datamaxi::new_with_base_url(API_KEY.to_string(), server.url());
+    let liq = mock_blocking_client(server.url()).liquidation();
     let res = liq.heatmap(LiquidationHeatmapOptions::new().window(LiquidationHeatmapWindow::_1h));
 
     mock.assert();
