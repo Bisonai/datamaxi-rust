@@ -317,10 +317,11 @@ fn live_listings_historical() {
             !resp.data.is_empty(),
             "listings historical `data` should not be empty"
         ),
-        // Known bug (codegen#55 / backend#7943): `network` is nullable on the
-        // wire but typed as non-optional `String` in `ListingsHistoricalView`.
+        // `network` (String) is now Option; but a timestamp i64 field
+        // (announced_at/deposit_at/trade_at) is also null on the wire for
+        // not-yet-listed tokens. Tracked for a further nullability pass.
         Err(Error::Http(e)) if e.is_decode() => {
-            eprintln!("KNOWN NULL-DECODE /listings/historical `network`: {e}");
+            eprintln!("KNOWN NULL-DECODE /listings/historical (null i64 timestamp): {e}");
         }
         Err(e) => panic!("live /listings/historical request failed: {e}"),
     }
@@ -433,11 +434,11 @@ fn live_premium_get() {
 
     match premium.get(PremiumOptions::new().limit(10)) {
         Ok(resp) => assert!(!resp.data.is_empty(), "premium `data` should not be empty"),
-        // Known bug (codegen#55 / backend#7943): `PremiumDetail.tc` (and
-        // siblings like `sc`/`spa`/`tpa`) are nullable on the wire but typed
-        // as non-optional `String`.
+        // `sc`/`tc`/`spa`/`tpa` (String) are now Option; but `PremiumDetail`
+        // also has conditionally-present numeric (f64) fields that are null
+        // depending on market type. Tracked for a further nullability pass.
         Err(Error::Http(e)) if e.is_decode() => {
-            eprintln!("KNOWN NULL-DECODE /premium `detail.tc`: {e}");
+            eprintln!("KNOWN NULL-DECODE /premium (null f64 field): {e}");
         }
         Err(e) => panic!("live /premium request failed: {e}"),
     }
@@ -450,18 +451,13 @@ fn live_telegram_channels() {
     let key = key_or_skip!("live_telegram_channels");
     let tg: Telegram = Datamaxi::new(key);
 
-    match tg.channels(TelegramChannelsOptions::new()) {
-        Ok(resp) => assert!(
-            !resp.data.is_empty(),
-            "telegram channels `data` should not be empty"
-        ),
-        // Known bug (codegen#55 / backend#7943): `createdAt` is nullable on
-        // the wire but typed as non-optional `i64` in `TelegramChannelsView`.
-        Err(Error::Http(e)) if e.is_decode() => {
-            eprintln!("KNOWN NULL-DECODE /telegram/channels `createdAt`: {e}");
-        }
-        Err(e) => panic!("live /telegram/channels request failed: {e}"),
-    }
+    let resp = tg
+        .channels(TelegramChannelsOptions::new())
+        .expect("live /telegram/channels request failed");
+    assert!(
+        !resp.data.is_empty(),
+        "telegram channels `data` should not be empty"
+    );
 }
 
 /// `/telegram/messages` returns a non-empty `data` array with default
