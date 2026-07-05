@@ -11,20 +11,20 @@ fn main() {
 
     // CEX Candle Exchanges
     match candle.exchanges(CexCandleExchangesMarket::Futures) {
-        Ok(answer) => println!("{}", answer),
+        Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Symbols
     let symbols_options = CexCandleSymbolsOptions::new();
     match candle.symbols("binance", symbols_options) {
-        Ok(answer) => println!("{}", answer),
+        Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 
     // CEX Candle Intervals
     match candle.intervals() {
-        Ok(answer) => println!("{}", answer),
+        Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {}", e),
     }
 

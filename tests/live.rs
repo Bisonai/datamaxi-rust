@@ -54,11 +54,10 @@ fn live_cex_candle_exchanges() {
         .exchanges(CexCandleExchangesMarket::Spot)
         .expect("live /cex/candle/exchanges request failed");
 
-    let arr = v.as_array().expect("expected a JSON array of exchanges");
-    assert!(!arr.is_empty(), "exchange list should not be empty");
+    assert!(!v.is_empty(), "exchange list should not be empty");
     assert!(
-        arr.iter().any(|e| e.as_str() == Some("binance")),
-        "expected 'binance' in exchange list, got {v}"
+        v.iter().any(|e| e == "binance"),
+        "expected 'binance' in exchange list, got {v:?}"
     );
 }
 

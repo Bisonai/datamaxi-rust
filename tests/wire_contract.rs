@@ -259,7 +259,8 @@ fn cex_symbol_cautions_sends_snake_keys() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        // `/cex/symbol/cautions` returns a top-level array (Vec<..>).
+        .with_body("[]")
         .expect(1)
         .create();
 
@@ -323,7 +324,8 @@ fn client_builder_sets_user_agent_and_auth() {
         .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        // `/cex/candle/exchanges` returns a top-level array (Vec<String>).
+        .with_body("[]")
         .expect(1)
         .create();
 

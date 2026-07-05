@@ -53,8 +53,9 @@ candle.get(
 ```
 
 Data endpoints deserialize into typed response structs generated from the API
-spec (e.g. `candle.get(..)` returns a `CexCandleResponse`); endpoints without a
-response schema in the spec still return `serde_json::Value`.
+spec: object responses into a struct (e.g. `candle.get(..)` → `CexCandleResponse`)
+and list responses into a `Vec` (e.g. `candle.exchanges(..)` → `Vec<String>`,
+`sym.cautions(..)` → `Vec<CexSymbolCautionsView>`).
 
 See [`examples/`](./examples/) for runnable examples.
 

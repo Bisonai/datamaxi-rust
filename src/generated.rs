@@ -58,6 +58,23 @@ pub struct CexCandleResponse {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
+pub struct CexCandleSymbolsView {
+    /// specifies the base symbol
+    pub b: String,
+    /// specifies the exchange
+    pub e: String,
+    /// specifies the unique id
+    pub id: String,
+    /// specifies the market
+    pub m: String,
+    /// specifies the quote symbol
+    pub q: String,
+    /// specifies the api symbol
+    pub s: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct CexCandleView {
     /// specifies close price of the candle
     #[serde(rename = "c")]
@@ -76,6 +93,156 @@ pub struct CexCandleView {
     pub open: f64,
     /// specifies trading volume (base token) of the candle
     #[serde(rename = "v")]
+    pub volume: f64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexFeesView {
+    /// specifies base symbol
+    pub base: String,
+    /// specifies exchange
+    pub exchange: String,
+    /// specifies maker fee percentage for futures market
+    pub futures_maker_fee: f64,
+    /// specifies taker fee percentage for futures market
+    pub futures_taker_fee: f64,
+    /// specifies quote symbol
+    pub quote: String,
+    /// specifies maker fee percentage for spot market (e.g. 0.001 = 0.1%)
+    pub spot_maker_fee: f64,
+    /// specifies taker fee percentage for spot market
+    pub spot_take_fee: f64,
+    /// specifies symbol
+    pub symbol: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolCautionsView {
+    pub b: String,
+    /// caution | warning | danger
+    pub caution_level: String,
+    pub e: String,
+    /// ms, 0 = indefinite
+    pub end_at: i64,
+    pub m: String,
+    pub q: String,
+    pub reasons: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolDelistingsView {
+    pub b: String,
+    /// ms (scheduled or past)
+    pub delisting_at: i64,
+    pub e: String,
+    /// ms
+    pub listed_at: i64,
+    pub m: String,
+    pub q: String,
+    /// delisting | delisted
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolLiquidationView {
+    pub b: String,
+    pub e: String,
+    pub event_count: i64,
+    pub long_volume: f64,
+    pub long_volume_usd: f64,
+    /// always "futures"
+    pub m: String,
+    pub q: String,
+    pub short_volume: f64,
+    pub short_volume_usd: f64,
+    pub total_volume: f64,
+    pub total_volume_usd: f64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolMetadataView {
+    pub b: String,
+    /// ms
+    pub caution_end_at: i64,
+    /// "", caution, warning, danger
+    pub caution_level: String,
+    pub caution_reasons: Vec<String>,
+    pub delisting_at: i64,
+    pub e: String,
+    pub listed_at: i64,
+    /// "spot" | "futures"
+    pub m: String,
+    pub q: String,
+    /// trading|pre_listing|halt|close_only|delisting|delisted
+    pub status: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolOiStatsView {
+    pub b: String,
+    /// %
+    pub change_1h: f64,
+    /// %
+    pub change_24h: f64,
+    /// %
+    pub change_4h: f64,
+    pub e: String,
+    /// always "futures"
+    pub m: String,
+    pub oi_to_vol_ratio: f64,
+    pub open_interest: f64,
+    pub open_interest_usd: f64,
+    pub q: String,
+    pub token_id: String,
+    pub ts: i64,
+    pub volume_24h_usd: f64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolOiView {
+    pub b: String,
+    pub e: String,
+    /// always "futures" for OI
+    pub m: String,
+    pub open_interest: f64,
+    pub open_interest_usd: f64,
+    pub q: String,
+    pub ts: i64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolTagsView {
+    pub b: String,
+    pub confidence: i64,
+    pub e: String,
+    pub m: String,
+    pub q: String,
+    pub source: String,
+    pub tag: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CexSymbolVolumeView {
+    pub b: String,
+    pub e: String,
+    /// spot | futures
+    pub m: String,
+    pub q: String,
+    /// USD-ish, dashboard-friendly
+    pub quote_volume: f64,
+    /// ms, collector wall-time
+    pub ts: i64,
+    /// base-denominated (raw)
     pub volume: f64,
 }
 
@@ -180,6 +347,23 @@ pub struct FundingRateLatestResponse {
     /// Specifies the symbol
     #[serde(rename = "s")]
     pub symbol: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FundingRateSymbolsView {
+    /// specifies the base symbol
+    pub b: String,
+    /// specifies the exchange
+    pub e: String,
+    /// specifies the unique id
+    pub id: String,
+    /// specifies the market
+    pub m: String,
+    /// specifies the quote symbol
+    pub q: String,
+    /// specifies the api symbol
+    pub s: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -461,6 +645,13 @@ pub struct ListingsHistoricalView {
 pub struct MarginBorrowResponse {
     pub cross: serde_json::Value,
     pub isolated: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct NaverTrendView {
+    pub d: i64,
+    pub v: f64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -888,6 +1079,19 @@ pub struct TokenDetail {
     pub symbol: String,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct WalletStatusView {
+    pub currency: String,
+    pub deposit_message: String,
+    pub deposit_state: String,
+    pub exchange: String,
+    pub network: String,
+    pub updated_at: i64,
+    pub withdraw_message: String,
+    pub withdraw_state: String,
+}
+
 // --- Announcements ---
 
 /// Specifies sort
@@ -1233,7 +1437,7 @@ impl CexCandle {
     }
 
     /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
-    pub fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<serde_json::Value> {
+    pub fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
@@ -1241,7 +1445,7 @@ impl CexCandle {
     }
 
     /// Fetch supported intervals accepted by `/api/v1/cex/candle` endpoint.
-    pub fn intervals(&self) -> Result<serde_json::Value> {
+    pub fn intervals(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/cex/candle/intervals", None)
     }
 
@@ -1250,7 +1454,7 @@ impl CexCandle {
         &self,
         exchange: impl Into<String>,
         options: CexCandleSymbolsOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<CexCandleSymbolsView>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         if let Some(v) = options.market {
@@ -1551,7 +1755,10 @@ impl Datamaxi for CexSymbol {
 
 impl CexSymbol {
     /// Return currently-active caution/warning/danger flagged symbols. Bithumb provides an expiry (end_at); other exchanges are open-ended until the next collector poll clears them.
-    pub fn cautions(&self, options: CexSymbolCautionsOptions) -> Result<serde_json::Value> {
+    pub fn cautions(
+        &self,
+        options: CexSymbolCautionsOptions,
+    ) -> Result<Vec<CexSymbolCautionsView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -1576,7 +1783,10 @@ impl CexSymbol {
     }
 
     /// Return symbols with a known delisting_at timestamp or trading_status in {delisting, delisted}. Filter by time window to get upcoming delistings.
-    pub fn delistings(&self, options: CexSymbolDelistingsOptions) -> Result<serde_json::Value> {
+    pub fn delistings(
+        &self,
+        options: CexSymbolDelistingsOptions,
+    ) -> Result<Vec<CexSymbolDelistingsView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -1608,7 +1818,7 @@ impl CexSymbol {
         &self,
         base: impl Into<String>,
         options: CexSymbolLiquidationOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<CexSymbolLiquidationView>> {
         let mut parameters = HashMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.window {
@@ -1619,7 +1829,10 @@ impl CexSymbol {
     }
 
     /// Fetch per-symbol trading status, caution flags, tags and timing metadata collected by tfsymbolmeta.
-    pub fn metadata(&self, options: CexSymbolMetadataOptions) -> Result<serde_json::Value> {
+    pub fn metadata(
+        &self,
+        options: CexSymbolMetadataOptions,
+    ) -> Result<Vec<CexSymbolMetadataView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -1651,7 +1864,7 @@ impl CexSymbol {
         &self,
         base: impl Into<String>,
         options: CexSymbolOiOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<CexSymbolOiView>> {
         let mut parameters = HashMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.exchange {
@@ -1665,7 +1878,7 @@ impl CexSymbol {
         &self,
         base: impl Into<String>,
         options: CexSymbolOiStatsOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<CexSymbolOiStatsView>> {
         let mut parameters = HashMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.exchange {
@@ -1679,7 +1892,7 @@ impl CexSymbol {
     }
 
     /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
-    pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<serde_json::Value> {
+    pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.tag {
             parameters.insert("tag".to_string(), v.to_string());
@@ -1713,7 +1926,7 @@ impl CexSymbol {
         &self,
         base: impl Into<String>,
         options: CexSymbolVolumeOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<CexSymbolVolumeView>> {
         let mut parameters = HashMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.market {
@@ -2074,7 +2287,7 @@ impl Forex {
     }
 
     /// Get supported forex symbols.
-    pub fn symbols(&self) -> Result<serde_json::Value> {
+    pub fn symbols(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/forex/symbols", None)
     }
 }
@@ -2133,7 +2346,7 @@ impl Datamaxi for FundingRate {
 
 impl FundingRate {
     /// Get supported exchanges accepted by `/api/v1/funding-rate` endpoint.
-    pub fn exchanges(&self) -> Result<serde_json::Value> {
+    pub fn exchanges(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/funding-rate/exchanges", None)
     }
 
@@ -2180,7 +2393,10 @@ impl FundingRate {
     }
 
     /// Fetch supported symbols accepted by `/api/v1/funding-rate` endpoint.
-    pub fn symbols(&self, options: FundingRateSymbolsOptions) -> Result<serde_json::Value> {
+    pub fn symbols(
+        &self,
+        options: FundingRateSymbolsOptions,
+    ) -> Result<Vec<FundingRateSymbolsView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -2883,14 +3099,14 @@ impl Datamaxi for NaverTrend {
 
 impl NaverTrend {
     /// Get Naver trend data with a daily frequency for a project that is associated with a given [symbol](./symbols). The values in response are normalized into a range from 0 to 100, where 0 corresponds to a minimum interest, and 100 corresponds to a maximum interest of users in Naver search engine.
-    pub fn get(&self, symbol: impl Into<String>) -> Result<serde_json::Value> {
+    pub fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
         let mut parameters = HashMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
         self.client.get("/api/v1/naver-trend", Some(parameters))
     }
 
     /// Get crypto symbols that are accepted by [Naver trend endpoint](./trend).
-    pub fn symbols(&self) -> Result<serde_json::Value> {
+    pub fn symbols(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/naver-trend/symbols", None)
     }
 }
@@ -3367,7 +3583,7 @@ impl Premium {
     }
 
     /// Get supported source exchanges for premium data.
-    pub fn exchanges(&self) -> Result<serde_json::Value> {
+    pub fn exchanges(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/premium/exchanges", None)
     }
 }
@@ -4020,7 +4236,7 @@ impl Ticker {
     }
 
     /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
-    pub fn exchanges(&self, market: TickerExchangesMarket) -> Result<serde_json::Value> {
+    pub fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
@@ -4032,7 +4248,7 @@ impl Ticker {
         &self,
         exchange: impl Into<String>,
         market: TickerSymbolsMarket,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("market".to_string(), market.to_string());
@@ -4204,7 +4420,7 @@ impl Datamaxi for TradingFees {
 
 impl TradingFees {
     /// Get trading fees.
-    pub fn fees(&self, options: CexFeesOptions) -> Result<serde_json::Value> {
+    pub fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
         let mut parameters = HashMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -4216,12 +4432,12 @@ impl TradingFees {
     }
 
     /// Get supported exchanges accepted by `/api/v1/trading-fees` endpoint.
-    pub fn exchanges(&self) -> Result<serde_json::Value> {
+    pub fn exchanges(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/cex/fees/exchanges", None)
     }
 
     /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
-    pub fn symbols(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
+    pub fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
@@ -4288,7 +4504,7 @@ impl WalletStatus {
         &self,
         asset: impl Into<String>,
         options: WalletStatusOptions,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Vec<WalletStatusView>> {
         let mut parameters = HashMap::new();
         parameters.insert("asset".to_string(), asset.into());
         if let Some(v) = options.exchange {
@@ -4298,7 +4514,7 @@ impl WalletStatus {
     }
 
     /// Get assets accepted by `/api/v1/wallet-status` endpoint.
-    pub fn assets(&self, exchange: impl Into<String>) -> Result<serde_json::Value> {
+    pub fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
         let mut parameters = HashMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
@@ -4306,7 +4522,7 @@ impl WalletStatus {
     }
 
     /// Get exchanges accepted by `/api/v1/wallet-status` endpoint.
-    pub fn exchanges(&self) -> Result<serde_json::Value> {
+    pub fn exchanges(&self) -> Result<Vec<String>> {
         self.client.get("/api/v1/wallet-status/exchanges", None)
     }
 }
