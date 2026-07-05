@@ -676,7 +676,7 @@
 <a href=#676 id=676 data-nosnippet>676</a>    <span class="kw">pub </span>base: String,
 <a href=#677 id=677 data-nosnippet>677</a>    <span class="kw">pub </span>deposit_at: i64,
 <a href=#678 id=678 data-nosnippet>678</a>    <span class="kw">pub </span>exchange: String,
-<a href=#679 id=679 data-nosnippet>679</a>    <span class="kw">pub </span>network: String,
+<a href=#679 id=679 data-nosnippet>679</a>    <span class="kw">pub </span>network: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#680 id=680 data-nosnippet>680</a>    <span class="kw">pub </span>trade_at: i64,
 <a href=#681 id=681 data-nosnippet>681</a>    <span class="kw">pub </span>url: String,
 <a href=#682 id=682 data-nosnippet>682</a>}
@@ -851,7 +851,7 @@
 <a href=#851 id=851 data-nosnippet>851</a>    <span class="doccomment">/// specifies +2% volume depth from source exchange
 <a href=#852 id=852 data-nosnippet>852</a>    </span><span class="kw">pub </span>sbd2p: f64,
 <a href=#853 id=853 data-nosnippet>853</a>    <span class="doccomment">/// for amm source ticker, amm source chain
-<a href=#854 id=854 data-nosnippet>854</a>    </span><span class="kw">pub </span>sc: String,
+<a href=#854 id=854 data-nosnippet>854</a>    </span><span class="kw">pub </span>sc: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#855 id=855 data-nosnippet>855</a>    <span class="doccomment">/// specifies the source exchange name
 <a href=#856 id=856 data-nosnippet>856</a>    </span><span class="kw">pub </span>se: String,
 <a href=#857 id=857 data-nosnippet>857</a>    <span class="doccomment">/// source funding rate
@@ -881,7 +881,7 @@
 <a href=#881 id=881 data-nosnippet>881</a>    <span class="doccomment">/// specifies the latest price of the source exchange in requested currency
 <a href=#882 id=882 data-nosnippet>882</a>    </span><span class="kw">pub </span>sp: f64,
 <a href=#883 id=883 data-nosnippet>883</a>    <span class="doccomment">/// for amm source ticker, amm pool address
-<a href=#884 id=884 data-nosnippet>884</a>    </span><span class="kw">pub </span>spa: String,
+<a href=#884 id=884 data-nosnippet>884</a>    </span><span class="kw">pub </span>spa: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#885 id=885 data-nosnippet>885</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 15m
 <a href=#886 id=886 data-nosnippet>886</a>    </span><span class="kw">pub </span>spdp15m: f64,
 <a href=#887 id=887 data-nosnippet>887</a>    <span class="doccomment">/// specifies the price difference percentage of the source exchange in the last 1h
@@ -913,7 +913,7 @@
 <a href=#913 id=913 data-nosnippet>913</a>    <span class="doccomment">/// target bid depth within -2% quote
 <a href=#914 id=914 data-nosnippet>914</a>    </span><span class="kw">pub </span>tbdf: f64,
 <a href=#915 id=915 data-nosnippet>915</a>    <span class="doccomment">/// for amm target ticker, amm target chain
-<a href=#916 id=916 data-nosnippet>916</a>    </span><span class="kw">pub </span>tc: String,
+<a href=#916 id=916 data-nosnippet>916</a>    </span><span class="kw">pub </span>tc: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#917 id=917 data-nosnippet>917</a>    <span class="doccomment">/// specifies the target exchange name
 <a href=#918 id=918 data-nosnippet>918</a>    </span><span class="kw">pub </span>te: String,
 <a href=#919 id=919 data-nosnippet>919</a>    <span class="doccomment">/// target funding rate
@@ -940,7 +940,7 @@
 <a href=#940 id=940 data-nosnippet>940</a>    <span class="doccomment">/// specifies the latest price of the target exchange
 <a href=#941 id=941 data-nosnippet>941</a>    </span><span class="kw">pub </span>tp: f64,
 <a href=#942 id=942 data-nosnippet>942</a>    <span class="doccomment">/// for amm target ticker, amm pool address
-<a href=#943 id=943 data-nosnippet>943</a>    </span><span class="kw">pub </span>tpa: String,
+<a href=#943 id=943 data-nosnippet>943</a>    </span><span class="kw">pub </span>tpa: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#944 id=944 data-nosnippet>944</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 15m
 <a href=#945 id=945 data-nosnippet>945</a>    </span><span class="kw">pub </span>tpdp15m: f64,
 <a href=#946 id=946 data-nosnippet>946</a>    <span class="doccomment">/// specifies the price difference percentage of the target exchange in the last 1h
@@ -1011,7 +1011,7 @@
 <a href=#1011 id=1011 data-nosnippet>1011</a>    </span><span class="kw">pub </span>channel_title: String,
 <a href=#1012 id=1012 data-nosnippet>1012</a>    <span class="doccomment">/// specifies the creation time of the channel
 <a href=#1013 id=1013 data-nosnippet>1013</a>    </span><span class="attr">#[serde(rename = <span class="string">"createdAt"</span>)]
-<a href=#1014 id=1014 data-nosnippet>1014</a>    </span><span class="kw">pub </span>created_at: i64,
+<a href=#1014 id=1014 data-nosnippet>1014</a>    </span><span class="kw">pub </span>created_at: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#1015 id=1015 data-nosnippet>1015</a>    <span class="doccomment">/// specifies the channel description
 <a href=#1016 id=1016 data-nosnippet>1016</a>    </span><span class="kw">pub </span>description: String,
 <a href=#1017 id=1017 data-nosnippet>1017</a>    <span class="doccomment">/// specifies the channel link
