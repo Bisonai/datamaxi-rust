@@ -2,7 +2,7 @@
 
 use crate::api::{Client, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // --- Response models ---
 
@@ -1253,7 +1253,7 @@ impl Announcements {
         &self,
         options: CexAnnouncementsOptions,
     ) -> Result<CexAnnouncementsResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
@@ -1280,11 +1280,17 @@ impl Announcements {
 
 #[derive(Default, Clone)]
 pub struct CexAnnouncementsOptions {
+    /// Page number (e.g. `1`)
     pub page: Option<i64>,
+    /// Page size (e.g. `100`)
     pub limit: Option<i64>,
+    /// Specifies sort (e.g. `asc`)
     pub sort: Option<CexAnnouncementsSort>,
+    /// Specifies key to sort by (e.g. `title`)
     pub key: Option<CexAnnouncementsKey>,
+    /// Specifies exchange(s), separated by , (e.g. `binance`)
     pub exchange: Option<String>,
+    /// Specifies category(s), separated by , (e.g. `listing`)
     pub category: Option<CexAnnouncementsCategory>,
 }
 
@@ -1451,7 +1457,7 @@ impl CexCandle {
         symbol: impl Into<String>,
         options: CexCandleOptions,
     ) -> Result<CexCandleResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         if let Some(v) = options.market {
@@ -1476,7 +1482,7 @@ impl CexCandle {
 
     /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
     pub async fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
             .get("/api/v1/cex/candle/exchanges", Some(parameters))
@@ -1494,7 +1500,7 @@ impl CexCandle {
         exchange: impl Into<String>,
         options: CexCandleSymbolsOptions,
     ) -> Result<Vec<CexCandleSymbolsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
@@ -1507,10 +1513,15 @@ impl CexCandle {
 
 #[derive(Default, Clone)]
 pub struct CexCandleOptions {
+    /// Specifies market (e.g. `spot`)
     pub market: Option<CexCandleMarket>,
+    /// Specifies currency (e.g. `USD`)
     pub currency: Option<CexCandleCurrency>,
+    /// Specifies interval (e.g. `1d`)
     pub interval: Option<String>,
+    /// Specifies from (e.g. `1735657200`)
     pub from: Option<String>,
+    /// Specifies to (e.g. `1735693200`)
     pub to: Option<String>,
 }
 
@@ -1553,6 +1564,7 @@ impl CexCandleOptions {
 
 #[derive(Default, Clone)]
 pub struct CexCandleSymbolsOptions {
+    /// Specifies market type (e.g. `spot`)
     pub market: Option<CexCandleSymbolsMarket>,
 }
 
@@ -1791,7 +1803,7 @@ impl CexSymbol {
         &self,
         options: CexSymbolCautionsOptions,
     ) -> Result<Vec<CexSymbolCautionsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -1820,7 +1832,7 @@ impl CexSymbol {
         &self,
         options: CexSymbolDelistingsOptions,
     ) -> Result<Vec<CexSymbolDelistingsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -1853,7 +1865,7 @@ impl CexSymbol {
         base: impl Into<String>,
         options: CexSymbolLiquidationOptions,
     ) -> Result<Vec<CexSymbolLiquidationView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
@@ -1868,7 +1880,7 @@ impl CexSymbol {
         &self,
         options: CexSymbolMetadataOptions,
     ) -> Result<Vec<CexSymbolMetadataView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -1901,7 +1913,7 @@ impl CexSymbol {
         base: impl Into<String>,
         options: CexSymbolOiOptions,
     ) -> Result<Vec<CexSymbolOiView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -1917,7 +1929,7 @@ impl CexSymbol {
         base: impl Into<String>,
         options: CexSymbolOiStatsOptions,
     ) -> Result<Vec<CexSymbolOiStatsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -1932,7 +1944,7 @@ impl CexSymbol {
 
     /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
     pub async fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.tag {
             parameters.insert("tag".to_string(), v.to_string());
         }
@@ -1968,7 +1980,7 @@ impl CexSymbol {
         base: impl Into<String>,
         options: CexSymbolVolumeOptions,
     ) -> Result<Vec<CexSymbolVolumeView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("base".to_string(), base.into());
         if let Some(v) = options.market {
             parameters.insert("market".to_string(), v.to_string());
@@ -1981,11 +1993,17 @@ impl CexSymbol {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolCautionsOptions {
+    /// Exchange filter (comma-separated, empty = all)
     pub exchange: Option<String>,
+    /// spot or futures
     pub market: Option<CexSymbolCautionsMarket>,
+    /// Minimum severity
     pub min_level: Option<CexSymbolCautionsMinLevel>,
+    /// Exclude rows whose end_at is in the past (default true)
     pub active_only: Option<bool>,
+    /// Page size (default 500, max 5000)
     pub limit: Option<i64>,
+    /// Page number (1-based)
     pub page: Option<i64>,
 }
 
@@ -2034,12 +2052,19 @@ impl CexSymbolCautionsOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolDelistingsOptions {
+    /// Exchange filter (comma-separated)
     pub exchange: Option<String>,
+    /// spot or futures
     pub market: Option<CexSymbolDelistingsMarket>,
+    /// Lower bound for delisting_at (ms epoch, default = now)
     pub from_ms: Option<i64>,
+    /// Upper bound for delisting_at (ms epoch, default = now+30 days)
     pub to_ms: Option<i64>,
+    /// Include already-delisted rows (default false)
     pub include_past: Option<bool>,
+    /// Page size (default 200, max 2000)
     pub limit: Option<i64>,
+    /// Page number (1-based)
     pub page: Option<i64>,
 }
 
@@ -2094,6 +2119,7 @@ impl CexSymbolDelistingsOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolLiquidationOptions {
+    /// Time window: 1h / 24h / 7d (default 24h, max 30d)
     pub window: Option<String>,
 }
 
@@ -2110,12 +2136,19 @@ impl CexSymbolLiquidationOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolMetadataOptions {
+    /// Comma-separated exchange names (empty = all) (e.g. `upbit,bithumb`)
     pub exchange: Option<String>,
+    /// spot or futures (empty = both)
     pub market: Option<CexSymbolMetadataMarket>,
+    /// Base asset filter (e.g. `BTC`)
     pub base: Option<String>,
+    /// Quote asset filter (e.g. `USDT`)
     pub quote: Option<String>,
+    /// trading_status filter (repeatable, comma-separated) (e.g. `trading,delisting`)
     pub status: Option<String>,
+    /// Page size (default 200, max 2000)
     pub limit: Option<i64>,
+    /// Page number (1-based)
     pub page: Option<i64>,
 }
 
@@ -2170,6 +2203,7 @@ impl CexSymbolMetadataOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolOiOptions {
+    /// Exchange filter (narrows the Redis scan)
     pub exchange: Option<String>,
 }
 
@@ -2186,7 +2220,9 @@ impl CexSymbolOiOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolOiStatsOptions {
+    /// Exchange filter — when omitted, returns every venue carrying the base
     pub exchange: Option<String>,
+    /// Convert *_usd fields to target currency (USD or KRW)
     pub currency: Option<CexSymbolOiStatsCurrency>,
 }
 
@@ -2211,13 +2247,21 @@ impl CexSymbolOiStatsOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolTagsOptions {
+    /// Tag filter (repeatable, comma-separated) (e.g. `meme,ai`)
     pub tag: Option<String>,
+    /// Exchange filter (repeatable, comma-separated) (e.g. `binance`)
     pub exchange: Option<String>,
+    /// spot or futures
     pub market: Option<CexSymbolTagsMarket>,
+    /// Base asset filter (e.g. `BTC`)
     pub base: Option<String>,
+    /// Tag source filter
     pub source: Option<CexSymbolTagsSource>,
+    /// Minimum confidence (0-100, default 80)
     pub min_confidence: Option<i64>,
+    /// Page size (default 500, max 5000)
     pub limit: Option<i64>,
+    /// Page number (1-based)
     pub page: Option<i64>,
 }
 
@@ -2278,6 +2322,7 @@ impl CexSymbolTagsOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolVolumeOptions {
+    /// Filter to spot or futures
     pub market: Option<CexSymbolVolumeMarket>,
 }
 
@@ -2307,7 +2352,7 @@ impl Forex {
 
     /// Get the latest forex rate for given symbol.
     pub async fn get(&self, symbol: impl Into<String>) -> Result<ForexResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
         self.client.get("/api/v1/forex", Some(parameters)).await
     }
@@ -2370,7 +2415,7 @@ impl FundingRate {
         symbol: impl Into<String>,
         options: FundingRateHistoryOptions,
     ) -> Result<FundingRateHistoryResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         if let Some(v) = options.page {
@@ -2399,7 +2444,7 @@ impl FundingRate {
         exchange: impl Into<String>,
         symbol: impl Into<String>,
     ) -> Result<FundingRateLatestResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         self.client
@@ -2412,7 +2457,7 @@ impl FundingRate {
         &self,
         options: FundingRateSymbolsOptions,
     ) -> Result<Vec<FundingRateSymbolsView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -2424,10 +2469,15 @@ impl FundingRate {
 
 #[derive(Default, Clone)]
 pub struct FundingRateHistoryOptions {
+    /// Specifies page (e.g. `1`)
     pub page: Option<i64>,
+    /// Specifies limit (e.g. `1000`)
     pub limit: Option<i64>,
+    /// Specifies from (e.g. `2021-01-01`)
     pub from: Option<String>,
+    /// Specifies to (e.g. `2021-01-01`)
     pub to: Option<String>,
+    /// Specifies sort (e.g. `asc`)
     pub sort: Option<FundingRateHistorySort>,
 }
 
@@ -2470,6 +2520,7 @@ impl FundingRateHistoryOptions {
 
 #[derive(Default, Clone)]
 pub struct FundingRateSymbolsOptions {
+    /// Specifies exchange name. Omit to receive symbols for all exchanges; constrain to a single exchange when filtering. (e.g. `binance`)
     pub exchange: Option<String>,
 }
 
@@ -2503,7 +2554,7 @@ impl IndexPrice {
         asset: impl Into<String>,
         options: IndexPriceOptions,
     ) -> Result<IndexPriceResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("asset".to_string(), asset.into());
         if let Some(v) = options.from {
             parameters.insert("from".to_string(), v.to_string());
@@ -2522,8 +2573,11 @@ impl IndexPrice {
 
 #[derive(Default, Clone)]
 pub struct IndexPriceOptions {
+    /// Specifies from (e.g. `2021-01-01`)
     pub from: Option<String>,
+    /// Specifies to (e.g. `2021-01-01`)
     pub to: Option<String>,
+    /// interval (e.g. `5m`)
     pub interval: Option<String>,
 }
 
@@ -2680,7 +2734,7 @@ impl Liquidation {
         symbol: impl Into<String>,
         options: LiquidationOptions,
     ) -> Result<LiquidationResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         if let Some(v) = options.limit {
@@ -2693,7 +2747,7 @@ impl Liquidation {
 
     /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
     pub async fn feed(&self, options: LiquidationFeedOptions) -> Result<LiquidationFeedResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -2716,7 +2770,7 @@ impl Liquidation {
         &self,
         options: LiquidationHeatmapOptions,
     ) -> Result<LiquidationHeatmapResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
         }
@@ -2730,7 +2784,7 @@ impl Liquidation {
 
     /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
     pub async fn map(&self, options: LiquidationMapOptions) -> Result<LiquidationMapResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -2750,7 +2804,7 @@ impl Liquidation {
         &self,
         options: LiquidationStatsOptions,
     ) -> Result<LiquidationStatsResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.window {
             parameters.insert("window".to_string(), v.to_string());
         }
@@ -2771,7 +2825,7 @@ impl Liquidation {
         symbol: impl Into<String>,
         options: LiquidationSymbolHistoryOptions,
     ) -> Result<LiquidationSymbolHistoryResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
         if let Some(v) = options.quote {
             parameters.insert("quote".to_string(), v.to_string());
@@ -2793,6 +2847,7 @@ impl Liquidation {
 
 #[derive(Default, Clone)]
 pub struct LiquidationOptions {
+    /// Number of events to return (1-1000) (e.g. `100`)
     pub limit: Option<i64>,
 }
 
@@ -2809,9 +2864,13 @@ impl LiquidationOptions {
 
 #[derive(Default, Clone)]
 pub struct LiquidationFeedOptions {
+    /// Exchange filter (e.g. `bybit`)
     pub exchange: Option<String>,
+    /// Base asset filter (case-insensitive) (e.g. `BTC`)
     pub base: Option<String>,
+    /// Minimum VolumeUsd filter (e.g. `10000`)
     pub min_volume_usd: Option<f64>,
+    /// Number of events (1-1000) (e.g. `100`)
     pub limit: Option<i64>,
 }
 
@@ -2848,7 +2907,9 @@ impl LiquidationFeedOptions {
 
 #[derive(Default, Clone)]
 pub struct LiquidationHeatmapOptions {
+    /// Rolling window
     pub window: Option<LiquidationHeatmapWindow>,
+    /// Top N tokens by total
     pub top_n: Option<i64>,
 }
 
@@ -2873,8 +2934,11 @@ impl LiquidationHeatmapOptions {
 
 #[derive(Default, Clone)]
 pub struct LiquidationMapOptions {
+    /// Exchange
     pub exchange: Option<String>,
+    /// Base asset (e.g. `BTC`)
     pub base: Option<String>,
+    /// Quote asset
     pub quote: Option<String>,
 }
 
@@ -2905,8 +2969,11 @@ impl LiquidationMapOptions {
 
 #[derive(Default, Clone)]
 pub struct LiquidationStatsOptions {
+    /// Rolling window
     pub window: Option<LiquidationStatsWindow>,
+    /// Exchange filter (e.g. `bybit`)
     pub exchange: Option<String>,
+    /// Minimum VolumeUsd filter (e.g. `10000`)
     pub min_volume_usd: Option<f64>,
 }
 
@@ -2937,9 +3004,13 @@ impl LiquidationStatsOptions {
 
 #[derive(Default, Clone)]
 pub struct LiquidationSymbolHistoryOptions {
+    /// Quote asset
     pub quote: Option<String>,
+    /// Optional exchange filter for the liquidation aggregation. The price line stays on Binance unless this is set.
     pub exchange: Option<String>,
+    /// Bucket interval
     pub interval: Option<LiquidationSymbolHistoryInterval>,
+    /// Lookback window
     pub window: Option<LiquidationSymbolHistoryWindow>,
 }
 
@@ -2992,7 +3063,7 @@ impl Listing {
         &self,
         options: ListingsHistoricalOptions,
     ) -> Result<ListingsHistoricalResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.refresh {
             parameters.insert("refresh".to_string(), v.to_string());
         }
@@ -3004,6 +3075,7 @@ impl Listing {
 
 #[derive(Default, Clone)]
 pub struct ListingsHistoricalOptions {
+    /// Refresh cache (e.g. `true`)
     pub refresh: Option<bool>,
 }
 
@@ -3033,7 +3105,7 @@ impl MarginBorrow {
 
     /// Get the margin borrow data.
     pub async fn get(&self, asset: impl Into<String>) -> Result<MarginBorrowResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("asset".to_string(), asset.into());
         self.client
             .get("/api/v1/margin-borrow", Some(parameters))
@@ -3056,7 +3128,7 @@ impl NaverTrend {
 
     /// Get Naver trend data with a daily frequency for a project that is associated with a given [symbol](./symbols). The values in response are normalized into a range from 0 to 100, where 0 corresponds to a minimum interest, and 100 corresponds to a maximum interest of users in Naver search engine.
     pub async fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("symbol".to_string(), symbol.into());
         self.client
             .get("/api/v1/naver-trend", Some(parameters))
@@ -3144,7 +3216,7 @@ impl OpenInterest {
         exchange: impl Into<String>,
         symbol: impl Into<String>,
     ) -> Result<OpenInterestResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         self.client
@@ -3158,7 +3230,7 @@ impl OpenInterest {
         token_id: impl Into<String>,
         options: OpenInterestHistoryAggregatedOptions,
     ) -> Result<OpenInterestHistoryAggregatedResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("token_id".to_string(), token_id.into());
         if let Some(v) = options.interval {
             parameters.insert("interval".to_string(), v.to_string());
@@ -3176,7 +3248,7 @@ impl OpenInterest {
 
     /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
     pub async fn list(&self, options: OpenInterestListOptions) -> Result<OpenInterestListResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -3190,7 +3262,7 @@ impl OpenInterest {
         &self,
         options: OpenInterestOverviewOptions,
     ) -> Result<OpenInterestOverviewResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
@@ -3216,7 +3288,7 @@ impl OpenInterest {
         &self,
         options: OpenInterestSummaryOptions,
     ) -> Result<OpenInterestSummaryResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.top_n {
             parameters.insert("top_n".to_string(), v.to_string());
         }
@@ -3228,8 +3300,11 @@ impl OpenInterest {
 
 #[derive(Default, Clone)]
 pub struct OpenInterestHistoryAggregatedOptions {
+    /// Aggregation interval (e.g. `1h`)
     pub interval: Option<OpenInterestHistoryAggregatedInterval>,
+    /// Start unix-ms (default: depends on interval — 7d for 1h, 30d for 4h, 1y for 1d) (e.g. `1776000000000`)
     pub from: Option<i64>,
+    /// End unix-ms (default: now) (e.g. `1776900000000`)
     pub to: Option<i64>,
 }
 
@@ -3260,6 +3335,7 @@ impl OpenInterestHistoryAggregatedOptions {
 
 #[derive(Default, Clone)]
 pub struct OpenInterestListOptions {
+    /// Exchange filter (e.g. `bybit`)
     pub exchange: Option<String>,
 }
 
@@ -3276,10 +3352,15 @@ impl OpenInterestListOptions {
 
 #[derive(Default, Clone)]
 pub struct OpenInterestOverviewOptions {
+    /// Page (e.g. `1`)
     pub page: Option<i64>,
+    /// Page size (e.g. `20`)
     pub limit: Option<i64>,
+    /// Sort-by exchange (e.g. `binance`)
     pub key: Option<String>,
+    /// Sort direction (e.g. `desc`)
     pub sort: Option<OpenInterestOverviewSort>,
+    /// Base symbol search (e.g. `BTC`)
     pub query: Option<String>,
 }
 
@@ -3322,6 +3403,7 @@ impl OpenInterestOverviewOptions {
 
 #[derive(Default, Clone)]
 pub struct OpenInterestSummaryOptions {
+    /// Top N tokens to return
     pub top_n: Option<i64>,
 }
 
@@ -3453,7 +3535,7 @@ impl Premium {
 
     /// Get real-time premium (price difference) data across exchanges.
     pub async fn get(&self, options: PremiumOptions) -> Result<PremiumResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.source_exchange {
             parameters.insert("source_exchange".to_string(), v.to_string());
         }
@@ -3528,26 +3610,47 @@ impl Premium {
 
 #[derive(Default, Clone)]
 pub struct PremiumOptions {
+    /// Specifies source exchange(s), separated by , (e.g. `binance`)
     pub source_exchange: Option<String>,
+    /// Specifies target exchange(s), separated by , (e.g. `upbit`)
     pub target_exchange: Option<String>,
+    /// Specifies asset(s), separated by , (e.g. `BTC`)
     pub asset: Option<String>,
+    /// Specifies source quote(s), separated by , (e.g. `USDT`)
     pub source_quote: Option<String>,
+    /// Specifies target quote(s), separated by , (e.g. `KRW`)
     pub target_quote: Option<String>,
+    /// Specifies source market (e.g. `spot`)
     pub source_market: Option<PremiumSourceMarket>,
+    /// Specifies target market (e.g. `spot`)
     pub target_market: Option<PremiumTargetMarket>,
+    /// Specifies premium type(s), separated by , (e.g. `spot-spot`)
     pub premium_type: Option<PremiumPremiumType>,
+    /// Specifies currency applied to price values (e.g. `KRW`)
     pub currency: Option<String>,
+    /// Specifies conversion base (e.g. `USDT`)
     pub conversion_base: Option<String>,
+    /// Page number (e.g. `1`)
     pub page: Option<i64>,
+    /// Page size (e.g. `10`)
     pub limit: Option<i64>,
+    /// Specifies sort order (e.g. `desc`)
     pub sort: Option<PremiumSort>,
+    /// Specifies key to sort by (e.g. `pdp`)
     pub key: Option<String>,
+    /// Search query for filtering assets (e.g. `BTC`)
     pub query: Option<String>,
+    /// Filter only transferable assets (e.g. `false`)
     pub only_transferable: Option<bool>,
+    /// Specifies network(s), separated by , (e.g. `ethereum`)
     pub network: Option<String>,
+    /// Minimum source volume (e.g. `10000`)
     pub min_sv: Option<f64>,
+    /// Minimum target volume (e.g. `10000`)
     pub min_tv: Option<f64>,
+    /// Specifies token id(s) to include, separated by , (e.g. `bitcoin`)
     pub token_include: Option<String>,
+    /// Specifies token id(s) to exclude, separated by , (e.g. `bitcoin`)
     pub token_exclude: Option<String>,
 }
 
@@ -3837,7 +3940,7 @@ impl Telegram {
         &self,
         options: TelegramChannelsOptions,
     ) -> Result<TelegramChannelsResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
@@ -3863,7 +3966,7 @@ impl Telegram {
         &self,
         options: TelegramMessagesOptions,
     ) -> Result<TelegramMessagesResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.channel {
             parameters.insert("channel".to_string(), v.to_string());
         }
@@ -3893,10 +3996,15 @@ impl Telegram {
 
 #[derive(Default, Clone)]
 pub struct TelegramChannelsOptions {
+    /// Page number (e.g. `1`)
     pub page: Option<i64>,
+    /// Page size (e.g. `100`)
     pub limit: Option<i64>,
+    /// Specifies language category of telegram channel (e.g. `english`)
     pub category: Option<String>,
+    /// Specifies key to sort by (e.g. `channelName`)
     pub key: Option<TelegramChannelsKey>,
+    /// Specifies sort (e.g. `asc`)
     pub sort: Option<TelegramChannelsSort>,
 }
 
@@ -3939,12 +4047,19 @@ impl TelegramChannelsOptions {
 
 #[derive(Default, Clone)]
 pub struct TelegramMessagesOptions {
+    /// Specifies channel username (e.g. `datamaxiplus`)
     pub channel: Option<String>,
+    /// Page number (e.g. `1`)
     pub page: Option<i64>,
+    /// Page size (e.g. `100`)
     pub limit: Option<i64>,
+    /// Specifies key to sort by (e.g. `publishedAt`)
     pub key: Option<TelegramMessagesKey>,
+    /// Specifies sort (e.g. `asc`)
     pub sort: Option<TelegramMessagesSort>,
+    /// Specifies category (e.g. `english`)
     pub category: Option<TelegramMessagesCategory>,
+    /// Specifies search query (e.g. `BTC`)
     pub search_query: Option<String>,
 }
 
@@ -4143,7 +4258,7 @@ impl Ticker {
         market: TickerMarket,
         options: TickerOptions,
     ) -> Result<TickerResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("symbol".to_string(), symbol.into());
         parameters.insert("market".to_string(), market.to_string());
@@ -4161,7 +4276,7 @@ impl Ticker {
 
     /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
     pub async fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("market".to_string(), market.to_string());
         self.client
             .get("/api/v1/ticker/exchanges", Some(parameters))
@@ -4174,7 +4289,7 @@ impl Ticker {
         exchange: impl Into<String>,
         market: TickerSymbolsMarket,
     ) -> Result<Vec<String>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         parameters.insert("market".to_string(), market.to_string());
         self.client
@@ -4185,8 +4300,11 @@ impl Ticker {
 
 #[derive(Default, Clone)]
 pub struct TickerOptions {
+    /// Specifies currency applied to price values (e.g. `KRW`)
     pub currency: Option<TickerCurrency>,
+    /// Specifies conversion base applied to price values (e.g. `USDT`)
     pub conversion_base: Option<TickerConversionBase>,
+    /// When true, include the frame's transport source (ws|rest) in the response. (e.g. `true`)
     pub include_source: Option<bool>,
 }
 
@@ -4258,7 +4376,7 @@ impl Token {
         &self,
         options: CexTokenUpdatesOptions,
     ) -> Result<CexTokenUpdatesResponse> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.page {
             parameters.insert("page".to_string(), v.to_string());
         }
@@ -4276,8 +4394,11 @@ impl Token {
 
 #[derive(Default, Clone)]
 pub struct CexTokenUpdatesOptions {
+    /// Specifies page (e.g. `1`)
     pub page: Option<String>,
+    /// Specifies limit (e.g. `10`)
     pub limit: Option<String>,
+    /// Specifies type of token update (e.g. `listed`)
     pub r#type: Option<CexTokenUpdatesType>,
 }
 
@@ -4321,7 +4442,7 @@ impl TradingFees {
 
     /// Get trading fees.
     pub async fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
         }
@@ -4338,7 +4459,7 @@ impl TradingFees {
 
     /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
     pub async fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
             .get("/api/v1/cex/fees/symbols", Some(parameters))
@@ -4348,7 +4469,9 @@ impl TradingFees {
 
 #[derive(Default, Clone)]
 pub struct CexFeesOptions {
+    /// Specifies exchange (e.g. `binance`)
     pub exchange: Option<String>,
+    /// Specifies symbol (e.g. `BTC-USDT`)
     pub symbol: Option<String>,
 }
 
@@ -4390,7 +4513,7 @@ impl WalletStatus {
         asset: impl Into<String>,
         options: WalletStatusOptions,
     ) -> Result<Vec<WalletStatusView>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("asset".to_string(), asset.into());
         if let Some(v) = options.exchange {
             parameters.insert("exchange".to_string(), v.to_string());
@@ -4402,7 +4525,7 @@ impl WalletStatus {
 
     /// Get assets accepted by `/api/v1/wallet-status` endpoint.
     pub async fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
-        let mut parameters = HashMap::new();
+        let mut parameters = BTreeMap::new();
         parameters.insert("exchange".to_string(), exchange.into());
         self.client
             .get("/api/v1/wallet-status/assets", Some(parameters))
@@ -4419,6 +4542,7 @@ impl WalletStatus {
 
 #[derive(Default, Clone)]
 pub struct WalletStatusOptions {
+    /// Specifes exchange (e.g. `binance`)
     pub exchange: Option<String>,
 }
 
@@ -4532,7 +4656,7 @@ pub mod blocking {
     use super::*;
     use crate::api::blocking::Client;
     use crate::api::Result;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     // --- Announcements ---
 
@@ -4552,7 +4676,7 @@ pub mod blocking {
             &self,
             options: CexAnnouncementsOptions,
         ) -> Result<CexAnnouncementsResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.page {
                 parameters.insert("page".to_string(), v.to_string());
             }
@@ -4596,7 +4720,7 @@ pub mod blocking {
             symbol: impl Into<String>,
             options: CexCandleOptions,
         ) -> Result<CexCandleResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             if let Some(v) = options.market {
@@ -4619,7 +4743,7 @@ pub mod blocking {
 
         /// Get supported exchanges accepted by `/api/v1/cex/candle` endpoint.
         pub fn exchanges(&self, market: CexCandleExchangesMarket) -> Result<Vec<String>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("market".to_string(), market.to_string());
             self.client
                 .get("/api/v1/cex/candle/exchanges", Some(parameters))
@@ -4636,7 +4760,7 @@ pub mod blocking {
             exchange: impl Into<String>,
             options: CexCandleSymbolsOptions,
         ) -> Result<Vec<CexCandleSymbolsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             if let Some(v) = options.market {
                 parameters.insert("market".to_string(), v.to_string());
@@ -4664,7 +4788,7 @@ pub mod blocking {
             &self,
             options: CexSymbolCautionsOptions,
         ) -> Result<Vec<CexSymbolCautionsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -4692,7 +4816,7 @@ pub mod blocking {
             &self,
             options: CexSymbolDelistingsOptions,
         ) -> Result<Vec<CexSymbolDelistingsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -4724,7 +4848,7 @@ pub mod blocking {
             base: impl Into<String>,
             options: CexSymbolLiquidationOptions,
         ) -> Result<Vec<CexSymbolLiquidationView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("base".to_string(), base.into());
             if let Some(v) = options.window {
                 parameters.insert("window".to_string(), v.to_string());
@@ -4738,7 +4862,7 @@ pub mod blocking {
             &self,
             options: CexSymbolMetadataOptions,
         ) -> Result<Vec<CexSymbolMetadataView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -4770,7 +4894,7 @@ pub mod blocking {
             base: impl Into<String>,
             options: CexSymbolOiOptions,
         ) -> Result<Vec<CexSymbolOiView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("base".to_string(), base.into());
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
@@ -4784,7 +4908,7 @@ pub mod blocking {
             base: impl Into<String>,
             options: CexSymbolOiStatsOptions,
         ) -> Result<Vec<CexSymbolOiStatsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("base".to_string(), base.into());
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
@@ -4798,7 +4922,7 @@ pub mod blocking {
 
         /// Fetch (exchange, market, base, quote, tag) rows from cex_symbol_tag. Use to find every symbol flagged with a given tag (e.g. all meme coins across exchanges).
         pub fn tags(&self, options: CexSymbolTagsOptions) -> Result<Vec<CexSymbolTagsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.tag {
                 parameters.insert("tag".to_string(), v.to_string());
             }
@@ -4832,7 +4956,7 @@ pub mod blocking {
             base: impl Into<String>,
             options: CexSymbolVolumeOptions,
         ) -> Result<Vec<CexSymbolVolumeView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("base".to_string(), base.into());
             if let Some(v) = options.market {
                 parameters.insert("market".to_string(), v.to_string());
@@ -4857,7 +4981,7 @@ pub mod blocking {
 
         /// Get the latest forex rate for given symbol.
         pub fn get(&self, symbol: impl Into<String>) -> Result<ForexResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("symbol".to_string(), symbol.into());
             self.client.get("/api/v1/forex", Some(parameters))
         }
@@ -4893,7 +5017,7 @@ pub mod blocking {
             symbol: impl Into<String>,
             options: FundingRateHistoryOptions,
         ) -> Result<FundingRateHistoryResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             if let Some(v) = options.page {
@@ -4921,7 +5045,7 @@ pub mod blocking {
             exchange: impl Into<String>,
             symbol: impl Into<String>,
         ) -> Result<FundingRateLatestResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             self.client
@@ -4933,7 +5057,7 @@ pub mod blocking {
             &self,
             options: FundingRateSymbolsOptions,
         ) -> Result<Vec<FundingRateSymbolsView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -4961,7 +5085,7 @@ pub mod blocking {
             asset: impl Into<String>,
             options: IndexPriceOptions,
         ) -> Result<IndexPriceResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("asset".to_string(), asset.into());
             if let Some(v) = options.from {
                 parameters.insert("from".to_string(), v.to_string());
@@ -4996,7 +5120,7 @@ pub mod blocking {
             symbol: impl Into<String>,
             options: LiquidationOptions,
         ) -> Result<LiquidationResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             if let Some(v) = options.limit {
@@ -5007,7 +5131,7 @@ pub mod blocking {
 
         /// Fetch most recent liquidation events across all futures symbols, newest first. Use together with the `/ws/v1/liquidation/feed` firehose for a live feed view.
         pub fn feed(&self, options: LiquidationFeedOptions) -> Result<LiquidationFeedResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -5029,7 +5153,7 @@ pub mod blocking {
             &self,
             options: LiquidationHeatmapOptions,
         ) -> Result<LiquidationHeatmapResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.window {
                 parameters.insert("window".to_string(), v.to_string());
             }
@@ -5042,7 +5166,7 @@ pub mod blocking {
 
         /// Coinglass-style liquidation map for one perpetual pair. Returns a price-grid breakdown of where leveraged positions would be liquidated, split by leverage tier (10x / 25x / 50x / 100x) and side (long below current price, short above). Built from current OI + last-24h candle entries + a fixed leverage-cohort prior. Read the `assumptions` field in the response for the modelling disclaimer. Cached server-side (~5s) so back-to-back polls are cheap.
         pub fn map(&self, options: LiquidationMapOptions) -> Result<LiquidationMapResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -5057,7 +5181,7 @@ pub mod blocking {
 
         /// Aggregate liquidation stats (total, long/short split, count, venue count, biggest single event) over a 1h/4h/24h window. Backs the liquidation page KPI strip for windows the live feed buffer can't cover.
         pub fn stats(&self, options: LiquidationStatsOptions) -> Result<LiquidationStatsResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.window {
                 parameters.insert("window".to_string(), v.to_string());
             }
@@ -5077,7 +5201,7 @@ pub mod blocking {
             symbol: impl Into<String>,
             options: LiquidationSymbolHistoryOptions,
         ) -> Result<LiquidationSymbolHistoryResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("symbol".to_string(), symbol.into());
             if let Some(v) = options.quote {
                 parameters.insert("quote".to_string(), v.to_string());
@@ -5114,7 +5238,7 @@ pub mod blocking {
             &self,
             options: ListingsHistoricalOptions,
         ) -> Result<ListingsHistoricalResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.refresh {
                 parameters.insert("refresh".to_string(), v.to_string());
             }
@@ -5138,7 +5262,7 @@ pub mod blocking {
 
         /// Get the margin borrow data.
         pub fn get(&self, asset: impl Into<String>) -> Result<MarginBorrowResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("asset".to_string(), asset.into());
             self.client.get("/api/v1/margin-borrow", Some(parameters))
         }
@@ -5159,7 +5283,7 @@ pub mod blocking {
 
         /// Get Naver trend data with a daily frequency for a project that is associated with a given [symbol](./symbols). The values in response are normalized into a range from 0 to 100, where 0 corresponds to a minimum interest, and 100 corresponds to a maximum interest of users in Naver search engine.
         pub fn get(&self, symbol: impl Into<String>) -> Result<Vec<NaverTrendView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("symbol".to_string(), symbol.into());
             self.client.get("/api/v1/naver-trend", Some(parameters))
         }
@@ -5189,7 +5313,7 @@ pub mod blocking {
             exchange: impl Into<String>,
             symbol: impl Into<String>,
         ) -> Result<OpenInterestResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             self.client.get("/api/v1/open-interest", Some(parameters))
@@ -5201,7 +5325,7 @@ pub mod blocking {
             token_id: impl Into<String>,
             options: OpenInterestHistoryAggregatedOptions,
         ) -> Result<OpenInterestHistoryAggregatedResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("token_id".to_string(), token_id.into());
             if let Some(v) = options.interval {
                 parameters.insert("interval".to_string(), v.to_string());
@@ -5218,7 +5342,7 @@ pub mod blocking {
 
         /// Fetch latest Open Interest snapshots across exchanges/symbols. Optionally filter by `exchange`. Results are sorted by `openInterestUsd` descending (null values last).
         pub fn list(&self, options: OpenInterestListOptions) -> Result<OpenInterestListResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -5231,7 +5355,7 @@ pub mod blocking {
             &self,
             options: OpenInterestOverviewOptions,
         ) -> Result<OpenInterestOverviewResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.page {
                 parameters.insert("page".to_string(), v.to_string());
             }
@@ -5256,7 +5380,7 @@ pub mod blocking {
             &self,
             options: OpenInterestSummaryOptions,
         ) -> Result<OpenInterestSummaryResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.top_n {
                 parameters.insert("top_n".to_string(), v.to_string());
             }
@@ -5280,7 +5404,7 @@ pub mod blocking {
 
         /// Get real-time premium (price difference) data across exchanges.
         pub fn get(&self, options: PremiumOptions) -> Result<PremiumResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.source_exchange {
                 parameters.insert("source_exchange".to_string(), v.to_string());
             }
@@ -5371,7 +5495,7 @@ pub mod blocking {
             &self,
             options: TelegramChannelsOptions,
         ) -> Result<TelegramChannelsResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.page {
                 parameters.insert("page".to_string(), v.to_string());
             }
@@ -5396,7 +5520,7 @@ pub mod blocking {
             &self,
             options: TelegramMessagesOptions,
         ) -> Result<TelegramMessagesResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.channel {
                 parameters.insert("channel".to_string(), v.to_string());
             }
@@ -5444,7 +5568,7 @@ pub mod blocking {
             market: TickerMarket,
             options: TickerOptions,
         ) -> Result<TickerResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("symbol".to_string(), symbol.into());
             parameters.insert("market".to_string(), market.to_string());
@@ -5462,7 +5586,7 @@ pub mod blocking {
 
         /// Get supported exchanges accepted by `/api/v1/ticker` endpoint.
         pub fn exchanges(&self, market: TickerExchangesMarket) -> Result<Vec<String>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("market".to_string(), market.to_string());
             self.client
                 .get("/api/v1/ticker/exchanges", Some(parameters))
@@ -5474,7 +5598,7 @@ pub mod blocking {
             exchange: impl Into<String>,
             market: TickerSymbolsMarket,
         ) -> Result<Vec<String>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             parameters.insert("market".to_string(), market.to_string());
             self.client.get("/api/v1/ticker/symbols", Some(parameters))
@@ -5496,7 +5620,7 @@ pub mod blocking {
 
         /// Fetch latest token updates
         pub fn updates(&self, options: CexTokenUpdatesOptions) -> Result<CexTokenUpdatesResponse> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.page {
                 parameters.insert("page".to_string(), v.to_string());
             }
@@ -5526,7 +5650,7 @@ pub mod blocking {
 
         /// Get trading fees.
         pub fn fees(&self, options: CexFeesOptions) -> Result<Vec<CexFeesView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
             }
@@ -5543,7 +5667,7 @@ pub mod blocking {
 
         /// Get supported symbols accepted by `/api/v1/trading-fees` endpoint.
         pub fn symbols(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             self.client
                 .get("/api/v1/cex/fees/symbols", Some(parameters))
@@ -5569,7 +5693,7 @@ pub mod blocking {
             asset: impl Into<String>,
             options: WalletStatusOptions,
         ) -> Result<Vec<WalletStatusView>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("asset".to_string(), asset.into());
             if let Some(v) = options.exchange {
                 parameters.insert("exchange".to_string(), v.to_string());
@@ -5579,7 +5703,7 @@ pub mod blocking {
 
         /// Get assets accepted by `/api/v1/wallet-status` endpoint.
         pub fn assets(&self, exchange: impl Into<String>) -> Result<Vec<String>> {
-            let mut parameters = HashMap::new();
+            let mut parameters = BTreeMap::new();
             parameters.insert("exchange".to_string(), exchange.into());
             self.client
                 .get("/api/v1/wallet-status/assets", Some(parameters))
