@@ -75,10 +75,17 @@ fn backoff_delay(config: &RetryConfig, attempt: u32) -> Duration {
         .min(RETRY_MAX_DELAY)
 }
 
-/// Parse a `Retry-After` header expressed as an integer number of seconds,
-/// capped at [`RETRY_MAX_DELAY`]. The HTTP-date form is not honored (returns
-/// `None`, so the caller falls back to exponential backoff).
-fn retry_after_delay(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
+/// Parse a `Retry-After` header into a [`Duration`], expressed as an integer
+/// number of seconds. Only the numeric delay-seconds form (RFC 9110 §10.2.3)
+/// is understood; the alternative HTTP-date form yields `None` rather than
+/// panicking, as does a missing, non-ASCII, or unparseable header.
+///
+/// The returned value is the raw parsed duration, uncapped. Internal retry
+/// sleeps must apply their own [`RETRY_MAX_DELAY`] cap at the call site (see
+/// [`retry_delay_for_response`]); the value surfaced via
+/// [`Error::RateLimited`] is deliberately left uncapped so callers see the
+/// server's actual suggestion.
+fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
     let secs = headers
         .get(reqwest::header::RETRY_AFTER)?
         .to_str()
@@ -86,11 +93,12 @@ fn retry_after_delay(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
         .trim()
         .parse::<u64>()
         .ok()?;
-    Some(Duration::from_secs(secs).min(RETRY_MAX_DELAY))
+    Some(Duration::from_secs(secs))
 }
 
 /// The delay to wait before retrying a retryable response: a `429`'s
-/// `Retry-After` when present, otherwise exponential backoff.
+/// `Retry-After` when present (capped at [`RETRY_MAX_DELAY`]), otherwise
+/// exponential backoff.
 fn retry_delay_for_response(
     config: &RetryConfig,
     status: StatusCode,
@@ -98,8 +106,8 @@ fn retry_delay_for_response(
     attempt: u32,
 ) -> Duration {
     if status == StatusCode::TOO_MANY_REQUESTS {
-        if let Some(delay) = retry_after_delay(headers) {
-            return delay;
+        if let Some(delay) = parse_retry_after(headers) {
+            return delay.min(RETRY_MAX_DELAY);
         }
     }
     backoff_delay(config, attempt)
@@ -120,17 +128,6 @@ fn truncate_body(mut s: String) -> String {
         s.truncate(end);
     }
     s
-}
-
-/// Parse a `Retry-After` header into a [`Duration`].
-///
-/// Only the numeric delay-seconds form (RFC 9110 §10.2.3) is understood; the
-/// alternative HTTP-date form yields `None` rather than panicking. A missing,
-/// non-ASCII, or unparseable header also yields `None`.
-fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
-    let value = headers.get(reqwest::header::RETRY_AFTER)?;
-    let secs = value.to_str().ok()?.trim().parse::<u64>().ok()?;
-    Some(Duration::from_secs(secs))
 }
 
 /// Build the underlying async HTTP client with our defaults (timeout,
@@ -407,11 +404,15 @@ pub enum Error {
 
     /// The API returned a `429 Too Many Requests` (rate limited).
     ///
-    /// `retry_after` carries the `Retry-After` header when present and expressed
-    /// as a delay in seconds; the HTTP-date form is not parsed and yields `None`.
+    /// `retry_after` carries the raw `Retry-After` header value (in seconds)
+    /// when present; the HTTP-date form is not parsed and yields `None`. This
+    /// is the server's actual suggestion and is **not** clamped to
+    /// [`RETRY_MAX_DELAY`] (that cap only bounds the client's internal retry
+    /// sleeps).
     #[error("Rate limited")]
     RateLimited {
-        /// Suggested wait before retrying, from the `Retry-After` header.
+        /// Suggested wait before retrying, from the `Retry-After` header
+        /// (raw, uncapped).
         retry_after: Option<Duration>,
     },
 
@@ -690,26 +691,27 @@ mod tests {
     }
 
     #[test]
-    fn retry_after_parses_integer_seconds_and_caps() {
+    fn parse_retry_after_parses_integer_seconds_uncapped() {
         let mut headers = HeaderMap::new();
         headers.insert(RETRY_AFTER, HeaderValue::from_static("2"));
-        assert_eq!(retry_after_delay(&headers), Some(Duration::from_secs(2)));
+        assert_eq!(parse_retry_after(&headers), Some(Duration::from_secs(2)));
 
+        // The parser itself never caps; that's the call site's job.
         headers.insert(RETRY_AFTER, HeaderValue::from_static("9999"));
-        assert_eq!(retry_after_delay(&headers), Some(RETRY_MAX_DELAY));
+        assert_eq!(parse_retry_after(&headers), Some(Duration::from_secs(9999)));
     }
 
     #[test]
-    fn retry_after_ignores_http_date_and_missing() {
+    fn parse_retry_after_ignores_http_date_and_missing() {
         let empty = HeaderMap::new();
-        assert_eq!(retry_after_delay(&empty), None);
+        assert_eq!(parse_retry_after(&empty), None);
 
         let mut headers = HeaderMap::new();
         headers.insert(
             RETRY_AFTER,
             HeaderValue::from_static("Wed, 21 Oct 2015 07:28:00 GMT"),
         );
-        assert_eq!(retry_after_delay(&headers), None);
+        assert_eq!(parse_retry_after(&headers), None);
     }
 
     #[test]
@@ -736,6 +738,22 @@ mod tests {
         assert_eq!(
             retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &empty, 2),
             Duration::from_millis(400)
+        );
+    }
+
+    #[test]
+    fn retry_delay_for_response_caps_large_retry_after() {
+        // The internal retry-loop call site must still cap a large
+        // Retry-After, even though the shared parser itself is uncapped.
+        let config = RetryConfig {
+            max_retries: 3,
+            base_delay: Duration::from_millis(100),
+        };
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("9999"));
+        assert_eq!(
+            retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &headers, 0),
+            RETRY_MAX_DELAY
         );
     }
 }
