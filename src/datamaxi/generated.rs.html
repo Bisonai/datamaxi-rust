@@ -110,15 +110,15 @@
 <a href=#110 id=110 data-nosnippet>110</a>    <span class="doccomment">/// specifies exchange
 <a href=#111 id=111 data-nosnippet>111</a>    </span><span class="kw">pub </span>exchange: String,
 <a href=#112 id=112 data-nosnippet>112</a>    <span class="doccomment">/// specifies maker fee percentage for futures market
-<a href=#113 id=113 data-nosnippet>113</a>    </span><span class="kw">pub </span>futures_maker_fee: f64,
+<a href=#113 id=113 data-nosnippet>113</a>    </span><span class="kw">pub </span>futures_maker_fee: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#114 id=114 data-nosnippet>114</a>    <span class="doccomment">/// specifies taker fee percentage for futures market
-<a href=#115 id=115 data-nosnippet>115</a>    </span><span class="kw">pub </span>futures_taker_fee: f64,
+<a href=#115 id=115 data-nosnippet>115</a>    </span><span class="kw">pub </span>futures_taker_fee: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#116 id=116 data-nosnippet>116</a>    <span class="doccomment">/// specifies quote symbol
 <a href=#117 id=117 data-nosnippet>117</a>    </span><span class="kw">pub </span>quote: String,
 <a href=#118 id=118 data-nosnippet>118</a>    <span class="doccomment">/// specifies maker fee percentage for spot market (e.g. 0.001 = 0.1%)
-<a href=#119 id=119 data-nosnippet>119</a>    </span><span class="kw">pub </span>spot_maker_fee: f64,
+<a href=#119 id=119 data-nosnippet>119</a>    </span><span class="kw">pub </span>spot_maker_fee: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#120 id=120 data-nosnippet>120</a>    <span class="doccomment">/// specifies taker fee percentage for spot market
-<a href=#121 id=121 data-nosnippet>121</a>    </span><span class="kw">pub </span>spot_take_fee: f64,
+<a href=#121 id=121 data-nosnippet>121</a>    </span><span class="kw">pub </span>spot_take_fee: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#122 id=122 data-nosnippet>122</a>    <span class="doccomment">/// specifies symbol
 <a href=#123 id=123 data-nosnippet>123</a>    </span><span class="kw">pub </span>symbol: String,
 <a href=#124 id=124 data-nosnippet>124</a>}
@@ -162,14 +162,14 @@
 <a href=#162 id=162 data-nosnippet>162</a>    <span class="kw">pub </span>e: String,
 <a href=#163 id=163 data-nosnippet>163</a>    <span class="kw">pub </span>event_count: i64,
 <a href=#164 id=164 data-nosnippet>164</a>    <span class="kw">pub </span>long_volume: f64,
-<a href=#165 id=165 data-nosnippet>165</a>    <span class="kw">pub </span>long_volume_usd: f64,
+<a href=#165 id=165 data-nosnippet>165</a>    <span class="kw">pub </span>long_volume_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#166 id=166 data-nosnippet>166</a>    <span class="doccomment">/// always "futures"
 <a href=#167 id=167 data-nosnippet>167</a>    </span><span class="kw">pub </span>m: String,
 <a href=#168 id=168 data-nosnippet>168</a>    <span class="kw">pub </span>q: String,
 <a href=#169 id=169 data-nosnippet>169</a>    <span class="kw">pub </span>short_volume: f64,
-<a href=#170 id=170 data-nosnippet>170</a>    <span class="kw">pub </span>short_volume_usd: f64,
+<a href=#170 id=170 data-nosnippet>170</a>    <span class="kw">pub </span>short_volume_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#171 id=171 data-nosnippet>171</a>    <span class="kw">pub </span>total_volume: f64,
-<a href=#172 id=172 data-nosnippet>172</a>    <span class="kw">pub </span>total_volume_usd: f64,
+<a href=#172 id=172 data-nosnippet>172</a>    <span class="kw">pub </span>total_volume_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#173 id=173 data-nosnippet>173</a>}
 <a href=#174 id=174 data-nosnippet>174</a>
 <a href=#175 id=175 data-nosnippet>175</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -199,21 +199,21 @@
 <a href=#199 id=199 data-nosnippet>199</a></span><span class="kw">pub struct </span>CexSymbolOiStatsView {
 <a href=#200 id=200 data-nosnippet>200</a>    <span class="kw">pub </span>b: String,
 <a href=#201 id=201 data-nosnippet>201</a>    <span class="doccomment">/// %
-<a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">pub </span>change_1h: f64,
+<a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">pub </span>change_1h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#203 id=203 data-nosnippet>203</a>    <span class="doccomment">/// %
-<a href=#204 id=204 data-nosnippet>204</a>    </span><span class="kw">pub </span>change_24h: f64,
+<a href=#204 id=204 data-nosnippet>204</a>    </span><span class="kw">pub </span>change_24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#205 id=205 data-nosnippet>205</a>    <span class="doccomment">/// %
-<a href=#206 id=206 data-nosnippet>206</a>    </span><span class="kw">pub </span>change_4h: f64,
+<a href=#206 id=206 data-nosnippet>206</a>    </span><span class="kw">pub </span>change_4h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#207 id=207 data-nosnippet>207</a>    <span class="kw">pub </span>e: String,
 <a href=#208 id=208 data-nosnippet>208</a>    <span class="doccomment">/// always "futures"
 <a href=#209 id=209 data-nosnippet>209</a>    </span><span class="kw">pub </span>m: String,
-<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">pub </span>oi_to_vol_ratio: f64,
+<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">pub </span>oi_to_vol_ratio: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#211 id=211 data-nosnippet>211</a>    <span class="kw">pub </span>open_interest: f64,
-<a href=#212 id=212 data-nosnippet>212</a>    <span class="kw">pub </span>open_interest_usd: f64,
+<a href=#212 id=212 data-nosnippet>212</a>    <span class="kw">pub </span>open_interest_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#213 id=213 data-nosnippet>213</a>    <span class="kw">pub </span>q: String,
 <a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">pub </span>token_id: String,
 <a href=#215 id=215 data-nosnippet>215</a>    <span class="kw">pub </span>ts: i64,
-<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">pub </span>volume_24h_usd: f64,
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">pub </span>volume_24h_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#217 id=217 data-nosnippet>217</a>}
 <a href=#218 id=218 data-nosnippet>218</a>
 <a href=#219 id=219 data-nosnippet>219</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -225,7 +225,7 @@
 <a href=#225 id=225 data-nosnippet>225</a>    <span class="doccomment">/// always "futures" for OI
 <a href=#226 id=226 data-nosnippet>226</a>    </span><span class="kw">pub </span>m: String,
 <a href=#227 id=227 data-nosnippet>227</a>    <span class="kw">pub </span>open_interest: f64,
-<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">pub </span>open_interest_usd: f64,
+<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">pub </span>open_interest_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#229 id=229 data-nosnippet>229</a>    <span class="kw">pub </span>q: String,
 <a href=#230 id=230 data-nosnippet>230</a>    <span class="kw">pub </span>ts: i64,
 <a href=#231 id=231 data-nosnippet>231</a>}
@@ -333,7 +333,7 @@
 <a href=#333 id=333 data-nosnippet>333</a>    </span><span class="kw">pub </span>timestamp: i64,
 <a href=#334 id=334 data-nosnippet>334</a>    <span class="doccomment">/// specifies the funding rate
 <a href=#335 id=335 data-nosnippet>335</a>    </span><span class="attr">#[serde(rename = <span class="string">"f"</span>)]
-<a href=#336 id=336 data-nosnippet>336</a>    </span><span class="kw">pub </span>funding_rate: f64,
+<a href=#336 id=336 data-nosnippet>336</a>    </span><span class="kw">pub </span>funding_rate: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#337 id=337 data-nosnippet>337</a>}
 <a href=#338 id=338 data-nosnippet>338</a>
 <a href=#339 id=339 data-nosnippet>339</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -351,10 +351,10 @@
 <a href=#351 id=351 data-nosnippet>351</a>    </span><span class="kw">pub </span>exchange: String,
 <a href=#352 id=352 data-nosnippet>352</a>    <span class="doccomment">/// Specifies the funding rate
 <a href=#353 id=353 data-nosnippet>353</a>    </span><span class="attr">#[serde(rename = <span class="string">"f"</span>)]
-<a href=#354 id=354 data-nosnippet>354</a>    </span><span class="kw">pub </span>funding_rate: f64,
+<a href=#354 id=354 data-nosnippet>354</a>    </span><span class="kw">pub </span>funding_rate: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#355 id=355 data-nosnippet>355</a>    <span class="doccomment">/// Specifies the interval hours
 <a href=#356 id=356 data-nosnippet>356</a>    </span><span class="attr">#[serde(rename = <span class="string">"i"</span>)]
-<a href=#357 id=357 data-nosnippet>357</a>    </span><span class="kw">pub </span>interval_hours: i64,
+<a href=#357 id=357 data-nosnippet>357</a>    </span><span class="kw">pub </span>interval_hours: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 <a href=#358 id=358 data-nosnippet>358</a>    <span class="doccomment">/// Specifies the token id
 <a href=#359 id=359 data-nosnippet>359</a>    </span><span class="attr">#[serde(rename = <span class="string">"id"</span>)]
 <a href=#360 id=360 data-nosnippet>360</a>    </span><span class="kw">pub </span>token_id: String,
@@ -408,7 +408,7 @@
 <a href=#408 id=408 data-nosnippet>408</a>    <span class="kw">pub </span>exchange: String,
 <a href=#409 id=409 data-nosnippet>409</a>    <span class="kw">pub </span>price: f64,
 <a href=#410 id=410 data-nosnippet>410</a>    <span class="attr">#[serde(rename = <span class="string">"priceUsd"</span>)]
-<a href=#411 id=411 data-nosnippet>411</a>    </span><span class="kw">pub </span>price_usd: f64,
+<a href=#411 id=411 data-nosnippet>411</a>    </span><span class="kw">pub </span>price_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#412 id=412 data-nosnippet>412</a>    <span class="kw">pub </span>quote: String,
 <a href=#413 id=413 data-nosnippet>413</a>    <span class="kw">pub </span>side: String,
 <a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">pub </span>symbol: String,
@@ -417,7 +417,7 @@
 <a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">pub </span>token_id: String,
 <a href=#418 id=418 data-nosnippet>418</a>    <span class="kw">pub </span>volume: f64,
 <a href=#419 id=419 data-nosnippet>419</a>    <span class="attr">#[serde(rename = <span class="string">"volumeUsd"</span>)]
-<a href=#420 id=420 data-nosnippet>420</a>    </span><span class="kw">pub </span>volume_usd: f64,
+<a href=#420 id=420 data-nosnippet>420</a>    </span><span class="kw">pub </span>volume_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#421 id=421 data-nosnippet>421</a>}
 <a href=#422 id=422 data-nosnippet>422</a>
 <a href=#423 id=423 data-nosnippet>423</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -428,7 +428,7 @@
 <a href=#428 id=428 data-nosnippet>428</a>    <span class="kw">pub </span>exchange: String,
 <a href=#429 id=429 data-nosnippet>429</a>    <span class="kw">pub </span>price: f64,
 <a href=#430 id=430 data-nosnippet>430</a>    <span class="attr">#[serde(rename = <span class="string">"priceUsd"</span>)]
-<a href=#431 id=431 data-nosnippet>431</a>    </span><span class="kw">pub </span>price_usd: f64,
+<a href=#431 id=431 data-nosnippet>431</a>    </span><span class="kw">pub </span>price_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">pub </span>quote: String,
 <a href=#433 id=433 data-nosnippet>433</a>    <span class="kw">pub </span>side: String,
 <a href=#434 id=434 data-nosnippet>434</a>    <span class="kw">pub </span>symbol: String,
@@ -437,7 +437,7 @@
 <a href=#437 id=437 data-nosnippet>437</a>    </span><span class="kw">pub </span>token_id: String,
 <a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">pub </span>volume: f64,
 <a href=#439 id=439 data-nosnippet>439</a>    <span class="attr">#[serde(rename = <span class="string">"volumeUsd"</span>)]
-<a href=#440 id=440 data-nosnippet>440</a>    </span><span class="kw">pub </span>volume_usd: f64,
+<a href=#440 id=440 data-nosnippet>440</a>    </span><span class="kw">pub </span>volume_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#441 id=441 data-nosnippet>441</a>}
 <a href=#442 id=442 data-nosnippet>442</a>
 <a href=#443 id=443 data-nosnippet>443</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -597,7 +597,7 @@
 <a href=#597 id=597 data-nosnippet>597</a>#[serde(default)]
 <a href=#598 id=598 data-nosnippet>598</a>#[non_exhaustive]
 <a href=#599 id=599 data-nosnippet>599</a></span><span class="kw">pub struct </span>LiquidationStatsResponse {
-<a href=#600 id=600 data-nosnippet>600</a>    <span class="kw">pub </span>biggest: LiquidationStatsBiggest,
+<a href=#600 id=600 data-nosnippet>600</a>    <span class="kw">pub </span>biggest: <span class="prelude-ty">Option</span>&lt;LiquidationStatsBiggest&gt;,
 <a href=#601 id=601 data-nosnippet>601</a>    <span class="doccomment">/// number of events
 <a href=#602 id=602 data-nosnippet>602</a>    </span><span class="kw">pub </span>count: i64,
 <a href=#603 id=603 data-nosnippet>603</a>    <span class="doccomment">/// ms
@@ -628,7 +628,7 @@
 <a href=#628 id=628 data-nosnippet>628</a>    </span><span class="attr">#[serde(rename = <span class="string">"longUsd"</span>)]
 <a href=#629 id=629 data-nosnippet>629</a>    </span><span class="kw">pub </span>long_usd: f64,
 <a href=#630 id=630 data-nosnippet>630</a>    <span class="doccomment">/// Candle close mid for the same bucket. nil when no candle exists (very early in a newly listed pair, or when the price feed is down). FE renders the price line with `connectNulls=false` so gaps stay visible instead of being smoothed across.
-<a href=#631 id=631 data-nosnippet>631</a>    </span><span class="kw">pub </span>price: f64,
+<a href=#631 id=631 data-nosnippet>631</a>    </span><span class="kw">pub </span>price: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#632 id=632 data-nosnippet>632</a>    <span class="doccomment">/// Liquidated short positions in USD over this bucket (Side='buy').
 <a href=#633 id=633 data-nosnippet>633</a>    </span><span class="attr">#[serde(rename = <span class="string">"shortUsd"</span>)]
 <a href=#634 id=634 data-nosnippet>634</a>    </span><span class="kw">pub </span>short_usd: f64,
@@ -713,7 +713,7 @@
 <a href=#713 id=713 data-nosnippet>713</a>    <span class="attr">#[serde(rename = <span class="string">"openInterest"</span>)]
 <a href=#714 id=714 data-nosnippet>714</a>    </span><span class="kw">pub </span>open_interest: f64,
 <a href=#715 id=715 data-nosnippet>715</a>    <span class="attr">#[serde(rename = <span class="string">"openInterestUsd"</span>)]
-<a href=#716 id=716 data-nosnippet>716</a>    </span><span class="kw">pub </span>open_interest_usd: f64,
+<a href=#716 id=716 data-nosnippet>716</a>    </span><span class="kw">pub </span>open_interest_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#717 id=717 data-nosnippet>717</a>    <span class="kw">pub </span>quote: String,
 <a href=#718 id=718 data-nosnippet>718</a>    <span class="kw">pub </span>symbol: String,
 <a href=#719 id=719 data-nosnippet>719</a>    <span class="kw">pub </span>timestamp: i64,
@@ -758,7 +758,7 @@
 <a href=#758 id=758 data-nosnippet>758</a>    <span class="attr">#[serde(rename = <span class="string">"openInterest"</span>)]
 <a href=#759 id=759 data-nosnippet>759</a>    </span><span class="kw">pub </span>open_interest: f64,
 <a href=#760 id=760 data-nosnippet>760</a>    <span class="attr">#[serde(rename = <span class="string">"openInterestUsd"</span>)]
-<a href=#761 id=761 data-nosnippet>761</a>    </span><span class="kw">pub </span>open_interest_usd: f64,
+<a href=#761 id=761 data-nosnippet>761</a>    </span><span class="kw">pub </span>open_interest_usd: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#762 id=762 data-nosnippet>762</a>    <span class="kw">pub </span>quote: String,
 <a href=#763 id=763 data-nosnippet>763</a>    <span class="kw">pub </span>symbol: String,
 <a href=#764 id=764 data-nosnippet>764</a>    <span class="kw">pub </span>timestamp: i64,
@@ -1089,25 +1089,25 @@
 <a href=#1089 id=1089 data-nosnippet>1089</a>    </span><span class="kw">pub </span>exchange: String,
 <a href=#1090 id=1090 data-nosnippet>1090</a>    <span class="doccomment">/// highest bid from orderbook
 <a href=#1091 id=1091 data-nosnippet>1091</a>    </span><span class="attr">#[serde(rename = <span class="string">"hb"</span>)]
-<a href=#1092 id=1092 data-nosnippet>1092</a>    </span><span class="kw">pub </span>highest_bid: f64,
+<a href=#1092 id=1092 data-nosnippet>1092</a>    </span><span class="kw">pub </span>highest_bid: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1093 id=1093 data-nosnippet>1093</a>    <span class="doccomment">/// lowest ask from orderbook
 <a href=#1094 id=1094 data-nosnippet>1094</a>    </span><span class="attr">#[serde(rename = <span class="string">"la"</span>)]
-<a href=#1095 id=1095 data-nosnippet>1095</a>    </span><span class="kw">pub </span>lowest_ask: f64,
+<a href=#1095 id=1095 data-nosnippet>1095</a>    </span><span class="kw">pub </span>lowest_ask: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1096 id=1096 data-nosnippet>1096</a>    <span class="doccomment">/// lower depth(2%)
 <a href=#1097 id=1097 data-nosnippet>1097</a>    </span><span class="attr">#[serde(rename = <span class="string">"ld"</span>)]
-<a href=#1098 id=1098 data-nosnippet>1098</a>    </span><span class="kw">pub </span>lower_depth: f64,
+<a href=#1098 id=1098 data-nosnippet>1098</a>    </span><span class="kw">pub </span>lower_depth: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1099 id=1099 data-nosnippet>1099</a>    <span class="doccomment">/// specifies the market type
 <a href=#1100 id=1100 data-nosnippet>1100</a>    </span><span class="attr">#[serde(rename = <span class="string">"m"</span>)]
 <a href=#1101 id=1101 data-nosnippet>1101</a>    </span><span class="kw">pub </span>market: String,
 <a href=#1102 id=1102 data-nosnippet>1102</a>    <span class="doccomment">/// specifies the latest price
 <a href=#1103 id=1103 data-nosnippet>1103</a>    </span><span class="attr">#[serde(rename = <span class="string">"p"</span>)]
-<a href=#1104 id=1104 data-nosnippet>1104</a>    </span><span class="kw">pub </span>price: f64,
+<a href=#1104 id=1104 data-nosnippet>1104</a>    </span><span class="kw">pub </span>price: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1105 id=1105 data-nosnippet>1105</a>    <span class="doccomment">/// specifies the price 24 hours ago
 <a href=#1106 id=1106 data-nosnippet>1106</a>    </span><span class="attr">#[serde(rename = <span class="string">"p24h"</span>)]
-<a href=#1107 id=1107 data-nosnippet>1107</a>    </span><span class="kw">pub </span>price_24h: f64,
+<a href=#1107 id=1107 data-nosnippet>1107</a>    </span><span class="kw">pub </span>price_24h: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1108 id=1108 data-nosnippet>1108</a>    <span class="doccomment">/// specified price change between the latest price and the price 24 hours ago
 <a href=#1109 id=1109 data-nosnippet>1109</a>    </span><span class="attr">#[serde(rename = <span class="string">"pc"</span>)]
-<a href=#1110 id=1110 data-nosnippet>1110</a>    </span><span class="kw">pub </span>price_change: f64,
+<a href=#1110 id=1110 data-nosnippet>1110</a>    </span><span class="kw">pub </span>price_change: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1111 id=1111 data-nosnippet>1111</a>    <span class="doccomment">/// specifies the quote token
 <a href=#1112 id=1112 data-nosnippet>1112</a>    </span><span class="attr">#[serde(rename = <span class="string">"q"</span>)]
 <a href=#1113 id=1113 data-nosnippet>1113</a>    </span><span class="kw">pub </span>quote: String,
@@ -1116,10 +1116,10 @@
 <a href=#1116 id=1116 data-nosnippet>1116</a>    </span><span class="kw">pub </span>symbol: String,
 <a href=#1117 id=1117 data-nosnippet>1117</a>    <span class="doccomment">/// upper depth(2%)
 <a href=#1118 id=1118 data-nosnippet>1118</a>    </span><span class="attr">#[serde(rename = <span class="string">"ud"</span>)]
-<a href=#1119 id=1119 data-nosnippet>1119</a>    </span><span class="kw">pub </span>upper_depth: f64,
+<a href=#1119 id=1119 data-nosnippet>1119</a>    </span><span class="kw">pub </span>upper_depth: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1120 id=1120 data-nosnippet>1120</a>    <span class="doccomment">/// specifies the trading volume in the last 24 hours
 <a href=#1121 id=1121 data-nosnippet>1121</a>    </span><span class="attr">#[serde(rename = <span class="string">"v"</span>)]
-<a href=#1122 id=1122 data-nosnippet>1122</a>    </span><span class="kw">pub </span>volume: f64,
+<a href=#1122 id=1122 data-nosnippet>1122</a>    </span><span class="kw">pub </span>volume: <span class="prelude-ty">Option</span>&lt;f64&gt;,
 <a href=#1123 id=1123 data-nosnippet>1123</a>}
 <a href=#1124 id=1124 data-nosnippet>1124</a>
 <a href=#1125 id=1125 data-nosnippet>1125</a><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -1127,7 +1127,7 @@
 <a href=#1127 id=1127 data-nosnippet>1127</a>#[non_exhaustive]
 <a href=#1128 id=1128 data-nosnippet>1128</a></span><span class="kw">pub struct </span>TokenDetail {
 <a href=#1129 id=1129 data-nosnippet>1129</a>    <span class="doccomment">/// specifies cmc id of the token
-<a href=#1130 id=1130 data-nosnippet>1130</a>    </span><span class="kw">pub </span>cmc_id: String,
+<a href=#1130 id=1130 data-nosnippet>1130</a>    </span><span class="kw">pub </span>cmc_id: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#1131 id=1131 data-nosnippet>1131</a>    <span class="doccomment">/// specifies the token icon url path
 <a href=#1132 id=1132 data-nosnippet>1132</a>    </span><span class="kw">pub </span>icon: String,
 <a href=#1133 id=1133 data-nosnippet>1133</a>    <span class="doccomment">/// specifies the unique id
