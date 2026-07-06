@@ -1,6 +1,6 @@
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -189,7 +189,7 @@ impl Client {
     pub async fn get<T: DeserializeOwned>(
         &self,
         endpoint: &str,
-        parameters: Option<HashMap<String, String>>,
+        parameters: Option<BTreeMap<String, String>>,
     ) -> Result<T> {
         let url: String = format!("{}{}", self.base_url, endpoint);
         let mut attempt: u32 = 0;
@@ -448,7 +448,7 @@ pub mod blocking {
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
     use serde::de::DeserializeOwned;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
     use std::io::Read;
     use std::time::Duration;
 
@@ -506,7 +506,7 @@ pub mod blocking {
         pub fn get<T: DeserializeOwned>(
             &self,
             endpoint: &str,
-            parameters: Option<HashMap<String, String>>,
+            parameters: Option<BTreeMap<String, String>>,
         ) -> Result<T> {
             let url: String = format!("{}{}", self.base_url, endpoint);
             let mut attempt: u32 = 0;
