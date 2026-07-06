@@ -110,15 +110,15 @@ pub struct CexFeesView {
     /// specifies exchange
     pub exchange: String,
     /// specifies maker fee percentage for futures market
-    pub futures_maker_fee: f64,
+    pub futures_maker_fee: Option<f64>,
     /// specifies taker fee percentage for futures market
-    pub futures_taker_fee: f64,
+    pub futures_taker_fee: Option<f64>,
     /// specifies quote symbol
     pub quote: String,
     /// specifies maker fee percentage for spot market (e.g. 0.001 = 0.1%)
-    pub spot_maker_fee: f64,
+    pub spot_maker_fee: Option<f64>,
     /// specifies taker fee percentage for spot market
-    pub spot_take_fee: f64,
+    pub spot_take_fee: Option<f64>,
     /// specifies symbol
     pub symbol: String,
 }
@@ -162,14 +162,14 @@ pub struct CexSymbolLiquidationView {
     pub e: String,
     pub event_count: i64,
     pub long_volume: f64,
-    pub long_volume_usd: f64,
+    pub long_volume_usd: Option<f64>,
     /// always "futures"
     pub m: String,
     pub q: String,
     pub short_volume: f64,
-    pub short_volume_usd: f64,
+    pub short_volume_usd: Option<f64>,
     pub total_volume: f64,
-    pub total_volume_usd: f64,
+    pub total_volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -199,21 +199,21 @@ pub struct CexSymbolMetadataView {
 pub struct CexSymbolOiStatsView {
     pub b: String,
     /// %
-    pub change_1h: f64,
+    pub change_1h: Option<f64>,
     /// %
-    pub change_24h: f64,
+    pub change_24h: Option<f64>,
     /// %
-    pub change_4h: f64,
+    pub change_4h: Option<f64>,
     pub e: String,
     /// always "futures"
     pub m: String,
-    pub oi_to_vol_ratio: f64,
+    pub oi_to_vol_ratio: Option<f64>,
     pub open_interest: f64,
-    pub open_interest_usd: f64,
+    pub open_interest_usd: Option<f64>,
     pub q: String,
     pub token_id: String,
     pub ts: i64,
-    pub volume_24h_usd: f64,
+    pub volume_24h_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -225,7 +225,7 @@ pub struct CexSymbolOiView {
     /// always "futures" for OI
     pub m: String,
     pub open_interest: f64,
-    pub open_interest_usd: f64,
+    pub open_interest_usd: Option<f64>,
     pub q: String,
     pub ts: i64,
 }
@@ -333,7 +333,7 @@ pub struct FundingRateHistoryView {
     pub timestamp: i64,
     /// specifies the funding rate
     #[serde(rename = "f")]
-    pub funding_rate: f64,
+    pub funding_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -351,10 +351,10 @@ pub struct FundingRateLatestResponse {
     pub exchange: String,
     /// Specifies the funding rate
     #[serde(rename = "f")]
-    pub funding_rate: f64,
+    pub funding_rate: Option<f64>,
     /// Specifies the interval hours
     #[serde(rename = "i")]
-    pub interval_hours: i64,
+    pub interval_hours: Option<i64>,
     /// Specifies the token id
     #[serde(rename = "id")]
     pub token_id: String,
@@ -408,7 +408,7 @@ pub struct LiquidationEntry {
     pub exchange: String,
     pub price: f64,
     #[serde(rename = "priceUsd")]
-    pub price_usd: f64,
+    pub price_usd: Option<f64>,
     pub quote: String,
     pub side: String,
     pub symbol: String,
@@ -417,7 +417,7 @@ pub struct LiquidationEntry {
     pub token_id: String,
     pub volume: f64,
     #[serde(rename = "volumeUsd")]
-    pub volume_usd: f64,
+    pub volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -428,7 +428,7 @@ pub struct LiquidationFeedEntry {
     pub exchange: String,
     pub price: f64,
     #[serde(rename = "priceUsd")]
-    pub price_usd: f64,
+    pub price_usd: Option<f64>,
     pub quote: String,
     pub side: String,
     pub symbol: String,
@@ -437,7 +437,7 @@ pub struct LiquidationFeedEntry {
     pub token_id: String,
     pub volume: f64,
     #[serde(rename = "volumeUsd")]
-    pub volume_usd: f64,
+    pub volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -597,7 +597,7 @@ pub struct LiquidationStatsBiggest {
 #[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationStatsResponse {
-    pub biggest: LiquidationStatsBiggest,
+    pub biggest: Option<LiquidationStatsBiggest>,
     /// number of events
     pub count: i64,
     /// ms
@@ -628,7 +628,7 @@ pub struct LiquidationSymbolHistoryBucket {
     #[serde(rename = "longUsd")]
     pub long_usd: f64,
     /// Candle close mid for the same bucket. nil when no candle exists (very early in a newly listed pair, or when the price feed is down). FE renders the price line with `connectNulls=false` so gaps stay visible instead of being smoothed across.
-    pub price: f64,
+    pub price: Option<f64>,
     /// Liquidated short positions in USD over this bucket (Side='buy').
     #[serde(rename = "shortUsd")]
     pub short_usd: f64,
@@ -713,7 +713,7 @@ pub struct OpenInterestListEntry {
     #[serde(rename = "openInterest")]
     pub open_interest: f64,
     #[serde(rename = "openInterestUsd")]
-    pub open_interest_usd: f64,
+    pub open_interest_usd: Option<f64>,
     pub quote: String,
     pub symbol: String,
     pub timestamp: i64,
@@ -758,7 +758,7 @@ pub struct OpenInterestResponse {
     #[serde(rename = "openInterest")]
     pub open_interest: f64,
     #[serde(rename = "openInterestUsd")]
-    pub open_interest_usd: f64,
+    pub open_interest_usd: Option<f64>,
     pub quote: String,
     pub symbol: String,
     pub timestamp: i64,
@@ -1089,25 +1089,25 @@ pub struct TickerView {
     pub exchange: String,
     /// highest bid from orderbook
     #[serde(rename = "hb")]
-    pub highest_bid: f64,
+    pub highest_bid: Option<f64>,
     /// lowest ask from orderbook
     #[serde(rename = "la")]
-    pub lowest_ask: f64,
+    pub lowest_ask: Option<f64>,
     /// lower depth(2%)
     #[serde(rename = "ld")]
-    pub lower_depth: f64,
+    pub lower_depth: Option<f64>,
     /// specifies the market type
     #[serde(rename = "m")]
     pub market: String,
     /// specifies the latest price
     #[serde(rename = "p")]
-    pub price: f64,
+    pub price: Option<f64>,
     /// specifies the price 24 hours ago
     #[serde(rename = "p24h")]
-    pub price_24h: f64,
+    pub price_24h: Option<f64>,
     /// specified price change between the latest price and the price 24 hours ago
     #[serde(rename = "pc")]
-    pub price_change: f64,
+    pub price_change: Option<f64>,
     /// specifies the quote token
     #[serde(rename = "q")]
     pub quote: String,
@@ -1116,10 +1116,10 @@ pub struct TickerView {
     pub symbol: String,
     /// upper depth(2%)
     #[serde(rename = "ud")]
-    pub upper_depth: f64,
+    pub upper_depth: Option<f64>,
     /// specifies the trading volume in the last 24 hours
     #[serde(rename = "v")]
-    pub volume: f64,
+    pub volume: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -1127,7 +1127,7 @@ pub struct TickerView {
 #[non_exhaustive]
 pub struct TokenDetail {
     /// specifies cmc id of the token
-    pub cmc_id: String,
+    pub cmc_id: Option<String>,
     /// specifies the token icon url path
     pub icon: String,
     /// specifies the unique id
