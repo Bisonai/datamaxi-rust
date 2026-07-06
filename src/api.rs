@@ -16,6 +16,95 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 /// Environment variable consulted for the API key when one is not passed explicitly.
 const API_KEY_ENV: &str = "DATAMAXI_API_KEY";
 
+/// Default number of retries on transient failures. Zero keeps the client's
+/// behavior unchanged unless retries are explicitly opted into via
+/// [`ClientBuilder::max_retries`].
+const DEFAULT_MAX_RETRIES: u32 = 0;
+
+/// Default base delay for exponential backoff between retries.
+const DEFAULT_RETRY_BASE_DELAY: Duration = Duration::from_millis(500);
+
+/// Hard cap on any single backoff/`Retry-After` wait, so a huge exponent or an
+/// abusive `Retry-After` header can never stall a request indefinitely.
+const RETRY_MAX_DELAY: Duration = Duration::from_secs(30);
+
+/// Retry/backoff policy shared by the async and blocking clients.
+///
+/// Transient conditions — request timeouts, connection errors, `429 Too Many
+/// Requests`, and `5xx` server errors — are retried up to `max_retries` times
+/// with exponential backoff (`base_delay * 2^attempt`, capped at
+/// [`RETRY_MAX_DELAY`]). A `429` response honors its `Retry-After` header (in
+/// seconds) when present. Fatal statuses (`400`/`401`/`403`/`404`, and every
+/// other `4xx`) are never retried.
+#[derive(Debug, Clone)]
+struct RetryConfig {
+    max_retries: u32,
+    base_delay: Duration,
+}
+
+impl Default for RetryConfig {
+    fn default() -> Self {
+        RetryConfig {
+            max_retries: DEFAULT_MAX_RETRIES,
+            base_delay: DEFAULT_RETRY_BASE_DELAY,
+        }
+    }
+}
+
+/// Whether a response status is transient and worth retrying: `429` or any
+/// `5xx`. All other statuses (including the fatal `400`/`401`/`403`/`404`) are
+/// terminal.
+fn is_retryable_status(status: StatusCode) -> bool {
+    status == StatusCode::TOO_MANY_REQUESTS || status.is_server_error()
+}
+
+/// Whether a transport-level error is transient: a timeout or a failure to
+/// connect. Other errors (e.g. body decode) are terminal.
+fn is_retryable_error(error: &reqwest::Error) -> bool {
+    error.is_timeout() || error.is_connect()
+}
+
+/// Exponential backoff for the given zero-based `attempt`: `base * 2^attempt`,
+/// saturating and capped at [`RETRY_MAX_DELAY`].
+fn backoff_delay(config: &RetryConfig, attempt: u32) -> Duration {
+    let factor = 1u32.checked_shl(attempt).unwrap_or(u32::MAX);
+    config
+        .base_delay
+        .checked_mul(factor)
+        .unwrap_or(RETRY_MAX_DELAY)
+        .min(RETRY_MAX_DELAY)
+}
+
+/// Parse a `Retry-After` header expressed as an integer number of seconds,
+/// capped at [`RETRY_MAX_DELAY`]. The HTTP-date form is not honored (returns
+/// `None`, so the caller falls back to exponential backoff).
+fn retry_after_delay(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
+    let secs = headers
+        .get(reqwest::header::RETRY_AFTER)?
+        .to_str()
+        .ok()?
+        .trim()
+        .parse::<u64>()
+        .ok()?;
+    Some(Duration::from_secs(secs).min(RETRY_MAX_DELAY))
+}
+
+/// The delay to wait before retrying a retryable response: a `429`'s
+/// `Retry-After` when present, otherwise exponential backoff.
+fn retry_delay_for_response(
+    config: &RetryConfig,
+    status: StatusCode,
+    headers: &reqwest::header::HeaderMap,
+    attempt: u32,
+) -> Duration {
+    if status == StatusCode::TOO_MANY_REQUESTS {
+        if let Some(delay) = retry_after_delay(headers) {
+            return delay;
+        }
+    }
+    backoff_delay(config, attempt)
+}
+
 /// The `User-Agent` sent with every request, e.g. `datamaxi-rust/0.4.0`.
 fn user_agent() -> String {
     concat!("datamaxi-rust/", env!("CARGO_PKG_VERSION")).to_string()
@@ -54,6 +143,7 @@ pub struct Client {
     base_url: String,
     api_key: String,
     inner_client: reqwest::Client,
+    retry: RetryConfig,
 }
 
 impl std::fmt::Debug for Client {
@@ -78,29 +168,61 @@ impl Client {
             base_url: BASE_URL.to_string(),
             api_key: api_key.into(),
             inner_client: build_inner_client(DEFAULT_TIMEOUT),
+            retry: RetryConfig::default(),
         }
     }
 
     /// Sends a GET request to the specified endpoint with optional parameters.
+    ///
+    /// Transient failures (timeouts, connection errors, `429`, and `5xx`) are
+    /// retried per the client's [`RetryConfig`] with exponential backoff; a
+    /// `429` honors its `Retry-After` header. Fatal statuses
+    /// (`400`/`401`/`403`/`404`) are returned without retry.
     pub async fn get<T: DeserializeOwned>(
         &self,
         endpoint: &str,
         parameters: Option<HashMap<String, String>>,
     ) -> Result<T> {
         let url: String = format!("{}{}", self.base_url, endpoint);
+        let mut attempt: u32 = 0;
 
-        let mut request = self
-            .inner_client
-            .get(url.as_str())
-            .header("X-DTMX-APIKEY", &self.api_key);
+        loop {
+            let mut request = self
+                .inner_client
+                .get(url.as_str())
+                .header("X-DTMX-APIKEY", &self.api_key);
 
-        if let Some(p) = parameters {
-            request = request.query(&p);
+            if let Some(ref p) = parameters {
+                request = request.query(p);
+            }
+
+            match request.send().await {
+                Ok(response) => {
+                    let status = response.status();
+                    if attempt < self.retry.max_retries && is_retryable_status(status) {
+                        let delay = retry_delay_for_response(
+                            &self.retry,
+                            status,
+                            response.headers(),
+                            attempt,
+                        );
+                        attempt += 1;
+                        tokio::time::sleep(delay).await;
+                        continue;
+                    }
+                    return handle_response(response).await;
+                }
+                Err(error) => {
+                    if attempt < self.retry.max_retries && is_retryable_error(&error) {
+                        let delay = backoff_delay(&self.retry, attempt);
+                        attempt += 1;
+                        tokio::time::sleep(delay).await;
+                        continue;
+                    }
+                    return Err(Error::from(error));
+                }
+            }
         }
-
-        let response = request.send().await?;
-
-        handle_response(response).await
     }
 }
 
@@ -148,16 +270,18 @@ pub struct ClientBuilder {
     base_url: Option<String>,
     api_key: Option<String>,
     timeout: Duration,
+    retry: RetryConfig,
 }
 
 impl ClientBuilder {
-    /// Creates a new builder with default settings (default timeout, key read
-    /// from the environment on `build`).
+    /// Creates a new builder with default settings (default timeout, no retries,
+    /// key read from the environment on `build`).
     pub fn new() -> Self {
         ClientBuilder {
             base_url: None,
             api_key: None,
             timeout: DEFAULT_TIMEOUT,
+            retry: RetryConfig::default(),
         }
     }
 
@@ -179,6 +303,21 @@ impl ClientBuilder {
         self
     }
 
+    /// Sets the maximum number of retries on transient failures (timeouts,
+    /// connection errors, `429`, and `5xx`). Defaults to `0` (no retries);
+    /// each retry backs off exponentially from the base delay.
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.retry.max_retries = max_retries;
+        self
+    }
+
+    /// Sets the base delay for exponential retry backoff (defaults to 500ms).
+    /// The nth retry waits `base_delay * 2^n`, capped at 30 seconds.
+    pub fn retry_base_delay(mut self, base_delay: Duration) -> Self {
+        self.retry.base_delay = base_delay;
+        self
+    }
+
     /// Builds the [`Client`].
     ///
     /// Resolves the API key from the explicit value or the `DATAMAXI_API_KEY`
@@ -194,6 +333,7 @@ impl ClientBuilder {
             base_url: self.base_url.unwrap_or_else(|| BASE_URL.to_string()),
             api_key,
             inner_client: build_inner_client(self.timeout),
+            retry: self.retry,
         })
     }
 }
@@ -247,7 +387,11 @@ pub enum Error {
 /// generated endpoint wrappers under [`crate::generated::blocking`] use this.
 #[cfg(feature = "blocking")]
 pub mod blocking {
-    use super::{truncate_body, user_agent, Error, Result, API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT};
+    use super::{
+        backoff_delay, is_retryable_error, is_retryable_status, retry_delay_for_response,
+        truncate_body, user_agent, Error, Result, RetryConfig, API_KEY_ENV, BASE_URL,
+        DEFAULT_TIMEOUT,
+    };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
     use serde::de::DeserializeOwned;
@@ -272,6 +416,7 @@ pub mod blocking {
         base_url: String,
         api_key: String,
         inner_client: reqwest::blocking::Client,
+        retry: RetryConfig,
     }
 
     impl std::fmt::Debug for Client {
@@ -294,29 +439,62 @@ pub mod blocking {
                 base_url: BASE_URL.to_string(),
                 api_key: api_key.into(),
                 inner_client: build_inner_client(DEFAULT_TIMEOUT),
+                retry: RetryConfig::default(),
             }
         }
 
         /// Sends a GET request to the specified endpoint with optional parameters.
+        ///
+        /// Mirrors the async [`super::Client::get`] retry behavior: transient
+        /// failures (timeouts, connection errors, `429`, and `5xx`) are retried
+        /// per the client's retry config with exponential backoff (a `429`
+        /// honors `Retry-After`); fatal statuses are returned without retry.
+        /// Backoff waits use a blocking [`std::thread::sleep`].
         pub fn get<T: DeserializeOwned>(
             &self,
             endpoint: &str,
             parameters: Option<HashMap<String, String>>,
         ) -> Result<T> {
             let url: String = format!("{}{}", self.base_url, endpoint);
+            let mut attempt: u32 = 0;
 
-            let mut request = self
-                .inner_client
-                .get(url.as_str())
-                .header("X-DTMX-APIKEY", &self.api_key);
+            loop {
+                let mut request = self
+                    .inner_client
+                    .get(url.as_str())
+                    .header("X-DTMX-APIKEY", &self.api_key);
 
-            if let Some(p) = parameters {
-                request = request.query(&p);
+                if let Some(ref p) = parameters {
+                    request = request.query(p);
+                }
+
+                match request.send() {
+                    Ok(response) => {
+                        let status = response.status();
+                        if attempt < self.retry.max_retries && is_retryable_status(status) {
+                            let delay = retry_delay_for_response(
+                                &self.retry,
+                                status,
+                                response.headers(),
+                                attempt,
+                            );
+                            attempt += 1;
+                            std::thread::sleep(delay);
+                            continue;
+                        }
+                        return handle_response(response);
+                    }
+                    Err(error) => {
+                        if attempt < self.retry.max_retries && is_retryable_error(&error) {
+                            let delay = backoff_delay(&self.retry, attempt);
+                            attempt += 1;
+                            std::thread::sleep(delay);
+                            continue;
+                        }
+                        return Err(Error::from(error));
+                    }
+                }
             }
-
-            let response = request.send()?;
-
-            handle_response(response)
         }
     }
 
@@ -345,6 +523,7 @@ pub mod blocking {
         base_url: Option<String>,
         api_key: Option<String>,
         timeout: Duration,
+        retry: RetryConfig,
     }
 
     impl ClientBuilder {
@@ -354,6 +533,7 @@ pub mod blocking {
                 base_url: None,
                 api_key: None,
                 timeout: DEFAULT_TIMEOUT,
+                retry: RetryConfig::default(),
             }
         }
 
@@ -375,6 +555,20 @@ pub mod blocking {
             self
         }
 
+        /// Sets the maximum number of retries on transient failures (timeouts,
+        /// connection errors, `429`, and `5xx`). Defaults to `0` (no retries).
+        pub fn max_retries(mut self, max_retries: u32) -> Self {
+            self.retry.max_retries = max_retries;
+            self
+        }
+
+        /// Sets the base delay for exponential retry backoff (defaults to
+        /// 500ms). The nth retry waits `base_delay * 2^n`, capped at 30 seconds.
+        pub fn retry_base_delay(mut self, base_delay: Duration) -> Self {
+            self.retry.base_delay = base_delay;
+            self
+        }
+
         /// Builds the blocking [`Client`], resolving the API key from the
         /// explicit value or the `DATAMAXI_API_KEY` environment variable.
         pub fn build(self) -> Result<Client> {
@@ -388,6 +582,7 @@ pub mod blocking {
                 base_url: self.base_url.unwrap_or_else(|| BASE_URL.to_string()),
                 api_key,
                 inner_client: build_inner_client(self.timeout),
+                retry: self.retry,
             })
         }
     }
@@ -396,5 +591,94 @@ pub mod blocking {
         fn default() -> Self {
             Self::new()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reqwest::header::{HeaderMap, HeaderValue, RETRY_AFTER};
+
+    #[test]
+    fn retryable_statuses_are_429_and_5xx() {
+        assert!(is_retryable_status(StatusCode::TOO_MANY_REQUESTS));
+        assert!(is_retryable_status(StatusCode::INTERNAL_SERVER_ERROR));
+        assert!(is_retryable_status(StatusCode::BAD_GATEWAY));
+        assert!(is_retryable_status(StatusCode::SERVICE_UNAVAILABLE));
+    }
+
+    #[test]
+    fn fatal_statuses_are_not_retryable() {
+        for status in [
+            StatusCode::BAD_REQUEST,
+            StatusCode::UNAUTHORIZED,
+            StatusCode::FORBIDDEN,
+            StatusCode::NOT_FOUND,
+        ] {
+            assert!(!is_retryable_status(status), "{status} must not be retried");
+        }
+    }
+
+    #[test]
+    fn backoff_is_exponential_and_capped() {
+        let config = RetryConfig {
+            max_retries: 5,
+            base_delay: Duration::from_millis(100),
+        };
+        assert_eq!(backoff_delay(&config, 0), Duration::from_millis(100));
+        assert_eq!(backoff_delay(&config, 1), Duration::from_millis(200));
+        assert_eq!(backoff_delay(&config, 2), Duration::from_millis(400));
+        // A large attempt saturates to the hard cap rather than overflowing.
+        assert_eq!(backoff_delay(&config, 1000), RETRY_MAX_DELAY);
+    }
+
+    #[test]
+    fn retry_after_parses_integer_seconds_and_caps() {
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("2"));
+        assert_eq!(retry_after_delay(&headers), Some(Duration::from_secs(2)));
+
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("9999"));
+        assert_eq!(retry_after_delay(&headers), Some(RETRY_MAX_DELAY));
+    }
+
+    #[test]
+    fn retry_after_ignores_http_date_and_missing() {
+        let empty = HeaderMap::new();
+        assert_eq!(retry_after_delay(&empty), None);
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("Wed, 21 Oct 2015 07:28:00 GMT"),
+        );
+        assert_eq!(retry_after_delay(&headers), None);
+    }
+
+    #[test]
+    fn retry_delay_prefers_retry_after_only_for_429() {
+        let config = RetryConfig {
+            max_retries: 3,
+            base_delay: Duration::from_millis(100),
+        };
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("5"));
+
+        // 429 with Retry-After honors the header.
+        assert_eq!(
+            retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &headers, 0),
+            Duration::from_secs(5)
+        );
+        // 5xx ignores Retry-After and uses backoff.
+        assert_eq!(
+            retry_delay_for_response(&config, StatusCode::BAD_GATEWAY, &headers, 1),
+            Duration::from_millis(200)
+        );
+        // 429 without Retry-After falls back to backoff.
+        let empty = HeaderMap::new();
+        assert_eq!(
+            retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &empty, 2),
+            Duration::from_millis(400)
+        );
     }
 }

@@ -500,3 +500,209 @@ fn blocking_liquidation_heatmap_smoke() {
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
 }
+
+// --- Retry / backoff (issue #66) ------------------------------------------
+//
+// These drive the retry loop through the public `get` (via the liquidation
+// accessor). A tiny `retry_base_delay` keeps the exponential backoff sleeps
+// sub-millisecond so the suite stays fast while still exercising the real code
+// path. Transient statuses (429, 5xx) retry; fatal statuses (400/401/403/404)
+// return immediately.
+
+/// Build an async client with retries enabled and a negligible backoff delay.
+fn mock_retry_client(base_url: String, max_retries: u32) -> Client {
+    ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(base_url)
+        .max_retries(max_retries)
+        .retry_base_delay(std::time::Duration::from_millis(1))
+        .build()
+        .expect("mock retry client builds")
+}
+
+/// A transient `503` on the first attempt is retried and the subsequent `200`
+/// succeeds. Two same-path mocks are consumed in order: the first (503) once,
+/// then the second (200).
+#[tokio::test]
+async fn retry_then_succeed_on_5xx() {
+    let mut server = mockito::Server::new_async().await;
+    let fail = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(503)
+        .with_body("unavailable")
+        .expect(1)
+        .create_async()
+        .await;
+    let ok = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create_async()
+        .await;
+
+    let res = mock_retry_client(server.url(), 2)
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await;
+
+    fail.assert_async().await;
+    ok.assert_async().await;
+    assert!(res.is_ok(), "expected Ok after retry, got {:?}", res);
+}
+
+/// A `429` with `Retry-After` is retried (honoring the header path) and then
+/// succeeds. `Retry-After: 0` keeps the test instant.
+#[tokio::test]
+async fn retry_then_succeed_on_429_with_retry_after() {
+    let mut server = mockito::Server::new_async().await;
+    let throttled = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(429)
+        .with_header("Retry-After", "0")
+        .with_body("slow down")
+        .expect(1)
+        .create_async()
+        .await;
+    let ok = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create_async()
+        .await;
+
+    let res = mock_retry_client(server.url(), 3)
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await;
+
+    throttled.assert_async().await;
+    ok.assert_async().await;
+    assert!(res.is_ok(), "expected Ok after 429 retry, got {:?}", res);
+}
+
+/// When every attempt is transiently failing, the client exhausts its retries
+/// (initial + `max_retries` = 3 total requests) and returns the last error.
+#[tokio::test]
+async fn retry_exhaustion_returns_error() {
+    let mut server = mockito::Server::new_async().await;
+    let mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(503)
+        .with_body("unavailable")
+        .expect(3)
+        .create_async()
+        .await;
+
+    let res = mock_retry_client(server.url(), 2)
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await;
+
+    mock.assert_async().await; // exactly 3 attempts
+    assert!(
+        matches!(res, Err(Error::UnexpectedStatusCode(503))),
+        "expected exhausted retries to surface the 503, got {:?}",
+        res
+    );
+}
+
+/// A fatal `400` is never retried even with retries enabled: exactly one
+/// request, and the error surfaces immediately.
+#[tokio::test]
+async fn no_retry_on_400() {
+    let mut server = mockito::Server::new_async().await;
+    let mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(400)
+        .with_body("bad input")
+        .expect(1)
+        .create_async()
+        .await;
+
+    let res = mock_retry_client(server.url(), 5)
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await;
+
+    mock.assert_async().await; // exactly one attempt, no retries
+    assert!(
+        matches!(res, Err(Error::BadRequest(_))),
+        "expected BadRequest without retry, got {:?}",
+        res
+    );
+}
+
+/// Blocking mirror: a transient `503` is retried and the following `200`
+/// succeeds, proving the blocking `get` shares the async retry semantics.
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_retry_then_succeed_on_5xx() {
+    let mut server = mockito::Server::new();
+    let fail = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(503)
+        .with_body("unavailable")
+        .expect(1)
+        .create();
+    let ok = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("{}")
+        .expect(1)
+        .create();
+
+    let client = datamaxi::api::blocking::ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(server.url())
+        .max_retries(2)
+        .retry_base_delay(std::time::Duration::from_millis(1))
+        .build()
+        .expect("blocking retry client builds");
+    let res = client
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new());
+
+    fail.assert();
+    ok.assert();
+    assert!(
+        res.is_ok(),
+        "expected Ok after blocking retry, got {:?}",
+        res
+    );
+}
+
+/// Blocking mirror: a fatal `400` is not retried (exactly one request).
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_no_retry_on_400() {
+    let mut server = mockito::Server::new();
+    let mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(400)
+        .with_body("bad input")
+        .expect(1)
+        .create();
+
+    let client = datamaxi::api::blocking::ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(server.url())
+        .max_retries(5)
+        .retry_base_delay(std::time::Duration::from_millis(1))
+        .build()
+        .expect("blocking retry client builds");
+    let res = client
+        .liquidation()
+        .heatmap(LiquidationHeatmapOptions::new());
+
+    mock.assert();
+    assert!(
+        matches!(res, Err(Error::BadRequest(_))),
+        "expected BadRequest without retry, got {:?}",
+        res
+    );
+}
