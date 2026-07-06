@@ -28,6 +28,13 @@ const DEFAULT_RETRY_BASE_DELAY: Duration = Duration::from_millis(500);
 /// abusive `Retry-After` header can never stall a request indefinitely.
 const RETRY_MAX_DELAY: Duration = Duration::from_secs(30);
 
+/// Hard cap, in bytes, on how much of a `400`/`500` error body is read and
+/// surfaced via [`Error::BadRequest`] / [`Error::InternalServerError`].
+/// Shared by the async streaming reader ([`read_body_capped`]), the blocking
+/// `Read`-based reader, and [`truncate_body`], so the cap can never drift
+/// between call sites.
+const MAX_ERROR_BODY_BYTES: usize = 1000;
+
 /// Retry/backoff policy shared by the async and blocking clients.
 ///
 /// Transient conditions — request timeouts, connection errors, `429 Too Many
@@ -118,10 +125,11 @@ fn user_agent() -> String {
     concat!("datamaxi-rust/", env!("CARGO_PKG_VERSION")).to_string()
 }
 
-/// Truncate a server error body to at most 1000 bytes, on a UTF-8 char boundary.
+/// Truncate a server error body to at most [`MAX_ERROR_BODY_BYTES`] bytes, on
+/// a UTF-8 char boundary.
 fn truncate_body(mut s: String) -> String {
-    if s.len() > 1000 {
-        let mut end = 1000;
+    if s.len() > MAX_ERROR_BODY_BYTES {
+        let mut end = MAX_ERROR_BODY_BYTES;
         while !s.is_char_boundary(end) {
             end -= 1;
         }
@@ -234,19 +242,19 @@ impl Client {
     }
 }
 
-/// Reads at most ~1000 bytes of an async response body, streaming chunk by
-/// chunk rather than buffering the whole body. Mirrors the blocking path's
-/// `response.take(1000).read_to_string(&mut body)`. Invalid UTF-8 in the
-/// truncated bytes is replaced lossily.
+/// Reads at most [`MAX_ERROR_BODY_BYTES`] of an async response body, streaming
+/// chunk by chunk rather than buffering the whole body. Mirrors the blocking
+/// path's `response.take(MAX_ERROR_BODY_BYTES).read_to_string(&mut body)`.
+/// Invalid UTF-8 in the truncated bytes is replaced lossily.
 async fn read_body_capped(mut response: reqwest::Response) -> String {
     let mut buf: Vec<u8> = Vec::new();
-    while buf.len() < 1000 {
+    while buf.len() < MAX_ERROR_BODY_BYTES {
         match response.chunk().await {
             Ok(Some(chunk)) => {
                 // Take only up to the remaining budget so a single oversized
                 // chunk can't push `buf` past the cap — a byte-exact bound
-                // matching the blocking path's `response.take(1000)`.
-                let take = (1000 - buf.len()).min(chunk.len());
+                // matching the blocking path's `response.take(MAX_ERROR_BODY_BYTES)`.
+                let take = (MAX_ERROR_BODY_BYTES - buf.len()).min(chunk.len());
                 buf.extend_from_slice(&chunk[..take]);
             }
             Ok(None) => break,
@@ -443,7 +451,7 @@ pub mod blocking {
     use super::{
         backoff_delay, is_retryable_error, is_retryable_status, parse_retry_after,
         retry_delay_for_response, truncate_body, user_agent, Error, Result, RetryConfig,
-        API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT,
+        API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT, MAX_ERROR_BODY_BYTES,
     };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
@@ -557,7 +565,9 @@ pub mod blocking {
             StatusCode::OK => Ok(response.json::<T>()?),
             StatusCode::INTERNAL_SERVER_ERROR => {
                 let mut body = String::new();
-                response.take(1000).read_to_string(&mut body)?;
+                response
+                    .take(MAX_ERROR_BODY_BYTES as u64)
+                    .read_to_string(&mut body)?;
                 Err(Error::InternalServerError(truncate_body(body)))
             }
             StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
@@ -568,7 +578,9 @@ pub mod blocking {
             }),
             StatusCode::BAD_REQUEST => {
                 let mut body = String::new();
-                response.take(1000).read_to_string(&mut body)?;
+                response
+                    .take(MAX_ERROR_BODY_BYTES as u64)
+                    .read_to_string(&mut body)?;
                 Err(Error::BadRequest(truncate_body(body)))
             }
             status => Err(Error::UnexpectedStatusCode(status.as_u16())),
