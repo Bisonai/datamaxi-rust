@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="datamaxi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.1 (31fca3adb 2026-06-26)" data-channel="1.96.1" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">datamaxi/</div>api.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>reqwest::StatusCode;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>serde::de::DeserializeOwned;
-<a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::collections::HashMap;
+<a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::collections::BTreeMap;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>std::time::Duration;
 <a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span>thiserror::Error;
 <a href=#6 id=6 data-nosnippet>6</a>
@@ -189,7 +189,7 @@
 <a href=#189 id=189 data-nosnippet>189</a>    </span><span class="kw">pub async fn </span>get&lt;T: DeserializeOwned&gt;(
 <a href=#190 id=190 data-nosnippet>190</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
 <a href=#191 id=191 data-nosnippet>191</a>        endpoint: <span class="kw-2">&amp;</span>str,
-<a href=#192 id=192 data-nosnippet>192</a>        parameters: <span class="prelude-ty">Option</span>&lt;HashMap&lt;String, String&gt;&gt;,
+<a href=#192 id=192 data-nosnippet>192</a>        parameters: <span class="prelude-ty">Option</span>&lt;BTreeMap&lt;String, String&gt;&gt;,
 <a href=#193 id=193 data-nosnippet>193</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
 <a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">let </span>url: String = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, <span class="self">self</span>.base_url, endpoint);
 <a href=#195 id=195 data-nosnippet>195</a>        <span class="kw">let </span><span class="kw-2">mut </span>attempt: u32 = <span class="number">0</span>;
@@ -448,7 +448,7 @@
 <a href=#448 id=448 data-nosnippet>448</a>    <span class="kw">use </span>reqwest::blocking::Response;
 <a href=#449 id=449 data-nosnippet>449</a>    <span class="kw">use </span>reqwest::StatusCode;
 <a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">use </span>serde::de::DeserializeOwned;
-<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">use </span>std::collections::HashMap;
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">use </span>std::collections::BTreeMap;
 <a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">use </span>std::io::Read;
 <a href=#453 id=453 data-nosnippet>453</a>    <span class="kw">use </span>std::time::Duration;
 <a href=#454 id=454 data-nosnippet>454</a>
@@ -506,7 +506,7 @@
 <a href=#506 id=506 data-nosnippet>506</a>        </span><span class="kw">pub fn </span>get&lt;T: DeserializeOwned&gt;(
 <a href=#507 id=507 data-nosnippet>507</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
 <a href=#508 id=508 data-nosnippet>508</a>            endpoint: <span class="kw-2">&amp;</span>str,
-<a href=#509 id=509 data-nosnippet>509</a>            parameters: <span class="prelude-ty">Option</span>&lt;HashMap&lt;String, String&gt;&gt;,
+<a href=#509 id=509 data-nosnippet>509</a>            parameters: <span class="prelude-ty">Option</span>&lt;BTreeMap&lt;String, String&gt;&gt;,
 <a href=#510 id=510 data-nosnippet>510</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
 <a href=#511 id=511 data-nosnippet>511</a>            <span class="kw">let </span>url: String = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, <span class="self">self</span>.base_url, endpoint);
 <a href=#512 id=512 data-nosnippet>512</a>            <span class="kw">let </span><span class="kw-2">mut </span>attempt: u32 = <span class="number">0</span>;
