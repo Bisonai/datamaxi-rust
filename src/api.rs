@@ -237,13 +237,28 @@ impl Client {
     }
 }
 
+/// Reads at most ~1000 bytes of an async response body, streaming chunk by
+/// chunk rather than buffering the whole body. Mirrors the blocking path's
+/// `response.take(1000).read_to_string(&mut body)`. Invalid UTF-8 in the
+/// truncated bytes is replaced lossily.
+async fn read_body_capped(mut response: reqwest::Response) -> String {
+    let mut buf: Vec<u8> = Vec::new();
+    while buf.len() < 1000 {
+        match response.chunk().await {
+            Ok(Some(chunk)) => buf.extend_from_slice(&chunk),
+            Ok(None) => break,
+            Err(_) => break,
+        }
+    }
+    truncate_body(String::from_utf8_lossy(&buf).into_owned())
+}
+
 /// Processes an async response from the API and returns the result.
 async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Result<T> {
     match response.status() {
         StatusCode::OK => Ok(response.json::<T>().await?),
         StatusCode::INTERNAL_SERVER_ERROR => {
-            let body = response.text().await.unwrap_or_default();
-            Err(Error::InternalServerError(truncate_body(body)))
+            Err(Error::InternalServerError(read_body_capped(response).await))
         }
         StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
         StatusCode::FORBIDDEN => Err(Error::Forbidden),
@@ -251,10 +266,7 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
         StatusCode::TOO_MANY_REQUESTS => Err(Error::RateLimited {
             retry_after: parse_retry_after(response.headers()),
         }),
-        StatusCode::BAD_REQUEST => {
-            let body = response.text().await.unwrap_or_default();
-            Err(Error::BadRequest(truncate_body(body)))
-        }
+        StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response).await)),
         status => Err(Error::UnexpectedStatusCode(status.as_u16())),
     }
 }

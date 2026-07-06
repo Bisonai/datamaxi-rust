@@ -235,6 +235,48 @@ async fn status_500_maps_to_internal_server_error() {
     );
 }
 
+/// A `400` body over 1000 bytes is truncated on the wire, mirroring the
+/// blocking path's `response.take(1000)`. Guards against the async path
+/// buffering the full body before truncating (issue #74).
+#[tokio::test]
+async fn status_400_body_over_1000_bytes_is_truncated() {
+    let big_body = "a".repeat(2000);
+    let err = call_with_status(400, &big_body)
+        .await
+        .expect_err("400 should be Err");
+    match err {
+        Error::BadRequest(body) => {
+            assert!(
+                body.len() <= 1000,
+                "expected truncated body <= 1000 bytes, got {}",
+                body.len()
+            );
+        }
+        other => panic!("expected BadRequest, got {:?}", other),
+    }
+}
+
+/// A `500` body over 1000 bytes is truncated on the wire (async parity with
+/// the blocking path). Guards against the async path buffering the full body
+/// before truncating (issue #74).
+#[tokio::test]
+async fn status_500_body_over_1000_bytes_is_truncated() {
+    let big_body = "b".repeat(2000);
+    let err = call_with_status(500, &big_body)
+        .await
+        .expect_err("500 should be Err");
+    match err {
+        Error::InternalServerError(body) => {
+            assert!(
+                body.len() <= 1000,
+                "expected truncated body <= 1000 bytes, got {}",
+                body.len()
+            );
+        }
+        other => panic!("expected InternalServerError, got {:?}", other),
+    }
+}
+
 #[tokio::test]
 async fn status_403_maps_to_forbidden() {
     let err = call_with_status(403, "nope")
