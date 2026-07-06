@@ -16,10 +16,10 @@ pub struct CexAnnouncementsResponse {
     pub data: Vec<CexAnnouncementsView>,
     /// specifies the categories of the announcements
     pub exchange: Vec<String>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
@@ -266,10 +266,10 @@ pub struct CexSymbolVolumeView {
 pub struct CexTokenUpdatesResponse {
     /// `data` specifies an array of the token updates
     pub data: Vec<CexTokenUpdatesView>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
@@ -733,10 +733,10 @@ pub struct OpenInterestListResponse {
 #[non_exhaustive]
 pub struct OpenInterestOverviewResponse {
     pub data: Vec<OpenInterestOverviewView>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
@@ -962,13 +962,13 @@ pub struct PremiumDetail {
 #[serde(default)]
 #[non_exhaustive]
 pub struct PremiumResponse {
-    pub conversion_base: String,
-    pub currency: String,
+    pub conversion_base: Option<String>,
+    pub currency: Option<String>,
     pub data: Vec<PremiumView>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
@@ -985,12 +985,12 @@ pub struct PremiumView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TelegramChannelsResponse {
-    pub category: String,
+    pub category: Option<String>,
     pub data: Vec<TelegramChannelsView>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
@@ -1021,13 +1021,13 @@ pub struct TelegramChannelsView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TelegramMessagesResponse {
-    pub category: String,
+    pub category: Option<String>,
     /// specifies an array of the Telegram messages
     pub data: Vec<TelegramMessagesView>,
-    pub key: String,
+    pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: String,
+    pub sort: Option<String>,
     pub total: i64,
 }
 
