@@ -278,12 +278,7 @@ async fn status_429_maps_to_rate_limited_without_retry_after() {
         .await
         .expect_err("429 should be Err");
     assert!(
-        matches!(
-            err,
-            Error::RateLimited {
-                retry_after: None
-            }
-        ),
+        matches!(err, Error::RateLimited { retry_after: None }),
         "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );
