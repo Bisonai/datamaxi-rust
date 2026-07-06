@@ -245,7 +245,13 @@ async fn read_body_capped(mut response: reqwest::Response) -> String {
     let mut buf: Vec<u8> = Vec::new();
     while buf.len() < 1000 {
         match response.chunk().await {
-            Ok(Some(chunk)) => buf.extend_from_slice(&chunk),
+            Ok(Some(chunk)) => {
+                // Take only up to the remaining budget so a single oversized
+                // chunk can't push `buf` past the cap — a byte-exact bound
+                // matching the blocking path's `response.take(1000)`.
+                let take = (1000 - buf.len()).min(chunk.len());
+                buf.extend_from_slice(&chunk[..take]);
+            }
             Ok(None) => break,
             Err(_) => break,
         }
