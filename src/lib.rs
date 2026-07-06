@@ -16,6 +16,11 @@
 //! datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git" }
 //! ```
 //!
+//! ### Minimum Supported Rust Version (MSRV)
+//!
+//! This crate requires **Rust 1.86** or newer. The MSRV is verified in CI and
+//! may be raised in a minor version bump.
+//!
 //! ## Configuration
 //!
 //! Private API endpoints are protected by an API key.

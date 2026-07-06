@@ -122,6 +122,17 @@ fn truncate_body(mut s: String) -> String {
     s
 }
 
+/// Parse a `Retry-After` header into a [`Duration`].
+///
+/// Only the numeric delay-seconds form (RFC 9110 §10.2.3) is understood; the
+/// alternative HTTP-date form yields `None` rather than panicking. A missing,
+/// non-ASCII, or unparseable header also yields `None`.
+fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
+    let value = headers.get(reqwest::header::RETRY_AFTER)?;
+    let secs = value.to_str().ok()?.trim().parse::<u64>().ok()?;
+    Some(Duration::from_secs(secs))
+}
+
 /// Build the underlying async HTTP client with our defaults (timeout,
 /// `User-Agent`, unbounded idle pool). Falls back to a default client if the
 /// builder fails, so client construction is infallible and never panics.
@@ -235,6 +246,11 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
             Err(Error::InternalServerError(truncate_body(body)))
         }
         StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
+        StatusCode::FORBIDDEN => Err(Error::Forbidden),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        StatusCode::TOO_MANY_REQUESTS => Err(Error::RateLimited {
+            retry_after: parse_retry_after(response.headers()),
+        }),
         StatusCode::BAD_REQUEST => {
             let body = response.text().await.unwrap_or_default();
             Err(Error::BadRequest(truncate_body(body)))
@@ -363,6 +379,24 @@ pub enum Error {
     #[error("Unauthorized")]
     Unauthorized,
 
+    /// The API returned a `403 Forbidden` (the key is valid but lacks access to the resource).
+    #[error("Forbidden")]
+    Forbidden,
+
+    /// The API returned a `404 Not Found` (the resource or endpoint does not exist).
+    #[error("Not found")]
+    NotFound,
+
+    /// The API returned a `429 Too Many Requests` (rate limited).
+    ///
+    /// `retry_after` carries the `Retry-After` header when present and expressed
+    /// as a delay in seconds; the HTTP-date form is not parsed and yields `None`.
+    #[error("Rate limited")]
+    RateLimited {
+        /// Suggested wait before retrying, from the `Retry-After` header.
+        retry_after: Option<Duration>,
+    },
+
     /// The API returned a `500 Internal Server Error`; the payload carries the server message.
     #[error("Internal server error: {0}")]
     InternalServerError(String),
@@ -388,9 +422,9 @@ pub enum Error {
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use super::{
-        backoff_delay, is_retryable_error, is_retryable_status, retry_delay_for_response,
-        truncate_body, user_agent, Error, Result, RetryConfig, API_KEY_ENV, BASE_URL,
-        DEFAULT_TIMEOUT,
+        backoff_delay, is_retryable_error, is_retryable_status, parse_retry_after,
+        retry_delay_for_response, truncate_body, user_agent, Error, Result, RetryConfig,
+        API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT,
     };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
@@ -508,6 +542,11 @@ pub mod blocking {
                 Err(Error::InternalServerError(truncate_body(body)))
             }
             StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
+            StatusCode::FORBIDDEN => Err(Error::Forbidden),
+            StatusCode::NOT_FOUND => Err(Error::NotFound),
+            StatusCode::TOO_MANY_REQUESTS => Err(Error::RateLimited {
+                retry_after: parse_retry_after(response.headers()),
+            }),
             StatusCode::BAD_REQUEST => {
                 let mut body = String::new();
                 response.take(1000).read_to_string(&mut body)?;
