@@ -258,6 +258,20 @@ async fn status_404_maps_to_not_found() {
     );
 }
 
+/// An unmapped status (here `502`) still falls through to the catch-all
+/// `UnexpectedStatusCode`, carrying the raw code.
+#[tokio::test]
+async fn status_502_maps_to_unexpected_status_code() {
+    let err = call_with_status(502, "bad gateway")
+        .await
+        .expect_err("502 should be Err");
+    assert!(
+        matches!(err, Error::UnexpectedStatusCode(502)),
+        "502 should map to UnexpectedStatusCode(502), got {:?}",
+        err
+    );
+}
+
 #[tokio::test]
 async fn status_429_maps_to_rate_limited_without_retry_after() {
     let err = call_with_status(429, "slow down")
