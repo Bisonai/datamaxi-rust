@@ -78,10 +78,6 @@ and list responses into a `Vec` (e.g. `candle.exchanges(..)` → `Vec<String>`,
 
 See [`examples/`](./examples/) for runnable examples.
 
-## Code Generation
-
-Most of the SDK is auto-generated from the OpenAPI spec via `datamaxi-codegen`. Generated code is in `src/generated.rs` and marked with `DO NOT EDIT`. Manual edits to generated files will be overwritten.
-
 ## Links
 
 - [Official Website](https://datamaxiplus.com/)
