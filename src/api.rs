@@ -28,6 +28,13 @@ const DEFAULT_RETRY_BASE_DELAY: Duration = Duration::from_millis(500);
 /// abusive `Retry-After` header can never stall a request indefinitely.
 const RETRY_MAX_DELAY: Duration = Duration::from_secs(30);
 
+/// Hard cap, in bytes, on how much of a `400`/`500` error body is read and
+/// surfaced via [`Error::BadRequest`] / [`Error::InternalServerError`].
+/// Shared by the async streaming reader ([`read_body_capped`]), the blocking
+/// `Read`-based reader, and [`truncate_body`], so the cap can never drift
+/// between call sites.
+const MAX_ERROR_BODY_BYTES: usize = 1000;
+
 /// Retry/backoff policy shared by the async and blocking clients.
 ///
 /// Transient conditions — request timeouts, connection errors, `429 Too Many
@@ -118,16 +125,155 @@ fn user_agent() -> String {
     concat!("datamaxi-rust/", env!("CARGO_PKG_VERSION")).to_string()
 }
 
-/// Truncate a server error body to at most 1000 bytes, on a UTF-8 char boundary.
+/// Truncate a server error body to at most [`MAX_ERROR_BODY_BYTES`] bytes, on
+/// a UTF-8 char boundary.
 fn truncate_body(mut s: String) -> String {
-    if s.len() > 1000 {
-        let mut end = 1000;
+    if s.len() > MAX_ERROR_BODY_BYTES {
+        let mut end = MAX_ERROR_BODY_BYTES;
         while !s.is_char_boundary(end) {
             end -= 1;
         }
         s.truncate(end);
     }
     s
+}
+
+/// Maps a terminal status — anything other than `200 OK`, `400`, and `500`
+/// (which need per-flavor body handling) — to the corresponding [`Error`].
+/// Returns `None` for those three statuses, leaving them to the caller.
+/// Shared by the async and blocking `handle_response`.
+fn map_error_status(status: StatusCode, headers: &reqwest::header::HeaderMap) -> Option<Error> {
+    match status {
+        StatusCode::UNAUTHORIZED => Some(Error::Unauthorized),
+        StatusCode::FORBIDDEN => Some(Error::Forbidden),
+        StatusCode::NOT_FOUND => Some(Error::NotFound),
+        StatusCode::TOO_MANY_REQUESTS => Some(Error::RateLimited {
+            retry_after: parse_retry_after(headers),
+        }),
+        _ => None,
+    }
+}
+
+/// Shared mutable state behind [`ClientBuilder`] and
+/// [`blocking::ClientBuilder`]: the four knobs (API key, base URL, timeout,
+/// retry policy) plus the logic to resolve them at `build()` time. Each
+/// flavor's builder is a thin wrapper that forwards its setters here and
+/// supplies its own `build_inner_client` to construct the right `Client`.
+#[derive(Debug, Clone)]
+struct BuilderState {
+    base_url: Option<String>,
+    api_key: Option<String>,
+    timeout: Duration,
+    retry: RetryConfig,
+}
+
+/// The pieces a flavor's `build()` needs, once [`BuilderState::resolve`] has
+/// applied the API key / base URL defaults.
+struct ResolvedBuilder {
+    api_key: String,
+    base_url: String,
+    timeout: Duration,
+    retry: RetryConfig,
+}
+
+impl BuilderState {
+    fn new() -> Self {
+        BuilderState {
+            base_url: None,
+            api_key: None,
+            timeout: DEFAULT_TIMEOUT,
+            retry: RetryConfig::default(),
+        }
+    }
+
+    fn api_key(&mut self, api_key: impl Into<String>) {
+        self.api_key = Some(api_key.into());
+    }
+
+    fn base_url(&mut self, base_url: impl Into<String>) {
+        self.base_url = Some(base_url.into());
+    }
+
+    fn timeout(&mut self, timeout: Duration) {
+        self.timeout = timeout;
+    }
+
+    fn max_retries(&mut self, max_retries: u32) {
+        self.retry.max_retries = max_retries;
+    }
+
+    fn retry_base_delay(&mut self, base_delay: Duration) {
+        self.retry.base_delay = base_delay;
+    }
+
+    /// Resolves the API key from the explicit value or the `DATAMAXI_API_KEY`
+    /// environment variable, returning [`Error::MissingApiKey`] if neither is
+    /// set, and the base URL from the explicit value or [`BASE_URL`].
+    fn resolve(self) -> Result<ResolvedBuilder> {
+        let api_key = self
+            .api_key
+            .or_else(|| std::env::var(API_KEY_ENV).ok())
+            .filter(|key| !key.trim().is_empty())
+            .ok_or(Error::MissingApiKey)?;
+        let base_url = self.base_url.unwrap_or_else(|| BASE_URL.to_string());
+
+        Ok(ResolvedBuilder {
+            api_key,
+            base_url,
+            timeout: self.timeout,
+            retry: self.retry,
+        })
+    }
+}
+
+/// Generates the retry loop shared by [`Client::get`] and
+/// [`blocking::Client::get`]. The two flavors are identical except for
+/// whether `send`, the backoff sleep, and `handle_response` are awaited: pass
+/// `await` as the trailing argument for the async flavor, and omit it for the
+/// blocking flavor.
+macro_rules! get_loop {
+    ($self:expr, $endpoint:expr, $parameters:expr, $handle_response:path, $sleep:path $(, $aw:ident)?) => {{
+        let url: String = format!("{}{}", $self.base_url, $endpoint);
+        let mut attempt: u32 = 0;
+
+        loop {
+            let mut request = $self
+                .inner_client
+                .get(url.as_str())
+                .header("X-DTMX-APIKEY", &$self.api_key);
+
+            if let Some(ref p) = $parameters {
+                request = request.query(p);
+            }
+
+            match request.send()$(.$aw)? {
+                Ok(response) => {
+                    let status = response.status();
+                    if attempt < $self.retry.max_retries && is_retryable_status(status) {
+                        let delay = retry_delay_for_response(
+                            &$self.retry,
+                            status,
+                            response.headers(),
+                            attempt,
+                        );
+                        attempt += 1;
+                        $sleep(delay)$(.$aw)?;
+                        continue;
+                    }
+                    return $handle_response(response)$(.$aw)?;
+                }
+                Err(error) => {
+                    if attempt < $self.retry.max_retries && is_retryable_error(&error) {
+                        let delay = backoff_delay(&$self.retry, attempt);
+                        attempt += 1;
+                        $sleep(delay)$(.$aw)?;
+                        continue;
+                    }
+                    return Err(Error::from(error));
+                }
+            }
+        }
+    }};
 }
 
 /// Build the underlying async HTTP client with our defaults (timeout,
@@ -191,62 +337,30 @@ impl Client {
         endpoint: &str,
         parameters: Option<BTreeMap<String, String>>,
     ) -> Result<T> {
-        let url: String = format!("{}{}", self.base_url, endpoint);
-        let mut attempt: u32 = 0;
-
-        loop {
-            let mut request = self
-                .inner_client
-                .get(url.as_str())
-                .header("X-DTMX-APIKEY", &self.api_key);
-
-            if let Some(ref p) = parameters {
-                request = request.query(p);
-            }
-
-            match request.send().await {
-                Ok(response) => {
-                    let status = response.status();
-                    if attempt < self.retry.max_retries && is_retryable_status(status) {
-                        let delay = retry_delay_for_response(
-                            &self.retry,
-                            status,
-                            response.headers(),
-                            attempt,
-                        );
-                        attempt += 1;
-                        tokio::time::sleep(delay).await;
-                        continue;
-                    }
-                    return handle_response(response).await;
-                }
-                Err(error) => {
-                    if attempt < self.retry.max_retries && is_retryable_error(&error) {
-                        let delay = backoff_delay(&self.retry, attempt);
-                        attempt += 1;
-                        tokio::time::sleep(delay).await;
-                        continue;
-                    }
-                    return Err(Error::from(error));
-                }
-            }
-        }
+        get_loop!(
+            self,
+            endpoint,
+            parameters,
+            handle_response,
+            tokio::time::sleep,
+            await
+        )
     }
 }
 
-/// Reads at most ~1000 bytes of an async response body, streaming chunk by
-/// chunk rather than buffering the whole body. Mirrors the blocking path's
-/// `response.take(1000).read_to_string(&mut body)`. Invalid UTF-8 in the
-/// truncated bytes is replaced lossily.
+/// Reads at most [`MAX_ERROR_BODY_BYTES`] of an async response body, streaming
+/// chunk by chunk rather than buffering the whole body. Mirrors the blocking
+/// path's `response.take(MAX_ERROR_BODY_BYTES).read_to_string(&mut body)`.
+/// Invalid UTF-8 in the truncated bytes is replaced lossily.
 async fn read_body_capped(mut response: reqwest::Response) -> String {
     let mut buf: Vec<u8> = Vec::new();
-    while buf.len() < 1000 {
+    while buf.len() < MAX_ERROR_BODY_BYTES {
         match response.chunk().await {
             Ok(Some(chunk)) => {
                 // Take only up to the remaining budget so a single oversized
                 // chunk can't push `buf` past the cap — a byte-exact bound
-                // matching the blocking path's `response.take(1000)`.
-                let take = (1000 - buf.len()).min(chunk.len());
+                // matching the blocking path's `response.take(MAX_ERROR_BODY_BYTES)`.
+                let take = (MAX_ERROR_BODY_BYTES - buf.len()).min(chunk.len());
                 buf.extend_from_slice(&chunk[..take]);
             }
             Ok(None) => break,
@@ -263,14 +377,11 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
         StatusCode::INTERNAL_SERVER_ERROR => {
             Err(Error::InternalServerError(read_body_capped(response).await))
         }
-        StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
-        StatusCode::FORBIDDEN => Err(Error::Forbidden),
-        StatusCode::NOT_FOUND => Err(Error::NotFound),
-        StatusCode::TOO_MANY_REQUESTS => Err(Error::RateLimited {
-            retry_after: parse_retry_after(response.headers()),
-        }),
         StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response).await)),
-        status => Err(Error::UnexpectedStatusCode(status.as_u16())),
+        status => match map_error_status(status, response.headers()) {
+            Some(err) => Err(err),
+            None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+        },
     }
 }
 
@@ -298,10 +409,7 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
 /// ```
 #[derive(Debug, Clone)]
 pub struct ClientBuilder {
-    base_url: Option<String>,
-    api_key: Option<String>,
-    timeout: Duration,
-    retry: RetryConfig,
+    state: BuilderState,
 }
 
 impl ClientBuilder {
@@ -309,28 +417,25 @@ impl ClientBuilder {
     /// key read from the environment on `build`).
     pub fn new() -> Self {
         ClientBuilder {
-            base_url: None,
-            api_key: None,
-            timeout: DEFAULT_TIMEOUT,
-            retry: RetryConfig::default(),
+            state: BuilderState::new(),
         }
     }
 
     /// Sets the API key explicitly, overriding the `DATAMAXI_API_KEY` environment variable.
     pub fn api_key(mut self, api_key: impl Into<String>) -> Self {
-        self.api_key = Some(api_key.into());
+        self.state.api_key(api_key);
         self
     }
 
     /// Overrides the base URL (defaults to the production API).
     pub fn base_url(mut self, base_url: impl Into<String>) -> Self {
-        self.base_url = Some(base_url.into());
+        self.state.base_url(base_url);
         self
     }
 
     /// Sets the per-request timeout (defaults to 10 seconds).
     pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
+        self.state.timeout(timeout);
         self
     }
 
@@ -338,14 +443,14 @@ impl ClientBuilder {
     /// connection errors, `429`, and `5xx`). Defaults to `0` (no retries);
     /// each retry backs off exponentially from the base delay.
     pub fn max_retries(mut self, max_retries: u32) -> Self {
-        self.retry.max_retries = max_retries;
+        self.state.max_retries(max_retries);
         self
     }
 
     /// Sets the base delay for exponential retry backoff (defaults to 500ms).
     /// The nth retry waits `base_delay * 2^n`, capped at 30 seconds.
     pub fn retry_base_delay(mut self, base_delay: Duration) -> Self {
-        self.retry.base_delay = base_delay;
+        self.state.retry_base_delay(base_delay);
         self
     }
 
@@ -354,17 +459,13 @@ impl ClientBuilder {
     /// Resolves the API key from the explicit value or the `DATAMAXI_API_KEY`
     /// environment variable, returning [`Error::MissingApiKey`] if neither is set.
     pub fn build(self) -> Result<Client> {
-        let api_key = self
-            .api_key
-            .or_else(|| std::env::var(API_KEY_ENV).ok())
-            .filter(|key| !key.trim().is_empty())
-            .ok_or(Error::MissingApiKey)?;
+        let resolved = self.state.resolve()?;
 
         Ok(Client {
-            base_url: self.base_url.unwrap_or_else(|| BASE_URL.to_string()),
-            api_key,
-            inner_client: build_inner_client(self.timeout),
-            retry: self.retry,
+            base_url: resolved.base_url,
+            api_key: resolved.api_key,
+            inner_client: build_inner_client(resolved.timeout),
+            retry: resolved.retry,
         })
     }
 }
@@ -441,9 +542,9 @@ pub enum Error {
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use super::{
-        backoff_delay, is_retryable_error, is_retryable_status, parse_retry_after,
-        retry_delay_for_response, truncate_body, user_agent, Error, Result, RetryConfig,
-        API_KEY_ENV, BASE_URL, DEFAULT_TIMEOUT,
+        backoff_delay, is_retryable_error, is_retryable_status, map_error_status,
+        retry_delay_for_response, truncate_body, user_agent, BuilderState, Error, Result,
+        RetryConfig, BASE_URL, DEFAULT_TIMEOUT, MAX_ERROR_BODY_BYTES,
     };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
@@ -508,47 +609,26 @@ pub mod blocking {
             endpoint: &str,
             parameters: Option<BTreeMap<String, String>>,
         ) -> Result<T> {
-            let url: String = format!("{}{}", self.base_url, endpoint);
-            let mut attempt: u32 = 0;
-
-            loop {
-                let mut request = self
-                    .inner_client
-                    .get(url.as_str())
-                    .header("X-DTMX-APIKEY", &self.api_key);
-
-                if let Some(ref p) = parameters {
-                    request = request.query(p);
-                }
-
-                match request.send() {
-                    Ok(response) => {
-                        let status = response.status();
-                        if attempt < self.retry.max_retries && is_retryable_status(status) {
-                            let delay = retry_delay_for_response(
-                                &self.retry,
-                                status,
-                                response.headers(),
-                                attempt,
-                            );
-                            attempt += 1;
-                            std::thread::sleep(delay);
-                            continue;
-                        }
-                        return handle_response(response);
-                    }
-                    Err(error) => {
-                        if attempt < self.retry.max_retries && is_retryable_error(&error) {
-                            let delay = backoff_delay(&self.retry, attempt);
-                            attempt += 1;
-                            std::thread::sleep(delay);
-                            continue;
-                        }
-                        return Err(Error::from(error));
-                    }
-                }
-            }
+            get_loop!(
+                self,
+                endpoint,
+                parameters,
+                handle_response,
+                std::thread::sleep
+            )
         }
+    }
+
+    /// Reads at most [`MAX_ERROR_BODY_BYTES`] of a blocking response body,
+    /// truncated on a UTF-8 char boundary. The blocking counterpart to the
+    /// async [`super::read_body_capped`]; shared by the `400` and `500` arms of
+    /// [`handle_response`] so the cap and truncation stay in one place.
+    fn read_body_capped(response: Response) -> std::io::Result<String> {
+        let mut body = String::new();
+        response
+            .take(MAX_ERROR_BODY_BYTES as u64)
+            .read_to_string(&mut body)?;
+        Ok(truncate_body(body))
     }
 
     /// Processes a blocking response from the API and returns the result.
@@ -556,91 +636,72 @@ pub mod blocking {
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>()?),
             StatusCode::INTERNAL_SERVER_ERROR => {
-                let mut body = String::new();
-                response.take(1000).read_to_string(&mut body)?;
-                Err(Error::InternalServerError(truncate_body(body)))
+                Err(Error::InternalServerError(read_body_capped(response)?))
             }
-            StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
-            StatusCode::FORBIDDEN => Err(Error::Forbidden),
-            StatusCode::NOT_FOUND => Err(Error::NotFound),
-            StatusCode::TOO_MANY_REQUESTS => Err(Error::RateLimited {
-                retry_after: parse_retry_after(response.headers()),
-            }),
-            StatusCode::BAD_REQUEST => {
-                let mut body = String::new();
-                response.take(1000).read_to_string(&mut body)?;
-                Err(Error::BadRequest(truncate_body(body)))
-            }
-            status => Err(Error::UnexpectedStatusCode(status.as_u16())),
+            StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response)?)),
+            status => match map_error_status(status, response.headers()) {
+                Some(err) => Err(err),
+                None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+            },
         }
     }
 
     /// Builder for a blocking [`Client`], mirroring the async [`super::ClientBuilder`].
     #[derive(Debug, Clone)]
     pub struct ClientBuilder {
-        base_url: Option<String>,
-        api_key: Option<String>,
-        timeout: Duration,
-        retry: RetryConfig,
+        state: BuilderState,
     }
 
     impl ClientBuilder {
         /// Creates a new builder with default settings.
         pub fn new() -> Self {
             ClientBuilder {
-                base_url: None,
-                api_key: None,
-                timeout: DEFAULT_TIMEOUT,
-                retry: RetryConfig::default(),
+                state: BuilderState::new(),
             }
         }
 
         /// Sets the API key explicitly, overriding the `DATAMAXI_API_KEY` environment variable.
         pub fn api_key(mut self, api_key: impl Into<String>) -> Self {
-            self.api_key = Some(api_key.into());
+            self.state.api_key(api_key);
             self
         }
 
         /// Overrides the base URL (defaults to the production API).
         pub fn base_url(mut self, base_url: impl Into<String>) -> Self {
-            self.base_url = Some(base_url.into());
+            self.state.base_url(base_url);
             self
         }
 
         /// Sets the per-request timeout (defaults to 10 seconds).
         pub fn timeout(mut self, timeout: Duration) -> Self {
-            self.timeout = timeout;
+            self.state.timeout(timeout);
             self
         }
 
         /// Sets the maximum number of retries on transient failures (timeouts,
         /// connection errors, `429`, and `5xx`). Defaults to `0` (no retries).
         pub fn max_retries(mut self, max_retries: u32) -> Self {
-            self.retry.max_retries = max_retries;
+            self.state.max_retries(max_retries);
             self
         }
 
         /// Sets the base delay for exponential retry backoff (defaults to
         /// 500ms). The nth retry waits `base_delay * 2^n`, capped at 30 seconds.
         pub fn retry_base_delay(mut self, base_delay: Duration) -> Self {
-            self.retry.base_delay = base_delay;
+            self.state.retry_base_delay(base_delay);
             self
         }
 
         /// Builds the blocking [`Client`], resolving the API key from the
         /// explicit value or the `DATAMAXI_API_KEY` environment variable.
         pub fn build(self) -> Result<Client> {
-            let api_key = self
-                .api_key
-                .or_else(|| std::env::var(API_KEY_ENV).ok())
-                .filter(|key| !key.trim().is_empty())
-                .ok_or(Error::MissingApiKey)?;
+            let resolved = self.state.resolve()?;
 
             Ok(Client {
-                base_url: self.base_url.unwrap_or_else(|| BASE_URL.to_string()),
-                api_key,
-                inner_client: build_inner_client(self.timeout),
-                retry: self.retry,
+                base_url: resolved.base_url,
+                api_key: resolved.api_key,
+                inner_client: build_inner_client(resolved.timeout),
+                retry: resolved.retry,
             })
         }
     }
