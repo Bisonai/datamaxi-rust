@@ -619,24 +619,26 @@ pub mod blocking {
         }
     }
 
+    /// Reads at most [`MAX_ERROR_BODY_BYTES`] of a blocking response body,
+    /// truncated on a UTF-8 char boundary. The blocking counterpart to the
+    /// async [`super::read_body_capped`]; shared by the `400` and `500` arms of
+    /// [`handle_response`] so the cap and truncation stay in one place.
+    fn read_body_capped(response: Response) -> std::io::Result<String> {
+        let mut body = String::new();
+        response
+            .take(MAX_ERROR_BODY_BYTES as u64)
+            .read_to_string(&mut body)?;
+        Ok(truncate_body(body))
+    }
+
     /// Processes a blocking response from the API and returns the result.
     fn handle_response<T: DeserializeOwned>(response: Response) -> Result<T> {
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>()?),
             StatusCode::INTERNAL_SERVER_ERROR => {
-                let mut body = String::new();
-                response
-                    .take(MAX_ERROR_BODY_BYTES as u64)
-                    .read_to_string(&mut body)?;
-                Err(Error::InternalServerError(truncate_body(body)))
+                Err(Error::InternalServerError(read_body_capped(response)?))
             }
-            StatusCode::BAD_REQUEST => {
-                let mut body = String::new();
-                response
-                    .take(MAX_ERROR_BODY_BYTES as u64)
-                    .read_to_string(&mut body)?;
-                Err(Error::BadRequest(truncate_body(body)))
-            }
+            StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response)?)),
             status => match map_error_status(status, response.headers()) {
                 Some(err) => Err(err),
                 None => Err(Error::UnexpectedStatusCode(status.as_u16())),
