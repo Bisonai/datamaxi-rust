@@ -14,9 +14,10 @@
 use datamaxi::api::{Client, ClientBuilder, Error};
 use datamaxi::{
     CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexSymbolCautionsMinLevel, CexSymbolCautionsOptions, LiquidationHeatmapOptions,
-    LiquidationHeatmapResponse, LiquidationHeatmapWindow, LiquidationStatsOptions,
-    LiquidationStatsWindow, OpenInterestSummaryOptions, PremiumOptions, PremiumPremiumType,
+    CexFeesOptions, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions,
+    CexSymbolLiquidationOptions, LiquidationHeatmapOptions, LiquidationHeatmapResponse,
+    LiquidationHeatmapWindow, LiquidationStatsOptions, LiquidationStatsWindow,
+    OpenInterestSummaryOptions, PremiumOptions, PremiumPremiumType,
 };
 use mockito::Matcher;
 
@@ -499,4 +500,324 @@ fn blocking_liquidation_heatmap_smoke() {
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+// --- Deep response deserialization (issue #64) -----------------------------
+//
+// The tests above prove the OUTBOUND contract (path/query/auth) and that a
+// response *decodes* — but they feed empty `{}`/`[]` bodies, so struct-level
+// `#[serde(default)]` masks any field-level decode bug. The tests below mock
+// REALISTIC non-empty JSON and assert decoded field VALUES and types across
+// each distinct response shape:
+//   * object response            → `CexCandleResponse`, `FundingRateLatestResponse`, `ForexResponse`
+//   * `Vec<View>` response       → `CexSymbolLiquidationView`, `CexFeesView`
+//   * scalar `Vec<String>`       → `funding_rate().exchanges()`
+// They specifically lock the `#[serde(rename)]` short keys (candle c/d/h/l/o/v,
+// forex d/r/s, funding b/d/e/f/i/id/q/s) and `Option<f64>`/`Option<i64>`
+// nullable fields BOTH present (`Some`) and absent (`None`). A codegen regen
+// that drops a `rename` or flips a type would fail here, not silently pass.
+
+/// Object response with a nested `Vec<CexCandleView>` whose fields are the
+/// renamed one-letter keys `c`/`d`/`h`/`l`/`o`/`v`. Asserts the top-level
+/// envelope AND every renamed candle field decodes to the right value — proving
+/// the `#[serde(rename)]` map, not just "decode didn't panic".
+#[tokio::test]
+async fn cex_candle_decodes_renamed_ohlcv_fields() {
+    let mut server = mockito::Server::new_async().await;
+
+    let body = r#"{
+        "currency": "USD",
+        "exchange": "binance",
+        "interval": "1h",
+        "market": "spot",
+        "symbol": "BTC-USDT",
+        "data": [
+            {"c": 100.5, "d": 1700000000, "h": 110.0, "l": 90.0, "o": 95.0, "v": 1234.5},
+            {"c": 101.5, "d": 1700003600, "h": 112.0, "l": 91.0, "o": 100.5, "v": 2000.0}
+        ]
+    }"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/cex/candle")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let resp = mock_client(server.url())
+        .cex_candle()
+        .get(
+            "binance",
+            "BTC-USDT",
+            CexCandleOptions::new()
+                .market(CexCandleMarket::Spot)
+                .interval("1h")
+                .currency(CexCandleCurrency::USD),
+        )
+        .await
+        .expect("realistic candle body decodes");
+
+    assert_eq!(resp.currency, "USD");
+    assert_eq!(resp.exchange, "binance");
+    assert_eq!(resp.interval, "1h");
+    assert_eq!(resp.market, "spot");
+    assert_eq!(resp.symbol, "BTC-USDT");
+    assert_eq!(resp.data.len(), 2);
+
+    let first = &resp.data[0];
+    assert_eq!(first.close, 100.5); // renamed "c"
+    assert_eq!(first.timestamp, 1_700_000_000); // renamed "d"
+    assert_eq!(first.high, 110.0); // renamed "h"
+    assert_eq!(first.low, 90.0); // renamed "l"
+    assert_eq!(first.open, 95.0); // renamed "o"
+    assert_eq!(first.volume, 1234.5); // renamed "v"
+
+    assert_eq!(resp.data[1].close, 101.5);
+    assert_eq!(resp.data[1].open, 100.5);
+}
+
+/// Object response with renamed keys AND nullable `Option<f64>`/`Option<i64>`
+/// fields PRESENT. `funding_rate` (`f`) and `interval_hours` (`i`) carry values,
+/// so both must decode to `Some(..)`.
+#[tokio::test]
+async fn funding_rate_latest_decodes_nullable_fields_present() {
+    let mut server = mockito::Server::new_async().await;
+
+    let body = r#"{
+        "b": "BTC",
+        "d": 1700000000,
+        "e": "binance",
+        "f": 0.0001,
+        "i": 8,
+        "id": "binance-btc-usdt",
+        "q": "USDT",
+        "s": "BTC-USDT"
+    }"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/funding-rate/latest")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let resp = mock_client(server.url())
+        .funding_rate()
+        .latest("binance", "BTC-USDT")
+        .await
+        .expect("funding-rate latest body decodes");
+
+    assert_eq!(resp.base, "BTC"); // renamed "b"
+    assert_eq!(resp.timestamp, 1_700_000_000); // renamed "d"
+    assert_eq!(resp.exchange, "binance"); // renamed "e"
+    assert_eq!(resp.funding_rate, Some(0.0001)); // renamed "f", present
+    assert_eq!(resp.interval_hours, Some(8)); // renamed "i", present
+    assert_eq!(resp.token_id, "binance-btc-usdt"); // renamed "id"
+    assert_eq!(resp.quote, "USDT"); // renamed "q"
+    assert_eq!(resp.symbol, "BTC-USDT"); // renamed "s"
+}
+
+/// Same shape as above but the nullable keys are ABSENT from the payload. With
+/// `#[serde(default)]` they must decode to `None` (not a zero value), while the
+/// required string/int fields still populate. This is the "absent → None" half
+/// of the nullable contract that an empty-body test can never exercise.
+#[tokio::test]
+async fn funding_rate_latest_decodes_nullable_fields_absent() {
+    let mut server = mockito::Server::new_async().await;
+
+    // No "f" / "i" keys at all.
+    let body = r#"{
+        "b": "ETH",
+        "d": 1700009999,
+        "e": "bybit",
+        "id": "bybit-eth-usdt",
+        "q": "USDT",
+        "s": "ETH-USDT"
+    }"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/funding-rate/latest")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let resp = mock_client(server.url())
+        .funding_rate()
+        .latest("bybit", "ETH-USDT")
+        .await
+        .expect("funding-rate latest body (nulls absent) decodes");
+
+    assert_eq!(resp.base, "ETH");
+    assert_eq!(resp.exchange, "bybit");
+    assert_eq!(resp.token_id, "bybit-eth-usdt");
+    assert_eq!(resp.funding_rate, None); // absent → None
+    assert_eq!(resp.interval_hours, None); // absent → None
+}
+
+/// `Vec<View>` response: a top-level JSON array of `CexSymbolLiquidationView`.
+/// The two elements exercise the `Option<f64>` USD fields BOTH present (element
+/// 0) and absent (element 1) within a single decoded vector, alongside the
+/// always-present `f64` volume fields.
+#[tokio::test]
+async fn cex_symbol_liquidation_decodes_vec_with_present_and_absent_nullables() {
+    let mut server = mockito::Server::new_async().await;
+
+    let body = r#"[
+        {
+            "b": "BTC", "e": "binance", "q": "USDT", "m": "futures",
+            "event_count": 12,
+            "long_volume": 100.0, "long_volume_usd": 4200000.0,
+            "short_volume": 50.0, "short_volume_usd": 2100000.0,
+            "total_volume": 150.0, "total_volume_usd": 6300000.0
+        },
+        {
+            "b": "ETH", "e": "bybit", "q": "USDT", "m": "futures",
+            "event_count": 3,
+            "long_volume": 10.0,
+            "short_volume": 5.0,
+            "total_volume": 15.0
+        }
+    ]"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/cex/symbol/liquidation")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let rows = mock_client(server.url())
+        .cex_symbol()
+        .liquidation("BTC", CexSymbolLiquidationOptions::new())
+        .await
+        .expect("liquidation array decodes");
+
+    assert_eq!(rows.len(), 2);
+
+    let btc = &rows[0];
+    assert_eq!(btc.b, "BTC");
+    assert_eq!(btc.e, "binance");
+    assert_eq!(btc.m, "futures");
+    assert_eq!(btc.event_count, 12);
+    assert_eq!(btc.long_volume, 100.0);
+    assert_eq!(btc.long_volume_usd, Some(4_200_000.0)); // present
+    assert_eq!(btc.short_volume_usd, Some(2_100_000.0));
+    assert_eq!(btc.total_volume_usd, Some(6_300_000.0));
+
+    let eth = &rows[1];
+    assert_eq!(eth.b, "ETH");
+    assert_eq!(eth.total_volume, 15.0);
+    assert_eq!(eth.long_volume_usd, None); // absent → None
+    assert_eq!(eth.short_volume_usd, None);
+    assert_eq!(eth.total_volume_usd, None);
+}
+
+/// `Vec<View>` response of `CexFeesView`, again mixing present/absent
+/// `Option<f64>` fee fields. Broadens coverage to the `/cex/fees` endpoint
+/// (reached via the `trading_fees()` accessor).
+#[tokio::test]
+async fn cex_fees_decodes_vec_with_present_and_absent_nullables() {
+    let mut server = mockito::Server::new_async().await;
+
+    let body = r#"[
+        {
+            "base": "BTC", "quote": "USDT", "symbol": "BTC-USDT", "exchange": "binance",
+            "spot_maker_fee": 0.001, "spot_take_fee": 0.001,
+            "futures_maker_fee": 0.0002, "futures_taker_fee": 0.0005
+        },
+        {
+            "base": "ETH", "quote": "USDT", "symbol": "ETH-USDT", "exchange": "binance",
+            "spot_maker_fee": 0.001, "spot_take_fee": 0.001
+        }
+    ]"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/cex/fees")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let fees = mock_client(server.url())
+        .trading_fees()
+        .fees(CexFeesOptions::new().exchange("binance"))
+        .await
+        .expect("fees array decodes");
+
+    assert_eq!(fees.len(), 2);
+
+    let btc = &fees[0];
+    assert_eq!(btc.symbol, "BTC-USDT");
+    assert_eq!(btc.spot_maker_fee, Some(0.001));
+    assert_eq!(btc.futures_maker_fee, Some(0.0002)); // present
+    assert_eq!(btc.futures_taker_fee, Some(0.0005));
+
+    let eth = &fees[1];
+    assert_eq!(eth.symbol, "ETH-USDT");
+    assert_eq!(eth.spot_maker_fee, Some(0.001));
+    assert_eq!(eth.futures_maker_fee, None); // absent → None
+    assert_eq!(eth.futures_taker_fee, None);
+}
+
+/// Object response `ForexResponse` with the renamed keys `d`/`r`/`s`. Small but
+/// distinct shape (flat object, no nested vec) and a new endpoint (`/forex`).
+#[tokio::test]
+async fn forex_decodes_renamed_fields() {
+    let mut server = mockito::Server::new_async().await;
+
+    let body = r#"{"d": 1700000000, "r": 1350.25, "s": "USD/KRW"}"#;
+
+    let _mock = server
+        .mock("GET", "/api/v1/forex")
+        .match_query(Matcher::Any)
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(body)
+        .create_async()
+        .await;
+
+    let resp = mock_client(server.url())
+        .forex()
+        .get("USD/KRW")
+        .await
+        .expect("forex body decodes");
+
+    assert_eq!(resp.timestamp, 1_700_000_000); // renamed "d"
+    assert_eq!(resp.rate, 1350.25); // renamed "r"
+    assert_eq!(resp.symbol, "USD/KRW"); // renamed "s"
+}
+
+/// Scalar `Vec<String>` response: the funding-rate `exchanges` list. Asserts the
+/// exact decoded elements (not just non-empty), broadening breadth to another
+/// endpoint (`/funding-rate/exchanges`).
+#[tokio::test]
+async fn funding_rate_exchanges_decodes_string_vec() {
+    let mut server = mockito::Server::new_async().await;
+
+    let _mock = server
+        .mock("GET", "/api/v1/funding-rate/exchanges")
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(r#"["binance","bybit","okx"]"#)
+        .create_async()
+        .await;
+
+    let exchanges = mock_client(server.url())
+        .funding_rate()
+        .exchanges()
+        .await
+        .expect("exchanges list decodes");
+
+    assert_eq!(exchanges, vec!["binance", "bybit", "okx"]);
 }
