@@ -22,6 +22,11 @@ wrappers under `datamaxi::blocking`:
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["blocking"] }
 ```
 
+### Minimum Supported Rust Version (MSRV)
+
+This crate requires **Rust 1.86** or newer. The MSRV is verified in CI and
+may be raised in a minor version bump.
+
 ## Configuration
 
 Private API endpoints require an API key. Register at [datamaxiplus.com/auth](https://datamaxiplus.com/auth) to get one.
