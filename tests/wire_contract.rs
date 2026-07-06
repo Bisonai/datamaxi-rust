@@ -236,13 +236,109 @@ async fn status_500_maps_to_internal_server_error() {
 }
 
 #[tokio::test]
-async fn status_404_maps_to_unexpected_status_code() {
+async fn status_403_maps_to_forbidden() {
+    let err = call_with_status(403, "nope")
+        .await
+        .expect_err("403 should be Err");
+    assert!(
+        matches!(err, Error::Forbidden),
+        "403 should map to Forbidden, got {:?}",
+        err
+    );
+}
+
+#[tokio::test]
+async fn status_404_maps_to_not_found() {
     let err = call_with_status(404, "nope")
         .await
         .expect_err("404 should be Err");
     assert!(
-        matches!(err, Error::UnexpectedStatusCode(404)),
-        "404 should map to UnexpectedStatusCode(404), got {:?}",
+        matches!(err, Error::NotFound),
+        "404 should map to NotFound, got {:?}",
+        err
+    );
+}
+
+/// An unmapped status (here `502`) still falls through to the catch-all
+/// `UnexpectedStatusCode`, carrying the raw code.
+#[tokio::test]
+async fn status_502_maps_to_unexpected_status_code() {
+    let err = call_with_status(502, "bad gateway")
+        .await
+        .expect_err("502 should be Err");
+    assert!(
+        matches!(err, Error::UnexpectedStatusCode(502)),
+        "502 should map to UnexpectedStatusCode(502), got {:?}",
+        err
+    );
+}
+
+#[tokio::test]
+async fn status_429_maps_to_rate_limited_without_retry_after() {
+    let err = call_with_status(429, "slow down")
+        .await
+        .expect_err("429 should be Err");
+    assert!(
+        matches!(err, Error::RateLimited { retry_after: None }),
+        "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
+        err
+    );
+}
+
+#[tokio::test]
+async fn status_429_surfaces_retry_after_seconds() {
+    let mut server = mockito::Server::new_async().await;
+    let _mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(429)
+        .with_header("Retry-After", "42")
+        .with_body("slow down")
+        .create_async()
+        .await;
+
+    let liq = mock_client(server.url()).liquidation();
+    let err = liq
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await
+        .expect_err("429 should be Err");
+    assert!(
+        matches!(
+            err,
+            Error::RateLimited {
+                retry_after: Some(d)
+            } if d == std::time::Duration::from_secs(42)
+        ),
+        "429 with Retry-After: 42 should surface Duration::from_secs(42), got {:?}",
+        err
+    );
+}
+
+/// A `Retry-After` HTTP-date (rather than delay-seconds) is not parsed and must
+/// yield `None` without panicking, while still mapping to `RateLimited`.
+#[tokio::test]
+async fn status_429_http_date_retry_after_yields_none() {
+    let mut server = mockito::Server::new_async().await;
+    let _mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(429)
+        .with_header("Retry-After", "Wed, 21 Oct 2015 07:28:00 GMT")
+        .with_body("slow down")
+        .create_async()
+        .await;
+
+    let liq = mock_client(server.url()).liquidation();
+    let err = liq
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await
+        .expect_err("429 should be Err");
+    assert!(
+        matches!(
+            err,
+            Error::RateLimited {
+                retry_after: None
+            }
+        ),
+        "429 with HTTP-date Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );
 }
@@ -500,6 +596,75 @@ fn blocking_liquidation_heatmap_smoke() {
 
     mock.assert();
     assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// Blocking mirror maps 403/404/429 to the same dedicated variants as async,
+/// including surfacing `Retry-After` on 429.
+#[cfg(feature = "blocking")]
+fn blocking_call_with_status(
+    status: usize,
+    retry_after: Option<&str>,
+) -> datamaxi::api::Result<LiquidationHeatmapResponse> {
+    let mut server = mockito::Server::new();
+    let mut m = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(status)
+        .with_body("body");
+    if let Some(ra) = retry_after {
+        m = m.with_header("Retry-After", ra);
+    }
+    let _mock = m.create();
+
+    let liq = mock_blocking_client(server.url()).liquidation();
+    liq.heatmap(LiquidationHeatmapOptions::new())
+}
+
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_status_403_maps_to_forbidden() {
+    let err = blocking_call_with_status(403, None).expect_err("403 should be Err");
+    assert!(
+        matches!(err, Error::Forbidden),
+        "403 should map to Forbidden, got {:?}",
+        err
+    );
+}
+
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_status_404_maps_to_not_found() {
+    let err = blocking_call_with_status(404, None).expect_err("404 should be Err");
+    assert!(
+        matches!(err, Error::NotFound),
+        "404 should map to NotFound, got {:?}",
+        err
+    );
+}
+
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_status_429_maps_to_rate_limited_without_retry_after() {
+    let err = blocking_call_with_status(429, None).expect_err("429 should be Err");
+    assert!(
+        matches!(err, Error::RateLimited { retry_after: None }),
+        "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
+        err
+    );
+}
+
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_status_429_surfaces_retry_after_seconds() {
+    let err = blocking_call_with_status(429, Some("42")).expect_err("429 should be Err");
+    assert!(
+        matches!(
+            err,
+            Error::RateLimited { retry_after: Some(d) }
+            if d == std::time::Duration::from_secs(42)
+        ),
+        "429 with Retry-After: 42 should surface Duration::from_secs(42), got {:?}",
+        err
+    );
 }
 
 // --- Deep response deserialization (issue #64) -----------------------------
