@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Client","ClientBuilder"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Client","ClientBuilder","Paginator"],"trait":["Paginated"],"type":["Result"]};
