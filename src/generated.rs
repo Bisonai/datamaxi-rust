@@ -2550,10 +2550,10 @@ pub struct FundingRateHistoryOptions {
     pub page: Option<i64>,
     /// Specifies limit (e.g. `1000`)
     pub limit: Option<i64>,
-    /// Specifies from (e.g. `2021-01-01`)
-    pub from: Option<String>,
-    /// Specifies to (e.g. `2021-01-01`)
-    pub to: Option<String>,
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
+    pub from: Option<i64>,
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
+    pub to: Option<i64>,
     /// Specifies sort (e.g. `asc`)
     pub sort: Option<FundingRateHistorySort>,
 }
@@ -2579,13 +2579,13 @@ impl FundingRateHistoryOptions {
         self
     }
 
-    pub fn from(mut self, from: impl Into<String>) -> Self {
-        self.from = Some(from.into());
+    pub fn from(mut self, from: i64) -> Self {
+        self.from = Some(from);
         self
     }
 
-    pub fn to(mut self, to: impl Into<String>) -> Self {
-        self.to = Some(to.into());
+    pub fn to(mut self, to: i64) -> Self {
+        self.to = Some(to);
         self
     }
 
@@ -2650,10 +2650,10 @@ impl IndexPrice {
 
 #[derive(Default, Clone)]
 pub struct IndexPriceOptions {
-    /// Specifies from (e.g. `2021-01-01`)
-    pub from: Option<String>,
-    /// Specifies to (e.g. `2021-01-01`)
-    pub to: Option<String>,
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
+    pub from: Option<i64>,
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
+    pub to: Option<i64>,
     /// interval (e.g. `5m`)
     pub interval: Option<String>,
 }
@@ -2667,13 +2667,13 @@ impl IndexPriceOptions {
         }
     }
 
-    pub fn from(mut self, from: impl Into<String>) -> Self {
-        self.from = Some(from.into());
+    pub fn from(mut self, from: i64) -> Self {
+        self.from = Some(from);
         self
     }
 
-    pub fn to(mut self, to: impl Into<String>) -> Self {
-        self.to = Some(to.into());
+    pub fn to(mut self, to: i64) -> Self {
+        self.to = Some(to);
         self
     }
 
