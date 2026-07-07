@@ -15,12 +15,19 @@ thiserror = "2.0.11"
 # surface already requires a Tokio runtime, so this adds no new runtime
 # requirement — it only makes the timer dependency explicit.
 tokio = { version = "1", default-features = false, features = ["time"] }
+# Optional: request-level spans/events in `get_loop!`, behind the `tracing`
+# feature. Compiles away entirely (no dependency pulled in) when disabled.
+tracing = { version = "0.1", optional = true }
 
 [features]
 default = []
 blocking = ["reqwest/blocking"]
+tracing = ["dep:tracing"]
 
 [dev-dependencies]
 dotenvy = "0.15.7"
 mockito = "1.5.0"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# Unconditional dev-dependency so tests can assert on emitted spans/events
+# when built with `--features tracing`; does not affect release builds.
+tracing = "0.1"

@@ -22,6 +22,24 @@ wrappers under `datamaxi::blocking`:
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["blocking"] }
 ```
 
+### Observability
+
+Two independent, opt-in hooks:
+
+- **`tracing` feature** — instruments each request with a span (`method`,
+  `endpoint`, `attempt`, `status`) and debug events on retry (backoff delay,
+  transient status/error). Off by default; adds no dependency when disabled.
+  ```toml
+  datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["tracing"] }
+  ```
+- **Custom HTTP client** — `ClientBuilder::http_client` (and the `blocking`
+  mirror) let you supply your own pre-built `reqwest::Client`, e.g. wrapped
+  with `reqwest-middleware` for custom auth, metrics, or logging:
+  ```rust,ignore
+  let http = reqwest::Client::builder().build()?;
+  let client = ClientBuilder::new().api_key("my_api_key").http_client(http).build()?;
+  ```
+
 ### Minimum Supported Rust Version (MSRV)
 
 This crate requires **Rust 1.86** or newer. The MSRV is verified in CI and

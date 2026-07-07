@@ -592,6 +592,82 @@ fn client_builder_without_key_errors() {
     );
 }
 
+/// `ClientBuilder::http_client` (issue #89) overrides the internally-built
+/// `reqwest::Client`. Proven by supplying a client with a custom `User-Agent`
+/// and asserting the mock server sees that value instead of the default
+/// `datamaxi-rust/<ver>` one — the escape hatch for custom middleware.
+#[tokio::test]
+async fn client_builder_http_client_overrides_inner_client() {
+    let mut server = mockito::Server::new_async().await;
+
+    let mock = server
+        .mock("GET", "/api/v1/cex/candle/exchanges")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_header("user-agent", "my-custom-middleware-client/1.0")
+        .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create_async()
+        .await;
+
+    let custom = reqwest::Client::builder()
+        .user_agent("my-custom-middleware-client/1.0")
+        .build()
+        .expect("custom reqwest client builds");
+
+    let client = ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(server.url())
+        .http_client(custom)
+        .build()
+        .expect("client with custom http_client should build");
+    let res = client
+        .cex_candle()
+        .exchanges(CexCandleExchangesMarket::Spot)
+        .await;
+
+    mock.assert_async().await;
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
+/// Blocking mirror of [`client_builder_http_client_overrides_inner_client`].
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_client_builder_http_client_overrides_inner_client() {
+    let mut server = mockito::Server::new();
+
+    let mock = server
+        .mock("GET", "/api/v1/cex/candle/exchanges")
+        .match_header("X-DTMX-APIKEY", API_KEY)
+        .match_header("user-agent", "my-custom-blocking-client/1.0")
+        .match_query(Matcher::UrlEncoded("market".into(), "spot".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let custom = reqwest::blocking::Client::builder()
+        .user_agent("my-custom-blocking-client/1.0")
+        .build()
+        .expect("custom blocking reqwest client builds");
+
+    let client = datamaxi::api::blocking::ClientBuilder::new()
+        .api_key(API_KEY)
+        .base_url(server.url())
+        .http_client(custom)
+        .build()
+        .expect("blocking client with custom http_client should build");
+    let res = client
+        .cex_candle()
+        .exchanges(CexCandleExchangesMarket::Spot);
+
+    mock.assert();
+    assert!(res.is_ok(), "expected Ok, got {:?}", res);
+}
+
 // --- Blocking feature smoke tests ------------------------------------------
 
 /// The `blocking` mirror exposes the same endpoints synchronously and routes
@@ -1233,4 +1309,92 @@ async fn funding_rate_exchanges_decodes_string_vec() {
         .expect("exchanges list decodes");
 
     assert_eq!(exchanges, vec!["binance", "bybit", "okx"]);
+}
+
+// --- tracing (issue #89) ----------------------------------------------------
+//
+// Proves the `tracing` feature actually emits: a minimal `Subscriber` counts
+// events, and a retried request (via the blocking client, to avoid needing an
+// async-aware subscriber) must produce at least the "retrying transient
+// response" debug event emitted by `get_loop!`.
+
+#[cfg(all(feature = "tracing", feature = "blocking"))]
+mod tracing_smoke {
+    use super::API_KEY;
+    use datamaxi::LiquidationHeatmapOptions;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
+    use std::time::Duration;
+    use tracing::span::{Attributes, Id, Record};
+    use tracing::{Event, Metadata, Subscriber};
+
+    /// Counts every `event!` (e.g. `tracing::debug!`) delivered to it; ignores
+    /// span lifecycle calls (a fixed dummy `Id` is fine since nothing here
+    /// inspects span identity).
+    struct CountingSubscriber {
+        events: Arc<AtomicUsize>,
+    }
+
+    impl Subscriber for CountingSubscriber {
+        fn enabled(&self, _metadata: &Metadata<'_>) -> bool {
+            true
+        }
+        fn new_span(&self, _span: &Attributes<'_>) -> Id {
+            Id::from_u64(1)
+        }
+        fn record(&self, _span: &Id, _values: &Record<'_>) {}
+        fn record_follows_from(&self, _span: &Id, _follows: &Id) {}
+        fn event(&self, _event: &Event<'_>) {
+            self.events.fetch_add(1, Ordering::SeqCst);
+        }
+        fn enter(&self, _span: &Id) {}
+        fn exit(&self, _span: &Id) {}
+    }
+
+    /// A retried `503` (followed by a `200`) must emit `get_loop!`'s "retrying
+    /// transient response" debug event under the `tracing` feature.
+    #[test]
+    fn retry_emits_tracing_event() {
+        let mut server = mockito::Server::new();
+        let fail = server
+            .mock("GET", "/api/v1/liquidation/heatmap")
+            .with_status(503)
+            .with_body("unavailable")
+            .expect(1)
+            .create();
+        let ok = server
+            .mock("GET", "/api/v1/liquidation/heatmap")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body("{}")
+            .expect(1)
+            .create();
+
+        let client = datamaxi::api::blocking::ClientBuilder::new()
+            .api_key(API_KEY)
+            .base_url(server.url())
+            .max_retries(1)
+            .retry_base_delay(Duration::from_millis(1))
+            .build()
+            .expect("mock retry client builds");
+
+        let events = Arc::new(AtomicUsize::new(0));
+        let subscriber = CountingSubscriber {
+            events: events.clone(),
+        };
+
+        let res = tracing::subscriber::with_default(subscriber, || {
+            client
+                .liquidation()
+                .heatmap(LiquidationHeatmapOptions::new())
+        });
+
+        fail.assert();
+        ok.assert();
+        assert!(res.is_ok(), "expected Ok after retry, got {:?}", res);
+        assert!(
+            events.load(Ordering::SeqCst) > 0,
+            "expected at least one tracing event emitted during retry"
+        );
+    }
 }
