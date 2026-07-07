@@ -20,6 +20,24 @@ where
     assert_eq!(reserialized, fixture);
 }
 
+/// Assert a payload MISSING `required_key` fails to deserialize into `T`.
+/// A required field carries no serde default, so its absence must be a hard
+/// decode error rather than a silently-defaulted zero value (issue #86).
+fn assert_missing_required<T: serde::de::DeserializeOwned>(
+    mut fixture: serde_json::Value,
+    required_key: &str,
+) {
+    fixture
+        .as_object_mut()
+        .expect("fixture is a JSON object")
+        .remove(required_key)
+        .expect("required_key is present in the fixture");
+    assert!(
+        serde_json::from_value::<T>(fixture).is_err(),
+        "missing required field `{required_key}` must fail to deserialize",
+    );
+}
+
 #[test]
 fn contract_cex_announcements_response() {
     let fixture = serde_json::json!({
@@ -49,6 +67,34 @@ fn contract_cex_announcements_response() {
 }
 
 #[test]
+fn contract_cex_announcements_response_missing_required() {
+    let fixture = serde_json::json!({
+        "category": [
+            "s",
+        ],
+        "data": [
+            {
+                "c": "s",
+                "d": 1,
+                "e": "s",
+                "s": "s",
+                "t": "s",
+                "u": "s",
+            },
+        ],
+        "exchange": [
+            "s",
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::CexAnnouncementsResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_cex_announcements_view() {
     let fixture = serde_json::json!({
         "c": "s",
@@ -59,6 +105,19 @@ fn contract_cex_announcements_view() {
         "u": "s",
     });
     assert_roundtrip::<datamaxi::CexAnnouncementsView>(fixture);
+}
+
+#[test]
+fn contract_cex_announcements_view_missing_required() {
+    let fixture = serde_json::json!({
+        "c": "s",
+        "d": 1,
+        "e": "s",
+        "s": "s",
+        "t": "s",
+        "u": "s",
+    });
+    assert_missing_required::<datamaxi::CexAnnouncementsView>(fixture, "c");
 }
 
 #[test]
@@ -84,6 +143,28 @@ fn contract_cex_candle_response() {
 }
 
 #[test]
+fn contract_cex_candle_response_missing_required() {
+    let fixture = serde_json::json!({
+        "currency": "s",
+        "data": [
+            {
+                "c": 1.5,
+                "d": 1,
+                "h": 1.5,
+                "l": 1.5,
+                "o": 1.5,
+                "v": 1.5,
+            },
+        ],
+        "exchange": "s",
+        "interval": "s",
+        "market": "s",
+        "symbol": "s",
+    });
+    assert_missing_required::<datamaxi::CexCandleResponse>(fixture, "currency");
+}
+
+#[test]
 fn contract_cex_candle_symbols_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -94,6 +175,19 @@ fn contract_cex_candle_symbols_view() {
         "s": "s",
     });
     assert_roundtrip::<datamaxi::CexCandleSymbolsView>(fixture);
+}
+
+#[test]
+fn contract_cex_candle_symbols_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "e": "s",
+        "id": "s",
+        "m": "s",
+        "q": "s",
+        "s": "s",
+    });
+    assert_missing_required::<datamaxi::CexCandleSymbolsView>(fixture, "b");
 }
 
 #[test]
@@ -110,6 +204,19 @@ fn contract_cex_candle_view() {
 }
 
 #[test]
+fn contract_cex_candle_view_missing_required() {
+    let fixture = serde_json::json!({
+        "c": 1.5,
+        "d": 1,
+        "h": 1.5,
+        "l": 1.5,
+        "o": 1.5,
+        "v": 1.5,
+    });
+    assert_missing_required::<datamaxi::CexCandleView>(fixture, "c");
+}
+
+#[test]
 fn contract_cex_fees_view() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -122,6 +229,21 @@ fn contract_cex_fees_view() {
         "symbol": "s",
     });
     assert_roundtrip::<datamaxi::CexFeesView>(fixture);
+}
+
+#[test]
+fn contract_cex_fees_view_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "futures_maker_fee": 1.5,
+        "futures_taker_fee": 1.5,
+        "quote": "s",
+        "spot_maker_fee": 1.5,
+        "spot_take_fee": 1.5,
+        "symbol": "s",
+    });
+    assert_missing_required::<datamaxi::CexFeesView>(fixture, "base");
 }
 
 #[test]
@@ -141,6 +263,22 @@ fn contract_cex_symbol_cautions_view() {
 }
 
 #[test]
+fn contract_cex_symbol_cautions_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "caution_level": "s",
+        "e": "s",
+        "end_at": 1,
+        "m": "s",
+        "q": "s",
+        "reasons": [
+            "s",
+        ],
+    });
+    assert_missing_required::<datamaxi::CexSymbolCautionsView>(fixture, "b");
+}
+
+#[test]
 fn contract_cex_symbol_delistings_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -152,6 +290,20 @@ fn contract_cex_symbol_delistings_view() {
         "status": "s",
     });
     assert_roundtrip::<datamaxi::CexSymbolDelistingsView>(fixture);
+}
+
+#[test]
+fn contract_cex_symbol_delistings_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "delisting_at": 1,
+        "e": "s",
+        "listed_at": 1,
+        "m": "s",
+        "q": "s",
+        "status": "s",
+    });
+    assert_missing_required::<datamaxi::CexSymbolDelistingsView>(fixture, "b");
 }
 
 #[test]
@@ -170,6 +322,24 @@ fn contract_cex_symbol_liquidation_view() {
         "total_volume_usd": 1.5,
     });
     assert_roundtrip::<datamaxi::CexSymbolLiquidationView>(fixture);
+}
+
+#[test]
+fn contract_cex_symbol_liquidation_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "e": "s",
+        "event_count": 1,
+        "long_volume": 1.5,
+        "long_volume_usd": 1.5,
+        "m": "s",
+        "q": "s",
+        "short_volume": 1.5,
+        "short_volume_usd": 1.5,
+        "total_volume": 1.5,
+        "total_volume_usd": 1.5,
+    });
+    assert_missing_required::<datamaxi::CexSymbolLiquidationView>(fixture, "b");
 }
 
 #[test]
@@ -195,6 +365,28 @@ fn contract_cex_symbol_metadata_view() {
 }
 
 #[test]
+fn contract_cex_symbol_metadata_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "caution_end_at": 1,
+        "caution_level": "s",
+        "caution_reasons": [
+            "s",
+        ],
+        "delisting_at": 1,
+        "e": "s",
+        "listed_at": 1,
+        "m": "s",
+        "q": "s",
+        "status": "s",
+        "tags": [
+            "s",
+        ],
+    });
+    assert_missing_required::<datamaxi::CexSymbolMetadataView>(fixture, "b");
+}
+
+#[test]
 fn contract_cex_symbol_oi_stats_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -215,6 +407,26 @@ fn contract_cex_symbol_oi_stats_view() {
 }
 
 #[test]
+fn contract_cex_symbol_oi_stats_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "change_1h": 1.5,
+        "change_24h": 1.5,
+        "change_4h": 1.5,
+        "e": "s",
+        "m": "s",
+        "oi_to_vol_ratio": 1.5,
+        "open_interest": 1.5,
+        "open_interest_usd": 1.5,
+        "q": "s",
+        "token_id": "s",
+        "ts": 1,
+        "volume_24h_usd": 1.5,
+    });
+    assert_missing_required::<datamaxi::CexSymbolOiStatsView>(fixture, "b");
+}
+
+#[test]
 fn contract_cex_symbol_oi_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -226,6 +438,20 @@ fn contract_cex_symbol_oi_view() {
         "ts": 1,
     });
     assert_roundtrip::<datamaxi::CexSymbolOiView>(fixture);
+}
+
+#[test]
+fn contract_cex_symbol_oi_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "e": "s",
+        "m": "s",
+        "open_interest": 1.5,
+        "open_interest_usd": 1.5,
+        "q": "s",
+        "ts": 1,
+    });
+    assert_missing_required::<datamaxi::CexSymbolOiView>(fixture, "b");
 }
 
 #[test]
@@ -243,6 +469,20 @@ fn contract_cex_symbol_tags_view() {
 }
 
 #[test]
+fn contract_cex_symbol_tags_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "confidence": 1,
+        "e": "s",
+        "m": "s",
+        "q": "s",
+        "source": "s",
+        "tag": "s",
+    });
+    assert_missing_required::<datamaxi::CexSymbolTagsView>(fixture, "b");
+}
+
+#[test]
 fn contract_cex_symbol_volume_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -254,6 +494,20 @@ fn contract_cex_symbol_volume_view() {
         "volume": 1.5,
     });
     assert_roundtrip::<datamaxi::CexSymbolVolumeView>(fixture);
+}
+
+#[test]
+fn contract_cex_symbol_volume_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "e": "s",
+        "m": "s",
+        "q": "s",
+        "quote_volume": 1.5,
+        "ts": 1,
+        "volume": 1.5,
+    });
+    assert_missing_required::<datamaxi::CexSymbolVolumeView>(fixture, "b");
 }
 
 #[test]
@@ -279,6 +533,28 @@ fn contract_cex_token_updates_response() {
 }
 
 #[test]
+fn contract_cex_token_updates_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "b": "s",
+                "d": 1,
+                "e": "s",
+                "m": "s",
+                "q": "s",
+                "t": "s",
+            },
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::CexTokenUpdatesResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_cex_token_updates_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -292,6 +568,19 @@ fn contract_cex_token_updates_view() {
 }
 
 #[test]
+fn contract_cex_token_updates_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "d": 1,
+        "e": "s",
+        "m": "s",
+        "q": "s",
+        "t": "s",
+    });
+    assert_missing_required::<datamaxi::CexTokenUpdatesView>(fixture, "b");
+}
+
+#[test]
 fn contract_forex_response() {
     let fixture = serde_json::json!({
         "d": 1,
@@ -299,6 +588,16 @@ fn contract_forex_response() {
         "s": "s",
     });
     assert_roundtrip::<datamaxi::ForexResponse>(fixture);
+}
+
+#[test]
+fn contract_forex_response_missing_required() {
+    let fixture = serde_json::json!({
+        "d": 1,
+        "r": 1.5,
+        "s": "s",
+    });
+    assert_missing_required::<datamaxi::ForexResponse>(fixture, "d");
 }
 
 #[test]
@@ -320,12 +619,39 @@ fn contract_funding_rate_history_response() {
 }
 
 #[test]
+fn contract_funding_rate_history_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "d": 1,
+                "f": 1.5,
+            },
+        ],
+        "exchange": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "symbol": "s",
+    });
+    assert_missing_required::<datamaxi::FundingRateHistoryResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_funding_rate_history_view() {
     let fixture = serde_json::json!({
         "d": 1,
         "f": 1.5,
     });
     assert_roundtrip::<datamaxi::FundingRateHistoryView>(fixture);
+}
+
+#[test]
+fn contract_funding_rate_history_view_missing_required() {
+    let fixture = serde_json::json!({
+        "d": 1,
+        "f": 1.5,
+    });
+    assert_missing_required::<datamaxi::FundingRateHistoryView>(fixture, "d");
 }
 
 #[test]
@@ -344,6 +670,21 @@ fn contract_funding_rate_latest_response() {
 }
 
 #[test]
+fn contract_funding_rate_latest_response_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "d": 1,
+        "e": "s",
+        "f": 1.5,
+        "i": 1,
+        "id": "s",
+        "q": "s",
+        "s": "s",
+    });
+    assert_missing_required::<datamaxi::FundingRateLatestResponse>(fixture, "b");
+}
+
+#[test]
 fn contract_funding_rate_symbols_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -354,6 +695,19 @@ fn contract_funding_rate_symbols_view() {
         "s": "s",
     });
     assert_roundtrip::<datamaxi::FundingRateSymbolsView>(fixture);
+}
+
+#[test]
+fn contract_funding_rate_symbols_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "e": "s",
+        "id": "s",
+        "m": "s",
+        "q": "s",
+        "s": "s",
+    });
+    assert_missing_required::<datamaxi::FundingRateSymbolsView>(fixture, "b");
 }
 
 #[test]
@@ -371,6 +725,20 @@ fn contract_index_price_response() {
 }
 
 #[test]
+fn contract_index_price_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "price": 1.5,
+                "timestamp": 1,
+                "volume": 1.5,
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::IndexPriceResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_index_price_view() {
     let fixture = serde_json::json!({
         "price": 1.5,
@@ -378,6 +746,16 @@ fn contract_index_price_view() {
         "volume": 1.5,
     });
     assert_roundtrip::<datamaxi::IndexPriceView>(fixture);
+}
+
+#[test]
+fn contract_index_price_view_missing_required() {
+    let fixture = serde_json::json!({
+        "price": 1.5,
+        "timestamp": 1,
+        "volume": 1.5,
+    });
+    assert_missing_required::<datamaxi::IndexPriceView>(fixture, "price");
 }
 
 #[test]
@@ -399,6 +777,24 @@ fn contract_liquidation_entry() {
 }
 
 #[test]
+fn contract_liquidation_entry_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "price": 1.5,
+        "priceUsd": 1.5,
+        "quote": "s",
+        "side": "s",
+        "symbol": "s",
+        "timestamp": 1,
+        "tokenId": "s",
+        "volume": 1.5,
+        "volumeUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationEntry>(fixture, "base");
+}
+
+#[test]
 fn contract_liquidation_feed_entry() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -414,6 +810,24 @@ fn contract_liquidation_feed_entry() {
         "volumeUsd": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationFeedEntry>(fixture);
+}
+
+#[test]
+fn contract_liquidation_feed_entry_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "price": 1.5,
+        "priceUsd": 1.5,
+        "quote": "s",
+        "side": "s",
+        "symbol": "s",
+        "timestamp": 1,
+        "tokenId": "s",
+        "volume": 1.5,
+        "volumeUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationFeedEntry>(fixture, "base");
 }
 
 #[test]
@@ -439,6 +853,28 @@ fn contract_liquidation_feed_response() {
 }
 
 #[test]
+fn contract_liquidation_feed_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "base": "s",
+                "exchange": "s",
+                "price": 1.5,
+                "priceUsd": 1.5,
+                "quote": "s",
+                "side": "s",
+                "symbol": "s",
+                "timestamp": 1,
+                "tokenId": "s",
+                "volume": 1.5,
+                "volumeUsd": 1.5,
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::LiquidationFeedResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_liquidation_heatmap_cell() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -452,6 +888,19 @@ fn contract_liquidation_heatmap_cell() {
 }
 
 #[test]
+fn contract_liquidation_heatmap_cell_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "longUsd": 1.5,
+        "shortUsd": 1.5,
+        "tokenId": "s",
+        "totalUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationHeatmapCell>(fixture, "base");
+}
+
+#[test]
 fn contract_liquidation_heatmap_exchangesummary() {
     let fixture = serde_json::json!({
         "exchange": "s",
@@ -460,6 +909,17 @@ fn contract_liquidation_heatmap_exchangesummary() {
         "totalUsd": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationHeatmapExchangesummary>(fixture);
+}
+
+#[test]
+fn contract_liquidation_heatmap_exchangesummary_missing_required() {
+    let fixture = serde_json::json!({
+        "exchange": "s",
+        "longUsd": 1.5,
+        "shortUsd": 1.5,
+        "totalUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationHeatmapExchangesummary>(fixture, "exchange");
 }
 
 #[test]
@@ -502,6 +962,45 @@ fn contract_liquidation_heatmap_response() {
 }
 
 #[test]
+fn contract_liquidation_heatmap_response_missing_required() {
+    let fixture = serde_json::json!({
+        "cells": [
+            {
+                "base": "s",
+                "exchange": "s",
+                "longUsd": 1.5,
+                "shortUsd": 1.5,
+                "tokenId": "s",
+                "totalUsd": 1.5,
+            },
+        ],
+        "exchanges": [
+            {
+                "exchange": "s",
+                "longUsd": 1.5,
+                "shortUsd": 1.5,
+                "totalUsd": 1.5,
+            },
+        ],
+        "generatedAt": 1,
+        "grandTotal": 1.5,
+        "tokens": [
+            {
+                "base": "s",
+                "longUsd": 1.5,
+                "name": "s",
+                "shortUsd": 1.5,
+                "symbol": "s",
+                "tokenId": "s",
+                "totalUsd": 1.5,
+            },
+        ],
+        "window": "s",
+    });
+    assert_missing_required::<datamaxi::LiquidationHeatmapResponse>(fixture, "cells");
+}
+
+#[test]
 fn contract_liquidation_heatmap_tokensummary() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -513,6 +1012,20 @@ fn contract_liquidation_heatmap_tokensummary() {
         "totalUsd": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationHeatmapTokensummary>(fixture);
+}
+
+#[test]
+fn contract_liquidation_heatmap_tokensummary_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "longUsd": 1.5,
+        "name": "s",
+        "shortUsd": 1.5,
+        "symbol": "s",
+        "tokenId": "s",
+        "totalUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationHeatmapTokensummary>(fixture, "base");
 }
 
 #[test]
@@ -533,6 +1046,23 @@ fn contract_liquidation_map_assumptions() {
 }
 
 #[test]
+fn contract_liquidation_map_assumptions_missing_required() {
+    let fixture = serde_json::json!({
+        "entrySamples": 1,
+        "entryWindow": "s",
+        "longShareOfOi": 1.5,
+        "mmr": 1.5,
+        "tiers": [
+            {
+                "leverage": 1,
+                "share": 1.5,
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::LiquidationMapAssumptions>(fixture, "entrySamples");
+}
+
+#[test]
 fn contract_liquidation_map_bucket() {
     let fixture = serde_json::json!({
         "l100xUsd": 1.5,
@@ -544,6 +1074,20 @@ fn contract_liquidation_map_bucket() {
         "totalUsd": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationMapBucket>(fixture);
+}
+
+#[test]
+fn contract_liquidation_map_bucket_missing_required() {
+    let fixture = serde_json::json!({
+        "l100xUsd": 1.5,
+        "l10xUsd": 1.5,
+        "l25xUsd": 1.5,
+        "l50xUsd": 1.5,
+        "price": 1.5,
+        "side": "s",
+        "totalUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationMapBucket>(fixture, "l100xUsd");
 }
 
 #[test]
@@ -586,12 +1130,60 @@ fn contract_liquidation_map_response() {
 }
 
 #[test]
+fn contract_liquidation_map_response_missing_required() {
+    let fixture = serde_json::json!({
+        "assumptions": {
+            "entrySamples": 1,
+            "entryWindow": "s",
+            "longShareOfOi": 1.5,
+            "mmr": 1.5,
+            "tiers": [
+                {
+                    "leverage": 1,
+                    "share": 1.5,
+                },
+            ],
+        },
+        "base": "s",
+        "buckets": [
+            {
+                "l100xUsd": 1.5,
+                "l10xUsd": 1.5,
+                "l25xUsd": 1.5,
+                "l50xUsd": 1.5,
+                "price": 1.5,
+                "side": "s",
+                "totalUsd": 1.5,
+            },
+        ],
+        "cumulativeLongUsd": 1.5,
+        "cumulativeShortUsd": 1.5,
+        "currentPrice": 1.5,
+        "exchange": "s",
+        "generatedAt": 1,
+        "quote": "s",
+        "symbol": "s",
+        "totalOiUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationMapResponse>(fixture, "assumptions");
+}
+
+#[test]
 fn contract_liquidation_map_tierassumption() {
     let fixture = serde_json::json!({
         "leverage": 1,
         "share": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationMapTierassumption>(fixture);
+}
+
+#[test]
+fn contract_liquidation_map_tierassumption_missing_required() {
+    let fixture = serde_json::json!({
+        "leverage": 1,
+        "share": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationMapTierassumption>(fixture, "leverage");
 }
 
 #[test]
@@ -617,6 +1209,28 @@ fn contract_liquidation_response() {
 }
 
 #[test]
+fn contract_liquidation_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "base": "s",
+                "exchange": "s",
+                "price": 1.5,
+                "priceUsd": 1.5,
+                "quote": "s",
+                "side": "s",
+                "symbol": "s",
+                "timestamp": 1,
+                "tokenId": "s",
+                "volume": 1.5,
+                "volumeUsd": 1.5,
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::LiquidationResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_liquidation_stats_biggest() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -625,6 +1239,17 @@ fn contract_liquidation_stats_biggest() {
         "volumeUsd": 1.5,
     });
     assert_roundtrip::<datamaxi::LiquidationStatsBiggest>(fixture);
+}
+
+#[test]
+fn contract_liquidation_stats_biggest_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "quote": "s",
+        "volumeUsd": 1.5,
+    });
+    assert_missing_required::<datamaxi::LiquidationStatsBiggest>(fixture, "base");
 }
 
 #[test]
@@ -649,6 +1274,27 @@ fn contract_liquidation_stats_response() {
 }
 
 #[test]
+fn contract_liquidation_stats_response_missing_required() {
+    let fixture = serde_json::json!({
+        "biggest": {
+            "base": "s",
+            "exchange": "s",
+            "quote": "s",
+            "volumeUsd": 1.5,
+        },
+        "count": 1,
+        "generatedAt": 1,
+        "longRatio": 1,
+        "longUsd": 1.5,
+        "shortUsd": 1.5,
+        "total": 1.5,
+        "venues": 1,
+        "window": "s",
+    });
+    assert_missing_required::<datamaxi::LiquidationStatsResponse>(fixture, "count");
+}
+
+#[test]
 fn contract_liquidation_symbol_history_bucket() {
     let fixture = serde_json::json!({
         "longUsd": 1.5,
@@ -658,6 +1304,18 @@ fn contract_liquidation_symbol_history_bucket() {
         "ts": 1,
     });
     assert_roundtrip::<datamaxi::LiquidationSymbolHistoryBucket>(fixture);
+}
+
+#[test]
+fn contract_liquidation_symbol_history_bucket_missing_required() {
+    let fixture = serde_json::json!({
+        "longUsd": 1.5,
+        "price": 1.5,
+        "shortUsd": 1.5,
+        "totalUsd": 1.5,
+        "ts": 1,
+    });
+    assert_missing_required::<datamaxi::LiquidationSymbolHistoryBucket>(fixture, "longUsd");
 }
 
 #[test]
@@ -685,6 +1343,30 @@ fn contract_liquidation_symbol_history_response() {
 }
 
 #[test]
+fn contract_liquidation_symbol_history_response_missing_required() {
+    let fixture = serde_json::json!({
+        "buckets": [
+            {
+                "longUsd": 1.5,
+                "price": 1.5,
+                "shortUsd": 1.5,
+                "totalUsd": 1.5,
+                "ts": 1,
+            },
+        ],
+        "exchange": "s",
+        "generatedAt": 1,
+        "interval": "s",
+        "quote": "s",
+        "symbol": "s",
+        "totalLongUsd": 1.5,
+        "totalShortUsd": 1.5,
+        "window": "s",
+    });
+    assert_missing_required::<datamaxi::LiquidationSymbolHistoryResponse>(fixture, "buckets");
+}
+
+#[test]
 fn contract_listings_historical_response() {
     let fixture = serde_json::json!({
         "data": [
@@ -703,6 +1385,24 @@ fn contract_listings_historical_response() {
 }
 
 #[test]
+fn contract_listings_historical_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "announced_at": 1,
+                "base": "s",
+                "deposit_at": 1,
+                "exchange": "s",
+                "network": "s",
+                "trade_at": 1,
+                "url": "s",
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::ListingsHistoricalResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_listings_historical_view() {
     let fixture = serde_json::json!({
         "announced_at": 1,
@@ -717,6 +1417,20 @@ fn contract_listings_historical_view() {
 }
 
 #[test]
+fn contract_listings_historical_view_missing_required() {
+    let fixture = serde_json::json!({
+        "announced_at": 1,
+        "base": "s",
+        "deposit_at": 1,
+        "exchange": "s",
+        "network": "s",
+        "trade_at": 1,
+        "url": "s",
+    });
+    assert_missing_required::<datamaxi::ListingsHistoricalView>(fixture, "announced_at");
+}
+
+#[test]
 fn contract_margin_borrow_response() {
     let fixture = serde_json::json!({
         "cross": "s",
@@ -726,12 +1440,30 @@ fn contract_margin_borrow_response() {
 }
 
 #[test]
+fn contract_margin_borrow_response_missing_required() {
+    let fixture = serde_json::json!({
+        "cross": "s",
+        "isolated": "s",
+    });
+    assert_missing_required::<datamaxi::MarginBorrowResponse>(fixture, "cross");
+}
+
+#[test]
 fn contract_naver_trend_view() {
     let fixture = serde_json::json!({
         "d": 1,
         "v": 1.5,
     });
     assert_roundtrip::<datamaxi::NaverTrendView>(fixture);
+}
+
+#[test]
+fn contract_naver_trend_view_missing_required() {
+    let fixture = serde_json::json!({
+        "d": 1,
+        "v": 1.5,
+    });
+    assert_missing_required::<datamaxi::NaverTrendView>(fixture, "d");
 }
 
 #[test]
@@ -751,6 +1483,22 @@ fn contract_open_interest_history_aggregated_response() {
 }
 
 #[test]
+fn contract_open_interest_history_aggregated_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": "s",
+        "exchange_url": "s",
+        "token": {
+            "cmc_id": "s",
+            "icon": "s",
+            "id": "s",
+            "name": "s",
+            "symbol": "s",
+        },
+    });
+    assert_missing_required::<datamaxi::OpenInterestHistoryAggregatedResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_open_interest_list_entry() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -763,6 +1511,21 @@ fn contract_open_interest_list_entry() {
         "tokenId": "s",
     });
     assert_roundtrip::<datamaxi::OpenInterestListEntry>(fixture);
+}
+
+#[test]
+fn contract_open_interest_list_entry_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "openInterest": 1.5,
+        "openInterestUsd": 1.5,
+        "quote": "s",
+        "symbol": "s",
+        "timestamp": 1,
+        "tokenId": "s",
+    });
+    assert_missing_required::<datamaxi::OpenInterestListEntry>(fixture, "base");
 }
 
 #[test]
@@ -782,6 +1545,25 @@ fn contract_open_interest_list_response() {
         ],
     });
     assert_roundtrip::<datamaxi::OpenInterestListResponse>(fixture);
+}
+
+#[test]
+fn contract_open_interest_list_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "base": "s",
+                "exchange": "s",
+                "openInterest": 1.5,
+                "openInterestUsd": 1.5,
+                "quote": "s",
+                "symbol": "s",
+                "timestamp": 1,
+                "tokenId": "s",
+            },
+        ],
+    });
+    assert_missing_required::<datamaxi::OpenInterestListResponse>(fixture, "data");
 }
 
 #[test]
@@ -810,6 +1592,31 @@ fn contract_open_interest_overview_response() {
 }
 
 #[test]
+fn contract_open_interest_overview_response_missing_required() {
+    let fixture = serde_json::json!({
+        "data": [
+            {
+                "exchanges": "s",
+                "id": "s",
+                "token": {
+                    "cmc_id": "s",
+                    "icon": "s",
+                    "id": "s",
+                    "name": "s",
+                    "symbol": "s",
+                },
+            },
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::OpenInterestOverviewResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_open_interest_overview_view() {
     let fixture = serde_json::json!({
         "exchanges": "s",
@@ -823,6 +1630,22 @@ fn contract_open_interest_overview_view() {
         },
     });
     assert_roundtrip::<datamaxi::OpenInterestOverviewView>(fixture);
+}
+
+#[test]
+fn contract_open_interest_overview_view_missing_required() {
+    let fixture = serde_json::json!({
+        "exchanges": "s",
+        "id": "s",
+        "token": {
+            "cmc_id": "s",
+            "icon": "s",
+            "id": "s",
+            "name": "s",
+            "symbol": "s",
+        },
+    });
+    assert_missing_required::<datamaxi::OpenInterestOverviewView>(fixture, "exchanges");
 }
 
 #[test]
@@ -841,6 +1664,21 @@ fn contract_open_interest_response() {
 }
 
 #[test]
+fn contract_open_interest_response_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "exchange": "s",
+        "openInterest": 1.5,
+        "openInterestUsd": 1.5,
+        "quote": "s",
+        "symbol": "s",
+        "timestamp": 1,
+        "tokenId": "s",
+    });
+    assert_missing_required::<datamaxi::OpenInterestResponse>(fixture, "base");
+}
+
+#[test]
 fn contract_open_interest_summary_exchangesummary() {
     let fixture = serde_json::json!({
         "exchange": "s",
@@ -848,6 +1686,16 @@ fn contract_open_interest_summary_exchangesummary() {
         "tokens": 1,
     });
     assert_roundtrip::<datamaxi::OpenInterestSummaryExchangesummary>(fixture);
+}
+
+#[test]
+fn contract_open_interest_summary_exchangesummary_missing_required() {
+    let fixture = serde_json::json!({
+        "exchange": "s",
+        "openInterestUsd": 1.5,
+        "tokens": 1,
+    });
+    assert_missing_required::<datamaxi::OpenInterestSummaryExchangesummary>(fixture, "exchange");
 }
 
 #[test]
@@ -879,6 +1727,34 @@ fn contract_open_interest_summary_response() {
 }
 
 #[test]
+fn contract_open_interest_summary_response_missing_required() {
+    let fixture = serde_json::json!({
+        "exchanges": [
+            {
+                "exchange": "s",
+                "openInterestUsd": 1.5,
+                "tokens": 1,
+            },
+        ],
+        "generatedAt": 1,
+        "grandTotal": 1.5,
+        "tokens": [
+            {
+                "base": "s",
+                "icon": "s",
+                "name": "s",
+                "openInterestUsd": 1.5,
+                "symbol": "s",
+                "tokenId": "s",
+                "venues": 1,
+            },
+        ],
+        "totalTokens": 1,
+    });
+    assert_missing_required::<datamaxi::OpenInterestSummaryResponse>(fixture, "exchanges");
+}
+
+#[test]
 fn contract_open_interest_summary_tokensummary() {
     let fixture = serde_json::json!({
         "base": "s",
@@ -890,6 +1766,20 @@ fn contract_open_interest_summary_tokensummary() {
         "venues": 1,
     });
     assert_roundtrip::<datamaxi::OpenInterestSummaryTokensummary>(fixture);
+}
+
+#[test]
+fn contract_open_interest_summary_tokensummary_missing_required() {
+    let fixture = serde_json::json!({
+        "base": "s",
+        "icon": "s",
+        "name": "s",
+        "openInterestUsd": 1.5,
+        "symbol": "s",
+        "tokenId": "s",
+        "venues": 1,
+    });
+    assert_missing_required::<datamaxi::OpenInterestSummaryTokensummary>(fixture, "base");
 }
 
 #[test]
@@ -972,6 +1862,88 @@ fn contract_premium_detail() {
         "tv": 1.5,
     });
     assert_roundtrip::<datamaxi::PremiumDetail>(fixture);
+}
+
+#[test]
+fn contract_premium_detail_missing_required() {
+    let fixture = serde_json::json!({
+        "bid": "s",
+        "d": 1,
+        "fg": 1.5,
+        "nfr": 1.5,
+        "pdp": 1.5,
+        "pdp15m": 1.5,
+        "pdp1h": 1.5,
+        "pdp24h": 1.5,
+        "pdp30m": 1.5,
+        "pdp4h": 1.5,
+        "pdp5m": 1.5,
+        "pmd": 1,
+        "sad": 1.5,
+        "sad2p": 1.5,
+        "sadf": 1.5,
+        "sb": "s",
+        "sbd2p": 1.5,
+        "sc": "s",
+        "se": "s",
+        "sfr": 1.5,
+        "sfri": 1,
+        "sfrt": 1,
+        "shb": 1.5,
+        "sla": 1.5,
+        "sm": "s",
+        "sms": true,
+        "snd": 1,
+        "soi": 1.5,
+        "soich1h": 1.5,
+        "soich24h": 1.5,
+        "soich4h": 1.5,
+        "soivr": 1.5,
+        "sp": 1.5,
+        "spa": "s",
+        "spdp15m": 1.5,
+        "spdp1h": 1.5,
+        "spdp24h": 1.5,
+        "spdp30m": 1.5,
+        "spdp4h": 1.5,
+        "spdp5m": 1.5,
+        "sq": "s",
+        "st": 1,
+        "sv": 1.5,
+        "t": true,
+        "tad2p": 1.5,
+        "tb": "s",
+        "tbd": 1.5,
+        "tbd2p": 1.5,
+        "tbdf": 1.5,
+        "tc": "s",
+        "te": "s",
+        "tfr": 1.5,
+        "tfri": 1,
+        "tfrt": 1,
+        "thb": 1.5,
+        "tla": 1.5,
+        "tm": "s",
+        "tms": true,
+        "tnd": 1,
+        "toi": 1.5,
+        "toich1h": 1.5,
+        "toich24h": 1.5,
+        "toich4h": 1.5,
+        "toivr": 1.5,
+        "tp": 1.5,
+        "tpa": "s",
+        "tpdp15m": 1.5,
+        "tpdp1h": 1.5,
+        "tpdp24h": 1.5,
+        "tpdp30m": 1.5,
+        "tpdp4h": 1.5,
+        "tpdp5m": 1.5,
+        "tq": "s",
+        "tt": 1,
+        "tv": 1.5,
+    });
+    assert_missing_required::<datamaxi::PremiumDetail>(fixture, "bid");
 }
 
 #[test]
@@ -1072,6 +2044,103 @@ fn contract_premium_response() {
 }
 
 #[test]
+fn contract_premium_response_missing_required() {
+    let fixture = serde_json::json!({
+        "conversion_base": "s",
+        "currency": "s",
+        "data": [
+            {
+                "detail": {
+                    "bid": "s",
+                    "d": 1,
+                    "fg": 1.5,
+                    "nfr": 1.5,
+                    "pdp": 1.5,
+                    "pdp15m": 1.5,
+                    "pdp1h": 1.5,
+                    "pdp24h": 1.5,
+                    "pdp30m": 1.5,
+                    "pdp4h": 1.5,
+                    "pdp5m": 1.5,
+                    "pmd": 1,
+                    "sad": 1.5,
+                    "sad2p": 1.5,
+                    "sadf": 1.5,
+                    "sb": "s",
+                    "sbd2p": 1.5,
+                    "sc": "s",
+                    "se": "s",
+                    "sfr": 1.5,
+                    "sfri": 1,
+                    "sfrt": 1,
+                    "shb": 1.5,
+                    "sla": 1.5,
+                    "sm": "s",
+                    "sms": true,
+                    "snd": 1,
+                    "soi": 1.5,
+                    "soich1h": 1.5,
+                    "soich24h": 1.5,
+                    "soich4h": 1.5,
+                    "soivr": 1.5,
+                    "sp": 1.5,
+                    "spa": "s",
+                    "spdp15m": 1.5,
+                    "spdp1h": 1.5,
+                    "spdp24h": 1.5,
+                    "spdp30m": 1.5,
+                    "spdp4h": 1.5,
+                    "spdp5m": 1.5,
+                    "sq": "s",
+                    "st": 1,
+                    "sv": 1.5,
+                    "t": true,
+                    "tad2p": 1.5,
+                    "tb": "s",
+                    "tbd": 1.5,
+                    "tbd2p": 1.5,
+                    "tbdf": 1.5,
+                    "tc": "s",
+                    "te": "s",
+                    "tfr": 1.5,
+                    "tfri": 1,
+                    "tfrt": 1,
+                    "thb": 1.5,
+                    "tla": 1.5,
+                    "tm": "s",
+                    "tms": true,
+                    "tnd": 1,
+                    "toi": 1.5,
+                    "toich1h": 1.5,
+                    "toich24h": 1.5,
+                    "toich4h": 1.5,
+                    "toivr": 1.5,
+                    "tp": 1.5,
+                    "tpa": "s",
+                    "tpdp15m": 1.5,
+                    "tpdp1h": 1.5,
+                    "tpdp24h": 1.5,
+                    "tpdp30m": 1.5,
+                    "tpdp4h": 1.5,
+                    "tpdp5m": 1.5,
+                    "tq": "s",
+                    "tt": 1,
+                    "tv": 1.5,
+                },
+                "source_annualized_funding_rate": 1.5,
+                "target_annualized_funding_rate": 1.5,
+            },
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::PremiumResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_premium_view() {
     let fixture = serde_json::json!({
         "detail": {
@@ -1158,6 +2227,92 @@ fn contract_premium_view() {
 }
 
 #[test]
+fn contract_premium_view_missing_required() {
+    let fixture = serde_json::json!({
+        "detail": {
+            "bid": "s",
+            "d": 1,
+            "fg": 1.5,
+            "nfr": 1.5,
+            "pdp": 1.5,
+            "pdp15m": 1.5,
+            "pdp1h": 1.5,
+            "pdp24h": 1.5,
+            "pdp30m": 1.5,
+            "pdp4h": 1.5,
+            "pdp5m": 1.5,
+            "pmd": 1,
+            "sad": 1.5,
+            "sad2p": 1.5,
+            "sadf": 1.5,
+            "sb": "s",
+            "sbd2p": 1.5,
+            "sc": "s",
+            "se": "s",
+            "sfr": 1.5,
+            "sfri": 1,
+            "sfrt": 1,
+            "shb": 1.5,
+            "sla": 1.5,
+            "sm": "s",
+            "sms": true,
+            "snd": 1,
+            "soi": 1.5,
+            "soich1h": 1.5,
+            "soich24h": 1.5,
+            "soich4h": 1.5,
+            "soivr": 1.5,
+            "sp": 1.5,
+            "spa": "s",
+            "spdp15m": 1.5,
+            "spdp1h": 1.5,
+            "spdp24h": 1.5,
+            "spdp30m": 1.5,
+            "spdp4h": 1.5,
+            "spdp5m": 1.5,
+            "sq": "s",
+            "st": 1,
+            "sv": 1.5,
+            "t": true,
+            "tad2p": 1.5,
+            "tb": "s",
+            "tbd": 1.5,
+            "tbd2p": 1.5,
+            "tbdf": 1.5,
+            "tc": "s",
+            "te": "s",
+            "tfr": 1.5,
+            "tfri": 1,
+            "tfrt": 1,
+            "thb": 1.5,
+            "tla": 1.5,
+            "tm": "s",
+            "tms": true,
+            "tnd": 1,
+            "toi": 1.5,
+            "toich1h": 1.5,
+            "toich24h": 1.5,
+            "toich4h": 1.5,
+            "toivr": 1.5,
+            "tp": 1.5,
+            "tpa": "s",
+            "tpdp15m": 1.5,
+            "tpdp1h": 1.5,
+            "tpdp24h": 1.5,
+            "tpdp30m": 1.5,
+            "tpdp4h": 1.5,
+            "tpdp5m": 1.5,
+            "tq": "s",
+            "tt": 1,
+            "tv": 1.5,
+        },
+        "source_annualized_funding_rate": 1.5,
+        "target_annualized_funding_rate": 1.5,
+    });
+    assert_missing_required::<datamaxi::PremiumView>(fixture, "detail");
+}
+
+#[test]
 fn contract_telegram_channels_response() {
     let fixture = serde_json::json!({
         "category": "s",
@@ -1182,6 +2337,30 @@ fn contract_telegram_channels_response() {
 }
 
 #[test]
+fn contract_telegram_channels_response_missing_required() {
+    let fixture = serde_json::json!({
+        "category": "s",
+        "data": [
+            {
+                "category": "s",
+                "channelName": "s",
+                "channelTitle": "s",
+                "createdAt": 1,
+                "description": "s",
+                "link": "s",
+                "subscribers": 1,
+            },
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::TelegramChannelsResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_telegram_channels_view() {
     let fixture = serde_json::json!({
         "category": "s",
@@ -1193,6 +2372,20 @@ fn contract_telegram_channels_view() {
         "subscribers": 1,
     });
     assert_roundtrip::<datamaxi::TelegramChannelsView>(fixture);
+}
+
+#[test]
+fn contract_telegram_channels_view_missing_required() {
+    let fixture = serde_json::json!({
+        "category": "s",
+        "channelName": "s",
+        "channelTitle": "s",
+        "createdAt": 1,
+        "description": "s",
+        "link": "s",
+        "subscribers": 1,
+    });
+    assert_missing_required::<datamaxi::TelegramChannelsView>(fixture, "category");
 }
 
 #[test]
@@ -1223,6 +2416,33 @@ fn contract_telegram_messages_response() {
 }
 
 #[test]
+fn contract_telegram_messages_response_missing_required() {
+    let fixture = serde_json::json!({
+        "category": "s",
+        "data": [
+            {
+                "channelHandle": "s",
+                "channelId": "s",
+                "channelName": "s",
+                "forwards": 1,
+                "message": "s",
+                "messageId": "s",
+                "messageLink": "s",
+                "publishedAt": 1,
+                "reactions": 1,
+                "views": 1,
+            },
+        ],
+        "key": "s",
+        "limit": 1,
+        "page": 1,
+        "sort": "s",
+        "total": 1,
+    });
+    assert_missing_required::<datamaxi::TelegramMessagesResponse>(fixture, "data");
+}
+
+#[test]
 fn contract_telegram_messages_view() {
     let fixture = serde_json::json!({
         "channelHandle": "s",
@@ -1237,6 +2457,23 @@ fn contract_telegram_messages_view() {
         "views": 1,
     });
     assert_roundtrip::<datamaxi::TelegramMessagesView>(fixture);
+}
+
+#[test]
+fn contract_telegram_messages_view_missing_required() {
+    let fixture = serde_json::json!({
+        "channelHandle": "s",
+        "channelId": "s",
+        "channelName": "s",
+        "forwards": 1,
+        "message": "s",
+        "messageId": "s",
+        "messageLink": "s",
+        "publishedAt": 1,
+        "reactions": 1,
+        "views": 1,
+    });
+    assert_missing_required::<datamaxi::TelegramMessagesView>(fixture, "channelHandle");
 }
 
 #[test]
@@ -1266,6 +2503,32 @@ fn contract_ticker_response() {
 }
 
 #[test]
+fn contract_ticker_response_missing_required() {
+    let fixture = serde_json::json!({
+        "currency": "s",
+        "data": {
+            "b": "s",
+            "d": 1,
+            "e": "s",
+            "hb": 1.5,
+            "la": 1.5,
+            "ld": 1.5,
+            "m": "s",
+            "p": 1.5,
+            "p24h": 1.5,
+            "pc": 1.5,
+            "q": "s",
+            "s": "s",
+            "ud": 1.5,
+            "v": 1.5,
+        },
+        "market": "s",
+        "src": "s",
+    });
+    assert_missing_required::<datamaxi::TickerResponse>(fixture, "currency");
+}
+
+#[test]
 fn contract_ticker_view() {
     let fixture = serde_json::json!({
         "b": "s",
@@ -1287,6 +2550,27 @@ fn contract_ticker_view() {
 }
 
 #[test]
+fn contract_ticker_view_missing_required() {
+    let fixture = serde_json::json!({
+        "b": "s",
+        "d": 1,
+        "e": "s",
+        "hb": 1.5,
+        "la": 1.5,
+        "ld": 1.5,
+        "m": "s",
+        "p": 1.5,
+        "p24h": 1.5,
+        "pc": 1.5,
+        "q": "s",
+        "s": "s",
+        "ud": 1.5,
+        "v": 1.5,
+    });
+    assert_missing_required::<datamaxi::TickerView>(fixture, "b");
+}
+
+#[test]
 fn contract_token_detail() {
     let fixture = serde_json::json!({
         "cmc_id": "s",
@@ -1296,6 +2580,18 @@ fn contract_token_detail() {
         "symbol": "s",
     });
     assert_roundtrip::<datamaxi::TokenDetail>(fixture);
+}
+
+#[test]
+fn contract_token_detail_missing_required() {
+    let fixture = serde_json::json!({
+        "cmc_id": "s",
+        "icon": "s",
+        "id": "s",
+        "name": "s",
+        "symbol": "s",
+    });
+    assert_missing_required::<datamaxi::TokenDetail>(fixture, "icon");
 }
 
 #[test]
@@ -1311,4 +2607,19 @@ fn contract_wallet_status_view() {
         "withdraw_state": "s",
     });
     assert_roundtrip::<datamaxi::WalletStatusView>(fixture);
+}
+
+#[test]
+fn contract_wallet_status_view_missing_required() {
+    let fixture = serde_json::json!({
+        "currency": "s",
+        "deposit_message": "s",
+        "deposit_state": "s",
+        "exchange": "s",
+        "network": "s",
+        "updated_at": 1,
+        "withdraw_message": "s",
+        "withdraw_state": "s",
+    });
+    assert_missing_required::<datamaxi::WalletStatusView>(fixture, "currency");
 }
