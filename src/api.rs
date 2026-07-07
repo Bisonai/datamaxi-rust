@@ -1,3 +1,20 @@
+//! ## Observability
+//!
+//! Two independent, additive, opt-in hooks:
+//!
+//! - **`tracing` feature** — instruments [`Client::get`] / [`blocking::Client::get`]
+//!   with a span (`method`, `endpoint`, `attempt`, `status`) and debug events on
+//!   each retry (backoff delay, transient status/error). Off by default and
+//!   compiles away entirely (no `tracing` dependency pulled in) when disabled.
+//!   The API key is never recorded — [`Client`]'s `Debug` impl already redacts
+//!   it, and no span/event field ever carries it.
+//! - **Custom HTTP client** — [`ClientBuilder::http_client`] /
+//!   [`blocking::ClientBuilder::http_client`] let callers supply their own
+//!   pre-built `reqwest::Client`, e.g. wrapped with `reqwest-middleware` for
+//!   custom auth, metrics, or logging middleware. When omitted, the client
+//!   falls back to the built-in defaults (`User-Agent`, unbounded idle pool,
+//!   the configured timeout).
+
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
@@ -238,6 +255,9 @@ macro_rules! get_loop {
         let mut attempt: u32 = 0;
 
         loop {
+            #[cfg(feature = "tracing")]
+            tracing::Span::current().record("attempt", attempt as u64);
+
             let mut request = $self
                 .inner_client
                 .get(url.as_str())
@@ -250,12 +270,23 @@ macro_rules! get_loop {
             match request.send()$(.$aw)? {
                 Ok(response) => {
                     let status = response.status();
+                    #[cfg(feature = "tracing")]
+                    tracing::Span::current().record("status", status.as_u16() as u64);
+
                     if attempt < $self.retry.max_retries && is_retryable_status(status) {
                         let delay = retry_delay_for_response(
                             &$self.retry,
                             status,
                             response.headers(),
                             attempt,
+                        );
+                        #[cfg(feature = "tracing")]
+                        tracing::debug!(
+                            target: "datamaxi::retry",
+                            attempt = attempt as u64,
+                            status = status.as_u16() as u64,
+                            delay_ms = delay.as_millis() as u64,
+                            "retrying transient response"
                         );
                         attempt += 1;
                         $sleep(delay)$(.$aw)?;
@@ -266,10 +297,20 @@ macro_rules! get_loop {
                 Err(error) => {
                     if attempt < $self.retry.max_retries && is_retryable_error(&error) {
                         let delay = backoff_delay(&$self.retry, attempt);
+                        #[cfg(feature = "tracing")]
+                        tracing::debug!(
+                            target: "datamaxi::retry",
+                            attempt = attempt as u64,
+                            delay_ms = delay.as_millis() as u64,
+                            error = %error,
+                            "retrying after transport error"
+                        );
                         attempt += 1;
                         $sleep(delay)$(.$aw)?;
                         continue;
                     }
+                    #[cfg(feature = "tracing")]
+                    tracing::warn!(target: "datamaxi::retry", error = %error, "request failed");
                     return Err(Error::from(error));
                 }
             }
@@ -333,6 +374,19 @@ impl Client {
     /// retried per the client's [`RetryConfig`] with exponential backoff; a
     /// `429` honors its `Retry-After` header. Fatal statuses
     /// (`400`/`401`/`403`/`404`) are returned without retry.
+    ///
+    /// With the `tracing` feature enabled, each call is wrapped in a span
+    /// carrying `method`, `endpoint`, `attempt`, and the resolved `status`;
+    /// retries additionally emit a debug event with the backoff delay. The
+    /// API key is never recorded.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            name = "datamaxi.get",
+            skip(self, parameters),
+            fields(method = "GET", attempt = tracing::field::Empty, status = tracing::field::Empty)
+        )
+    )]
     pub async fn get<T: DeserializeOwned>(
         &self,
         endpoint: &str,
@@ -617,6 +671,7 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
 #[derive(Debug, Clone)]
 pub struct ClientBuilder {
     state: BuilderState,
+    http_client: Option<reqwest::Client>,
 }
 
 impl ClientBuilder {
@@ -625,6 +680,7 @@ impl ClientBuilder {
     pub fn new() -> Self {
         ClientBuilder {
             state: BuilderState::new(),
+            http_client: None,
         }
     }
 
@@ -661,17 +717,33 @@ impl ClientBuilder {
         self
     }
 
+    /// Overrides the internally-built `reqwest::Client` with a caller-supplied
+    /// one — the escape hatch for custom middleware, timeouts, proxies, or
+    /// instrumentation (e.g. a `reqwest-middleware` client wrapped down to its
+    /// inner `reqwest::Client`, or one built with `reqwest_tracing`).
+    ///
+    /// When set, [`ClientBuilder::timeout`] is ignored for HTTP-level
+    /// settings (the caller's client is used as-is); [`build`](Self::build)
+    /// no longer applies the built-in `User-Agent` / pool defaults.
+    pub fn http_client(mut self, client: reqwest::Client) -> Self {
+        self.http_client = Some(client);
+        self
+    }
+
     /// Builds the [`Client`].
     ///
     /// Resolves the API key from the explicit value or the `DATAMAXI_API_KEY`
     /// environment variable, returning [`Error::MissingApiKey`] if neither is set.
     pub fn build(self) -> Result<Client> {
         let resolved = self.state.resolve()?;
+        let inner_client = self
+            .http_client
+            .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
         Ok(Client {
             base_url: resolved.base_url,
             api_key: resolved.api_key,
-            inner_client: build_inner_client(resolved.timeout),
+            inner_client,
             retry: resolved.retry,
         })
     }
@@ -812,6 +884,19 @@ pub mod blocking {
         /// per the client's retry config with exponential backoff (a `429`
         /// honors `Retry-After`); fatal statuses are returned without retry.
         /// Backoff waits use a blocking [`std::thread::sleep`].
+        ///
+        /// With the `tracing` feature enabled, each call is wrapped in a span
+        /// carrying `method`, `endpoint`, `attempt`, and the resolved
+        /// `status`; retries additionally emit a debug event with the
+        /// backoff delay. The API key is never recorded.
+        #[cfg_attr(
+            feature = "tracing",
+            tracing::instrument(
+                name = "datamaxi.get",
+                skip(self, parameters),
+                fields(method = "GET", attempt = tracing::field::Empty, status = tracing::field::Empty)
+            )
+        )]
         pub fn get<T: DeserializeOwned>(
             &self,
             endpoint: &str,
@@ -951,6 +1036,7 @@ pub mod blocking {
     #[derive(Debug, Clone)]
     pub struct ClientBuilder {
         state: BuilderState,
+        http_client: Option<reqwest::blocking::Client>,
     }
 
     impl ClientBuilder {
@@ -958,6 +1044,7 @@ pub mod blocking {
         pub fn new() -> Self {
             ClientBuilder {
                 state: BuilderState::new(),
+                http_client: None,
             }
         }
 
@@ -993,15 +1080,26 @@ pub mod blocking {
             self
         }
 
+        /// Overrides the internally-built `reqwest::blocking::Client` with a
+        /// caller-supplied one. Mirrors [`super::ClientBuilder::http_client`]
+        /// for the blocking flavor.
+        pub fn http_client(mut self, client: reqwest::blocking::Client) -> Self {
+            self.http_client = Some(client);
+            self
+        }
+
         /// Builds the blocking [`Client`], resolving the API key from the
         /// explicit value or the `DATAMAXI_API_KEY` environment variable.
         pub fn build(self) -> Result<Client> {
             let resolved = self.state.resolve()?;
+            let inner_client = self
+                .http_client
+                .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
             Ok(Client {
                 base_url: resolved.base_url,
                 api_key: resolved.api_key,
-                inner_client: build_inner_client(resolved.timeout),
+                inner_client,
                 retry: resolved.retry,
             })
         }
