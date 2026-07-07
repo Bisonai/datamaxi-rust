@@ -23,6 +23,13 @@ use mockito::Matcher;
 
 const API_KEY: &str = "test-api-key";
 
+/// Minimal but COMPLETE `LiquidationHeatmapResponse` envelope: every required
+/// field present (empty arrays are valid instances of the required `Vec`
+/// fields), so this decodes under both lax (struct-level `#[serde(default)]`)
+/// and strict (per-field only) generated code.
+const HEATMAP_BODY: &str =
+    r#"{"cells":[],"exchanges":[],"generatedAt":0,"grandTotal":0.0,"tokens":[],"window":"1h"}"#;
+
 /// Build an async client pointed at the mock server (explicit key + base URL),
 /// exercising the new root-client construction + accessor path the SDK exposes.
 fn mock_client(base_url: String) -> Client {
@@ -58,7 +65,7 @@ async fn liquidation_heatmap_sends_top_n_window_and_apikey() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create_async()
         .await;
@@ -86,7 +93,9 @@ async fn liquidation_stats_sends_min_volume_usd() {
             Matcher::UrlEncoded("window".into(), "24h".into()),
         ]))
         .with_status(200)
-        .with_body("{}")
+        .with_body(
+            r#"{"count":1,"generatedAt":0,"longRatio":0,"longUsd":0.0,"shortUsd":0.0,"total":0.0,"venues":0,"window":"24h"}"#,
+        )
         .expect(1)
         .create_async()
         .await;
@@ -117,7 +126,9 @@ async fn cex_candle_sends_required_and_optional_keys() {
             Matcher::UrlEncoded("currency".into(), "USD".into()),
         ]))
         .with_status(200)
-        .with_body("{}")
+        .with_body(
+            r#"{"currency":"USD","data":[],"exchange":"binance","interval":"1h","market":"spot","symbol":"BTC-USDT"}"#,
+        )
         .expect(1)
         .create_async()
         .await;
@@ -155,7 +166,9 @@ async fn query_params_are_percent_encoded() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(
+            r#"{"currency":"USD","data":[],"exchange":"binance","interval":"1h","market":"spot","symbol":"BTC-USDT"}"#,
+        )
         .expect(1)
         .create_async()
         .await;
@@ -193,9 +206,9 @@ async fn call_with_status(
 
 #[tokio::test]
 async fn status_200_maps_to_ok() {
-    // Body deserializes into the typed `LiquidationHeatmapResponse`; struct-level
-    // serde default lets an empty `{}` payload decode with zero-valued fields.
-    let res = call_with_status(200, "{}").await;
+    // Body deserializes into the typed `LiquidationHeatmapResponse`; a complete
+    // envelope (every required field present) decodes under strict decode too.
+    let res = call_with_status(200, HEATMAP_BODY).await;
     assert!(res.is_ok(), "200 should map to Ok, got {:?}", res);
 }
 
@@ -406,7 +419,9 @@ async fn open_interest_summary_sends_top_n() {
         .match_query(Matcher::UrlEncoded("top_n".into(), "5".into()))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(
+            r#"{"exchanges":[],"generatedAt":0,"grandTotal":0.0,"tokens":[],"totalTokens":0}"#,
+        )
         .expect(1)
         .create_async()
         .await;
@@ -467,7 +482,7 @@ async fn premium_sends_snake_keys() {
         ]))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(r#"{"data":[],"limit":1,"page":1,"sort":"x","total":0}"#)
         .expect(1)
         .create_async()
         .await;
@@ -500,7 +515,7 @@ async fn root_client_accessors_share_one_client() {
         .match_query(Matcher::UrlEncoded("window".into(), "1h".into()))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create_async()
         .await;
@@ -705,7 +720,7 @@ fn blocking_liquidation_heatmap_smoke() {
         .match_query(Matcher::UrlEncoded("window".into(), "1h".into()))
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create();
 
@@ -752,7 +767,7 @@ async fn retry_then_succeed_on_5xx() {
         .mock("GET", "/api/v1/liquidation/heatmap")
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create_async()
         .await;
@@ -784,7 +799,7 @@ async fn retry_then_succeed_on_429_with_retry_after() {
         .mock("GET", "/api/v1/liquidation/heatmap")
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create_async()
         .await;
@@ -867,7 +882,7 @@ fn blocking_retry_then_succeed_on_5xx() {
         .mock("GET", "/api/v1/liquidation/heatmap")
         .with_status(200)
         .with_header("content-type", "application/json")
-        .with_body("{}")
+        .with_body(HEATMAP_BODY)
         .expect(1)
         .create();
 
@@ -1320,7 +1335,7 @@ async fn funding_rate_exchanges_decodes_string_vec() {
 
 #[cfg(all(feature = "tracing", feature = "blocking"))]
 mod tracing_smoke {
-    use super::API_KEY;
+    use super::{API_KEY, HEATMAP_BODY};
     use datamaxi::LiquidationHeatmapOptions;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
@@ -1366,7 +1381,7 @@ mod tracing_smoke {
             .mock("GET", "/api/v1/liquidation/heatmap")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body("{}")
+            .with_body(HEATMAP_BODY)
             .expect(1)
             .create();
 
