@@ -32,7 +32,7 @@ fn page_body(page: i64, limit: i64, total: i64, n: usize) -> String {
         })
         .collect();
     format!(
-        r#"{{"data":[{}],"limit":{limit},"page":{page},"total":{total}}}"#,
+        r#"{{"category":[],"data":[{}],"exchange":[],"limit":{limit},"page":{page},"sort":"x","total":{total}}}"#,
         data.join(",")
     )
 }
