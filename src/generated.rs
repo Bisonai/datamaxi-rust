@@ -7,15 +7,17 @@ use std::collections::BTreeMap;
 // --- Response models ---
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexAnnouncementsResponse {
     /// specifies the exchanges of the announcements
+    #[serde(default)]
     pub category: Vec<String>,
     /// `Data` specifies an array of the announcements
     pub data: Vec<CexAnnouncementsView>,
     /// specifies the categories of the announcements
+    #[serde(default)]
     pub exchange: Vec<String>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -24,7 +26,6 @@ pub struct CexAnnouncementsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexAnnouncementsView {
     /// specifies the category of the announcement
@@ -48,7 +49,6 @@ pub struct CexAnnouncementsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexCandleResponse {
     pub currency: String,
@@ -60,7 +60,6 @@ pub struct CexCandleResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexCandleSymbolsView {
     /// specifies the base symbol
@@ -83,7 +82,6 @@ pub struct CexCandleSymbolsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexCandleView {
     /// specifies close price of the candle
@@ -107,7 +105,6 @@ pub struct CexCandleView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexFeesView {
     /// specifies base symbol
@@ -115,21 +112,24 @@ pub struct CexFeesView {
     /// specifies exchange
     pub exchange: String,
     /// specifies maker fee percentage for futures market
+    #[serde(default)]
     pub futures_maker_fee: Option<f64>,
     /// specifies taker fee percentage for futures market
+    #[serde(default)]
     pub futures_taker_fee: Option<f64>,
     /// specifies quote symbol
     pub quote: String,
     /// specifies maker fee percentage for spot market (e.g. 0.001 = 0.1%)
+    #[serde(default)]
     pub spot_maker_fee: Option<f64>,
     /// specifies taker fee percentage for spot market
+    #[serde(default)]
     pub spot_take_fee: Option<f64>,
     /// specifies symbol
     pub symbol: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolCautionsView {
     #[serde(rename = "b")]
@@ -139,16 +139,17 @@ pub struct CexSymbolCautionsView {
     #[serde(rename = "e")]
     pub exchange: String,
     /// ms, 0 = indefinite
+    #[serde(default)]
     pub end_at: Option<i64>,
     #[serde(rename = "m")]
     pub market: String,
     #[serde(rename = "q")]
     pub quote: String,
+    #[serde(default)]
     pub reasons: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolDelistingsView {
     #[serde(rename = "b")]
@@ -158,6 +159,7 @@ pub struct CexSymbolDelistingsView {
     #[serde(rename = "e")]
     pub exchange: String,
     /// ms
+    #[serde(default)]
     pub listed_at: Option<i64>,
     #[serde(rename = "m")]
     pub market: String,
@@ -168,7 +170,6 @@ pub struct CexSymbolDelistingsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolLiquidationView {
     #[serde(rename = "b")]
@@ -177,6 +178,7 @@ pub struct CexSymbolLiquidationView {
     pub exchange: String,
     pub event_count: i64,
     pub long_volume: f64,
+    #[serde(default)]
     pub long_volume_usd: Option<f64>,
     /// always "futures"
     #[serde(rename = "m")]
@@ -184,25 +186,31 @@ pub struct CexSymbolLiquidationView {
     #[serde(rename = "q")]
     pub quote: String,
     pub short_volume: f64,
+    #[serde(default)]
     pub short_volume_usd: Option<f64>,
     pub total_volume: f64,
+    #[serde(default)]
     pub total_volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolMetadataView {
     #[serde(rename = "b")]
     pub base: String,
     /// ms
+    #[serde(default)]
     pub caution_end_at: Option<i64>,
     /// "", caution, warning, danger
+    #[serde(default)]
     pub caution_level: Option<String>,
+    #[serde(default)]
     pub caution_reasons: Vec<String>,
+    #[serde(default)]
     pub delisting_at: Option<i64>,
     #[serde(rename = "e")]
     pub exchange: String,
+    #[serde(default)]
     pub listed_at: Option<i64>,
     /// "spot" | "futures"
     #[serde(rename = "m")]
@@ -211,38 +219,44 @@ pub struct CexSymbolMetadataView {
     pub quote: String,
     /// trading|pre_listing|halt|close_only|delisting|delisted
     pub status: String,
+    #[serde(default)]
     pub tags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolOiStatsView {
     #[serde(rename = "b")]
     pub base: String,
     /// %
+    #[serde(default)]
     pub change_1h: Option<f64>,
     /// %
+    #[serde(default)]
     pub change_24h: Option<f64>,
     /// %
+    #[serde(default)]
     pub change_4h: Option<f64>,
     #[serde(rename = "e")]
     pub exchange: String,
     /// always "futures"
     #[serde(rename = "m")]
     pub market: String,
+    #[serde(default)]
     pub oi_to_vol_ratio: Option<f64>,
     pub open_interest: f64,
+    #[serde(default)]
     pub open_interest_usd: Option<f64>,
     #[serde(rename = "q")]
     pub quote: String,
+    #[serde(default)]
     pub token_id: Option<String>,
     pub ts: i64,
+    #[serde(default)]
     pub volume_24h_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolOiView {
     #[serde(rename = "b")]
@@ -253,6 +267,7 @@ pub struct CexSymbolOiView {
     #[serde(rename = "m")]
     pub market: String,
     pub open_interest: f64,
+    #[serde(default)]
     pub open_interest_usd: Option<f64>,
     #[serde(rename = "q")]
     pub quote: String,
@@ -260,7 +275,6 @@ pub struct CexSymbolOiView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolTagsView {
     #[serde(rename = "b")]
@@ -277,7 +291,6 @@ pub struct CexSymbolTagsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolVolumeView {
     #[serde(rename = "b")]
@@ -298,11 +311,11 @@ pub struct CexSymbolVolumeView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexTokenUpdatesResponse {
     /// `data` specifies an array of the token updates
     pub data: Vec<CexTokenUpdatesView>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -311,7 +324,6 @@ pub struct CexTokenUpdatesResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct CexTokenUpdatesView {
     /// Specifies the base token
@@ -335,7 +347,6 @@ pub struct CexTokenUpdatesView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct ForexResponse {
     /// specifies the unix timestamp of the forex rate
@@ -350,7 +361,6 @@ pub struct ForexResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct FundingRateHistoryResponse {
     pub data: Vec<FundingRateHistoryView>,
@@ -362,19 +372,17 @@ pub struct FundingRateHistoryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct FundingRateHistoryView {
     /// specifies the date and time in UNIX timestamp format
     #[serde(rename = "d")]
     pub timestamp: i64,
     /// specifies the funding rate
-    #[serde(rename = "f")]
+    #[serde(rename = "f", default)]
     pub funding_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct FundingRateLatestResponse {
     /// Specifies the base
@@ -387,10 +395,10 @@ pub struct FundingRateLatestResponse {
     #[serde(rename = "e")]
     pub exchange: String,
     /// Specifies the funding rate
-    #[serde(rename = "f")]
+    #[serde(rename = "f", default)]
     pub funding_rate: Option<f64>,
     /// Specifies the interval hours
-    #[serde(rename = "i")]
+    #[serde(rename = "i", default)]
     pub interval_hours: Option<i64>,
     /// Specifies the token id
     #[serde(rename = "id")]
@@ -404,7 +412,6 @@ pub struct FundingRateLatestResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct FundingRateSymbolsView {
     /// specifies the base symbol
@@ -427,14 +434,12 @@ pub struct FundingRateSymbolsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct IndexPriceResponse {
     pub data: Vec<IndexPriceView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct IndexPriceView {
     pub price: f64,
@@ -443,13 +448,12 @@ pub struct IndexPriceView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationEntry {
     pub base: String,
     pub exchange: String,
     pub price: f64,
-    #[serde(rename = "priceUsd")]
+    #[serde(rename = "priceUsd", default)]
     pub price_usd: Option<f64>,
     pub quote: String,
     pub side: String,
@@ -458,18 +462,17 @@ pub struct LiquidationEntry {
     #[serde(rename = "tokenId")]
     pub token_id: String,
     pub volume: f64,
-    #[serde(rename = "volumeUsd")]
+    #[serde(rename = "volumeUsd", default)]
     pub volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationFeedEntry {
     pub base: String,
     pub exchange: String,
     pub price: f64,
-    #[serde(rename = "priceUsd")]
+    #[serde(rename = "priceUsd", default)]
     pub price_usd: Option<f64>,
     pub quote: String,
     pub side: String,
@@ -478,19 +481,17 @@ pub struct LiquidationFeedEntry {
     #[serde(rename = "tokenId")]
     pub token_id: String,
     pub volume: f64,
-    #[serde(rename = "volumeUsd")]
+    #[serde(rename = "volumeUsd", default)]
     pub volume_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationFeedResponse {
     pub data: Vec<LiquidationFeedEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationHeatmapCell {
     pub base: String,
@@ -506,7 +507,6 @@ pub struct LiquidationHeatmapCell {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationHeatmapExchangesummary {
     pub exchange: String,
@@ -519,7 +519,6 @@ pub struct LiquidationHeatmapExchangesummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationHeatmapResponse {
     /// (top tokens) × (all exchanges with data)
@@ -538,7 +537,6 @@ pub struct LiquidationHeatmapResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationHeatmapTokensummary {
     pub base: String,
@@ -555,7 +553,6 @@ pub struct LiquidationHeatmapTokensummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationMapAssumptions {
     #[serde(rename = "entrySamples")]
@@ -569,7 +566,6 @@ pub struct LiquidationMapAssumptions {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationMapBucket {
     #[serde(rename = "l100xUsd")]
@@ -587,7 +583,6 @@ pub struct LiquidationMapBucket {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationMapResponse {
     pub assumptions: LiquidationMapAssumptions,
@@ -609,7 +604,6 @@ pub struct LiquidationMapResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationMapTierassumption {
     pub leverage: i64,
@@ -617,14 +611,12 @@ pub struct LiquidationMapTierassumption {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationResponse {
     pub data: Vec<LiquidationEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationStatsBiggest {
     pub base: String,
@@ -635,9 +627,9 @@ pub struct LiquidationStatsBiggest {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationStatsResponse {
+    #[serde(default)]
     pub biggest: Option<LiquidationStatsBiggest>,
     /// number of events
     pub count: i64,
@@ -662,11 +654,11 @@ pub struct LiquidationStatsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationSymbolHistoryBucket {
     #[serde(rename = "longUsd")]
     pub long_usd: f64,
+    #[serde(default)]
     pub price: Option<f64>,
     #[serde(rename = "shortUsd")]
     pub short_usd: f64,
@@ -676,7 +668,6 @@ pub struct LiquidationSymbolHistoryBucket {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationSymbolHistoryResponse {
     pub buckets: Vec<LiquidationSymbolHistoryBucket>,
@@ -694,27 +685,27 @@ pub struct LiquidationSymbolHistoryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct ListingsHistoricalResponse {
     pub data: Vec<ListingsHistoricalView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct ListingsHistoricalView {
     pub announced_at: i64,
     pub base: String,
+    #[serde(default)]
     pub deposit_at: Option<i64>,
     pub exchange: String,
+    #[serde(default)]
     pub network: Option<String>,
+    #[serde(default)]
     pub trade_at: Option<i64>,
     pub url: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct MarginBorrowResponse {
     pub cross: serde_json::Value,
@@ -722,7 +713,6 @@ pub struct MarginBorrowResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct NaverTrendView {
     #[serde(rename = "d")]
@@ -732,7 +722,6 @@ pub struct NaverTrendView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestHistoryAggregatedResponse {
     /// Data is keyed by exchange id → time-series points ordered by t asc.
@@ -742,14 +731,13 @@ pub struct OpenInterestHistoryAggregatedResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestListEntry {
     pub base: String,
     pub exchange: String,
     #[serde(rename = "openInterest")]
     pub open_interest: f64,
-    #[serde(rename = "openInterestUsd")]
+    #[serde(rename = "openInterestUsd", default)]
     pub open_interest_usd: Option<f64>,
     pub quote: String,
     pub symbol: String,
@@ -759,17 +747,16 @@ pub struct OpenInterestListEntry {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestListResponse {
     pub data: Vec<OpenInterestListEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestOverviewResponse {
     pub data: Vec<OpenInterestOverviewView>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -778,7 +765,6 @@ pub struct OpenInterestOverviewResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestOverviewView {
     pub exchanges: serde_json::Value,
@@ -787,14 +773,13 @@ pub struct OpenInterestOverviewView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestResponse {
     pub base: String,
     pub exchange: String,
     #[serde(rename = "openInterest")]
     pub open_interest: f64,
-    #[serde(rename = "openInterestUsd")]
+    #[serde(rename = "openInterestUsd", default)]
     pub open_interest_usd: Option<f64>,
     pub quote: String,
     pub symbol: String,
@@ -804,7 +789,6 @@ pub struct OpenInterestResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestSummaryExchangesummary {
     pub exchange: String,
@@ -814,7 +798,6 @@ pub struct OpenInterestSummaryExchangesummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestSummaryResponse {
     pub exchanges: Vec<OpenInterestSummaryExchangesummary>,
@@ -828,7 +811,6 @@ pub struct OpenInterestSummaryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestSummaryTokensummary {
     pub base: String,
@@ -843,160 +825,224 @@ pub struct OpenInterestSummaryTokensummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct PremiumDetail {
     pub bid: String,
     /// specifies the date and the time in UTC milliseconds
     pub d: i64,
     /// funding gap which is difference between source and target fundingrate without funding interval consideration
+    #[serde(default)]
     pub fg: Option<f64>,
     /// net fundingrate which takes funding interval into account
+    #[serde(default)]
     pub nfr: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges
+    #[serde(default)]
     pub pdp: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 15m ago
+    #[serde(default)]
     pub pdp15m: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 1h ago
+    #[serde(default)]
     pub pdp1h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 24h ago
+    #[serde(default)]
     pub pdp24h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 30m ago
+    #[serde(default)]
     pub pdp30m: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 4h ago
+    #[serde(default)]
     pub pdp4h: Option<f64>,
     /// specifies the price difference percentage between the source and target exchanges 5m ago
+    #[serde(default)]
     pub pdp5m: Option<f64>,
     /// sepcifies premium duration
+    #[serde(default)]
     pub pmd: Option<i64>,
     /// source ask depth within +2% base
+    #[serde(default)]
     pub sad: Option<f64>,
     /// specifies -2% volume depth from source exchange
+    #[serde(default)]
     pub sad2p: Option<f64>,
     /// source ask depth within +2% quote
+    #[serde(default)]
     pub sadf: Option<f64>,
     /// specifies the base token of the source exchange
     pub sb: String,
     /// specifies +2% volume depth from source exchange
+    #[serde(default)]
     pub sbd2p: Option<f64>,
     /// for amm source ticker, amm source chain
+    #[serde(default)]
     pub sc: Option<String>,
     /// specifies the source exchange name
     pub se: String,
     /// source funding rate
+    #[serde(default)]
     pub sfr: Option<f64>,
     /// source funding rate interval, 1 stands for 1 hour
+    #[serde(default)]
     pub sfri: Option<i64>,
     /// source fundingrate info timestamp in UTC millisecond
+    #[serde(default)]
     pub sfrt: Option<i64>,
     /// specifies highest bid from source exchange
+    #[serde(default)]
     pub shb: Option<f64>,
     /// specifies lowest bid from source exchange
+    #[serde(default)]
     pub sla: Option<f64>,
     /// specifies the source market type
     pub sm: String,
     /// boolean if source exchange margin is supported, returned only for spot market
+    #[serde(default)]
     pub sms: Option<bool>,
     /// source next distribution time in UTC milliseconds
+    #[serde(default)]
     pub snd: Option<i64>,
     /// Open Interest snapshot — USD-denominated. Source and target sides.
+    #[serde(default)]
     pub soi: Option<f64>,
     /// OI % change over rolling 1h / 4h / 24h windows.
+    #[serde(default)]
     pub soich1h: Option<f64>,
+    #[serde(default)]
     pub soich24h: Option<f64>,
+    #[serde(default)]
     pub soich4h: Option<f64>,
     /// OI / 24h USD quote volume. Crude "leverage per turnover" metric.
+    #[serde(default)]
     pub soivr: Option<f64>,
     /// specifies the latest price of the source exchange in requested currency
+    #[serde(default)]
     pub sp: Option<f64>,
     /// for amm source ticker, amm pool address
+    #[serde(default)]
     pub spa: Option<String>,
     /// specifies the price difference percentage of the source exchange in the last 15m
+    #[serde(default)]
     pub spdp15m: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 1h
+    #[serde(default)]
     pub spdp1h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 24h
+    #[serde(default)]
     pub spdp24h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 30m
+    #[serde(default)]
     pub spdp30m: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 4h
+    #[serde(default)]
     pub spdp4h: Option<f64>,
     /// specifies the price difference percentage of the source exchange in the last 5m
+    #[serde(default)]
     pub spdp5m: Option<f64>,
     /// specifies the quote token of the source exchange
     pub sq: String,
     /// specifies the date and the time of source ticker in UTC milliseconds
     pub st: i64,
     /// specifies the trading volume of the source exchange in the last 24 hours in requested currency
+    #[serde(default)]
     pub sv: Option<f64>,
     /// transferable, null if unknown
+    #[serde(default)]
     pub t: Option<bool>,
     /// specifies -2% volume depth from target exchange
+    #[serde(default)]
     pub tad2p: Option<f64>,
     /// specifies the base token of the target exchange
     pub tb: String,
     /// target bid depth within -2% base
+    #[serde(default)]
     pub tbd: Option<f64>,
     /// specifies +2% volume depth from target exchange
+    #[serde(default)]
     pub tbd2p: Option<f64>,
     /// target bid depth within -2% quote
+    #[serde(default)]
     pub tbdf: Option<f64>,
     /// for amm target ticker, amm target chain
+    #[serde(default)]
     pub tc: Option<String>,
     /// specifies the target exchange name
     pub te: String,
     /// target funding rate
+    #[serde(default)]
     pub tfr: Option<f64>,
     /// target funding rate interval, 1 stands for 1 hour
+    #[serde(default)]
     pub tfri: Option<i64>,
     /// target fundingrate info timestamp in UTC millisecond
+    #[serde(default)]
     pub tfrt: Option<i64>,
     /// specifies highest bid from target exchange
+    #[serde(default)]
     pub thb: Option<f64>,
     /// specifies lowest bid from target exchange
+    #[serde(default)]
     pub tla: Option<f64>,
     /// specifies the target market type
     pub tm: String,
     /// boolean if target exchange margin is supported, returned only for spot market
+    #[serde(default)]
     pub tms: Option<bool>,
     /// target next distribution time in UTC millisconds
+    #[serde(default)]
     pub tnd: Option<i64>,
+    #[serde(default)]
     pub toi: Option<f64>,
+    #[serde(default)]
     pub toich1h: Option<f64>,
+    #[serde(default)]
     pub toich24h: Option<f64>,
+    #[serde(default)]
     pub toich4h: Option<f64>,
+    #[serde(default)]
     pub toivr: Option<f64>,
     /// specifies the latest price of the target exchange
+    #[serde(default)]
     pub tp: Option<f64>,
     /// for amm target ticker, amm pool address
+    #[serde(default)]
     pub tpa: Option<String>,
     /// specifies the price difference percentage of the target exchange in the last 15m
+    #[serde(default)]
     pub tpdp15m: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 1h
+    #[serde(default)]
     pub tpdp1h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 24h
+    #[serde(default)]
     pub tpdp24h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 30m
+    #[serde(default)]
     pub tpdp30m: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 4h
+    #[serde(default)]
     pub tpdp4h: Option<f64>,
     /// specifies the price difference percentage of the target exchange in the last 5m
+    #[serde(default)]
     pub tpdp5m: Option<f64>,
     /// specifies the quote token of the target exchange
     pub tq: String,
     /// specifies the date and the time of target ticker in UTC milliseconds
     pub tt: i64,
     /// specifies the trading volume of the target exchange in the last 24 hours in requested currency
+    #[serde(default)]
     pub tv: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct PremiumResponse {
+    #[serde(default)]
     pub conversion_base: Option<String>,
+    #[serde(default)]
     pub currency: Option<String>,
     pub data: Vec<PremiumView>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -1005,20 +1051,22 @@ pub struct PremiumResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct PremiumView {
     pub detail: PremiumDetail,
+    #[serde(default)]
     pub source_annualized_funding_rate: Option<f64>,
+    #[serde(default)]
     pub target_annualized_funding_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TelegramChannelsResponse {
+    #[serde(default)]
     pub category: Option<String>,
     pub data: Vec<TelegramChannelsView>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -1027,7 +1075,6 @@ pub struct TelegramChannelsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TelegramChannelsView {
     /// specifies the channel category
@@ -1039,7 +1086,7 @@ pub struct TelegramChannelsView {
     #[serde(rename = "channelTitle")]
     pub channel_title: String,
     /// specifies the creation time of the channel
-    #[serde(rename = "createdAt")]
+    #[serde(rename = "createdAt", default)]
     pub created_at: Option<i64>,
     /// specifies the channel description
     pub description: String,
@@ -1050,12 +1097,13 @@ pub struct TelegramChannelsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TelegramMessagesResponse {
+    #[serde(default)]
     pub category: Option<String>,
     /// specifies an array of the Telegram messages
     pub data: Vec<TelegramMessagesView>,
+    #[serde(default)]
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
@@ -1064,7 +1112,6 @@ pub struct TelegramMessagesResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TelegramMessagesView {
     /// specifies the channel handle
@@ -1096,18 +1143,17 @@ pub struct TelegramMessagesView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TickerResponse {
     pub currency: String,
     pub data: TickerView,
     pub market: String,
     /// Source is populated only when ?include_source=true; omitempty drops the key for default callers, preserving the pre-Phase-1 JSON byte shape (strict-decoder safe).
+    #[serde(default)]
     pub src: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TickerView {
     /// specifies the base token
@@ -1120,25 +1166,25 @@ pub struct TickerView {
     #[serde(rename = "e")]
     pub exchange: String,
     /// highest bid from orderbook
-    #[serde(rename = "hb")]
+    #[serde(rename = "hb", default)]
     pub highest_bid: Option<f64>,
     /// lowest ask from orderbook
-    #[serde(rename = "la")]
+    #[serde(rename = "la", default)]
     pub lowest_ask: Option<f64>,
     /// lower depth(2%)
-    #[serde(rename = "ld")]
+    #[serde(rename = "ld", default)]
     pub lower_depth: Option<f64>,
     /// specifies the market type
     #[serde(rename = "m")]
     pub market: String,
     /// specifies the latest price
-    #[serde(rename = "p")]
+    #[serde(rename = "p", default)]
     pub price: Option<f64>,
     /// specifies the price 24 hours ago
-    #[serde(rename = "p24h")]
+    #[serde(rename = "p24h", default)]
     pub price_24h: Option<f64>,
     /// specified price change between the latest price and the price 24 hours ago
-    #[serde(rename = "pc")]
+    #[serde(rename = "pc", default)]
     pub price_change: Option<f64>,
     /// specifies the quote token
     #[serde(rename = "q")]
@@ -1147,18 +1193,18 @@ pub struct TickerView {
     #[serde(rename = "s")]
     pub symbol: String,
     /// upper depth(2%)
-    #[serde(rename = "ud")]
+    #[serde(rename = "ud", default)]
     pub upper_depth: Option<f64>,
     /// specifies the trading volume in the last 24 hours
-    #[serde(rename = "v")]
+    #[serde(rename = "v", default)]
     pub volume: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct TokenDetail {
     /// specifies cmc id of the token
+    #[serde(default)]
     pub cmc_id: Option<String>,
     /// specifies the token icon url path
     pub icon: String,
@@ -1171,7 +1217,6 @@ pub struct TokenDetail {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
 #[non_exhaustive]
 pub struct WalletStatusView {
     pub currency: String,
