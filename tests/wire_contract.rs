@@ -1193,9 +1193,9 @@ async fn cex_symbol_liquidation_decodes_vec_with_present_and_absent_nullables() 
     assert_eq!(rows.len(), 2);
 
     let btc = &rows[0];
-    assert_eq!(btc.b, "BTC");
-    assert_eq!(btc.e, "binance");
-    assert_eq!(btc.m, "futures");
+    assert_eq!(btc.base, "BTC");
+    assert_eq!(btc.exchange, "binance");
+    assert_eq!(btc.market, "futures");
     assert_eq!(btc.event_count, 12);
     assert_eq!(btc.long_volume, 100.0);
     assert_eq!(btc.long_volume_usd, Some(4_200_000.0)); // present
@@ -1203,7 +1203,7 @@ async fn cex_symbol_liquidation_decodes_vec_with_present_and_absent_nullables() 
     assert_eq!(btc.total_volume_usd, Some(6_300_000.0));
 
     let eth = &rows[1];
-    assert_eq!(eth.b, "ETH");
+    assert_eq!(eth.base, "ETH");
     assert_eq!(eth.total_volume, 15.0);
     assert_eq!(eth.long_volume_usd, None); // absent → None
     assert_eq!(eth.short_volume_usd, None);

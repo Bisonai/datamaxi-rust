@@ -64,17 +64,22 @@ pub struct CexCandleResponse {
 #[non_exhaustive]
 pub struct CexCandleSymbolsView {
     /// specifies the base symbol
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// specifies the exchange
-    pub e: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// specifies the unique id
     pub id: String,
     /// specifies the market
-    pub m: String,
+    #[serde(rename = "m")]
+    pub market: String,
     /// specifies the quote symbol
-    pub q: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     /// specifies the api symbol
-    pub s: String,
+    #[serde(rename = "s")]
+    pub symbol: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -127,14 +132,18 @@ pub struct CexFeesView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolCautionsView {
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// caution | warning | danger
     pub caution_level: String,
-    pub e: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// ms, 0 = indefinite
-    pub end_at: i64,
-    pub m: String,
-    pub q: String,
+    pub end_at: Option<i64>,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     pub reasons: Vec<String>,
 }
 
@@ -142,14 +151,18 @@ pub struct CexSymbolCautionsView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolDelistingsView {
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// ms (scheduled or past)
     pub delisting_at: i64,
-    pub e: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// ms
-    pub listed_at: i64,
-    pub m: String,
-    pub q: String,
+    pub listed_at: Option<i64>,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     /// delisting | delisted
     pub status: String,
 }
@@ -158,14 +171,18 @@ pub struct CexSymbolDelistingsView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolLiquidationView {
-    pub b: String,
-    pub e: String,
+    #[serde(rename = "b")]
+    pub base: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     pub event_count: i64,
     pub long_volume: f64,
     pub long_volume_usd: Option<f64>,
     /// always "futures"
-    pub m: String,
-    pub q: String,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     pub short_volume: f64,
     pub short_volume_usd: Option<f64>,
     pub total_volume: f64,
@@ -176,18 +193,22 @@ pub struct CexSymbolLiquidationView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolMetadataView {
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// ms
-    pub caution_end_at: i64,
+    pub caution_end_at: Option<i64>,
     /// "", caution, warning, danger
-    pub caution_level: String,
+    pub caution_level: Option<String>,
     pub caution_reasons: Vec<String>,
-    pub delisting_at: i64,
-    pub e: String,
-    pub listed_at: i64,
+    pub delisting_at: Option<i64>,
+    #[serde(rename = "e")]
+    pub exchange: String,
+    pub listed_at: Option<i64>,
     /// "spot" | "futures"
-    pub m: String,
-    pub q: String,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     /// trading|pre_listing|halt|close_only|delisting|delisted
     pub status: String,
     pub tags: Vec<String>,
@@ -197,21 +218,25 @@ pub struct CexSymbolMetadataView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolOiStatsView {
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// %
     pub change_1h: Option<f64>,
     /// %
     pub change_24h: Option<f64>,
     /// %
     pub change_4h: Option<f64>,
-    pub e: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// always "futures"
-    pub m: String,
+    #[serde(rename = "m")]
+    pub market: String,
     pub oi_to_vol_ratio: Option<f64>,
     pub open_interest: f64,
     pub open_interest_usd: Option<f64>,
-    pub q: String,
-    pub token_id: String,
+    #[serde(rename = "q")]
+    pub quote: String,
+    pub token_id: Option<String>,
     pub ts: i64,
     pub volume_24h_usd: Option<f64>,
 }
@@ -220,13 +245,17 @@ pub struct CexSymbolOiStatsView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolOiView {
-    pub b: String,
-    pub e: String,
+    #[serde(rename = "b")]
+    pub base: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// always "futures" for OI
-    pub m: String,
+    #[serde(rename = "m")]
+    pub market: String,
     pub open_interest: f64,
     pub open_interest_usd: Option<f64>,
-    pub q: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     pub ts: i64,
 }
 
@@ -234,11 +263,15 @@ pub struct CexSymbolOiView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolTagsView {
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     pub confidence: i64,
-    pub e: String,
-    pub m: String,
-    pub q: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     pub source: String,
     pub tag: String,
 }
@@ -247,11 +280,15 @@ pub struct CexSymbolTagsView {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CexSymbolVolumeView {
-    pub b: String,
-    pub e: String,
+    #[serde(rename = "b")]
+    pub base: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// spot | futures
-    pub m: String,
-    pub q: String,
+    #[serde(rename = "m")]
+    pub market: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     /// USD-ish, dashboard-friendly
     pub quote_volume: f64,
     /// ms, collector wall-time
@@ -371,17 +408,22 @@ pub struct FundingRateLatestResponse {
 #[non_exhaustive]
 pub struct FundingRateSymbolsView {
     /// specifies the base symbol
-    pub b: String,
+    #[serde(rename = "b")]
+    pub base: String,
     /// specifies the exchange
-    pub e: String,
+    #[serde(rename = "e")]
+    pub exchange: String,
     /// specifies the unique id
     pub id: String,
     /// specifies the market
-    pub m: String,
+    #[serde(rename = "m")]
+    pub market: String,
     /// specifies the quote symbol
-    pub q: String,
+    #[serde(rename = "q")]
+    pub quote: String,
     /// specifies the api symbol
-    pub s: String,
+    #[serde(rename = "s")]
+    pub symbol: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -690,8 +732,10 @@ pub struct MarginBorrowResponse {
 #[serde(default)]
 #[non_exhaustive]
 pub struct NaverTrendView {
-    pub d: i64,
-    pub v: f64,
+    #[serde(rename = "d")]
+    pub timestamp: i64,
+    #[serde(rename = "v")]
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -1519,10 +1563,10 @@ pub struct CexCandleOptions {
     pub currency: Option<CexCandleCurrency>,
     /// Specifies interval (e.g. `1d`)
     pub interval: Option<String>,
-    /// Specifies from (e.g. `1735657200`)
-    pub from: Option<String>,
-    /// Specifies to (e.g. `1735693200`)
-    pub to: Option<String>,
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
+    pub from: Option<i64>,
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
+    pub to: Option<i64>,
 }
 
 impl CexCandleOptions {
@@ -1551,13 +1595,13 @@ impl CexCandleOptions {
         self
     }
 
-    pub fn from(mut self, from: impl Into<String>) -> Self {
-        self.from = Some(from.into());
+    pub fn from(mut self, from: i64) -> Self {
+        self.from = Some(from);
         self
     }
 
-    pub fn to(mut self, to: impl Into<String>) -> Self {
-        self.to = Some(to.into());
+    pub fn to(mut self, to: i64) -> Self {
+        self.to = Some(to);
         self
     }
 }
