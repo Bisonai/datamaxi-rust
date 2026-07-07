@@ -1,6 +1,7 @@
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
+use std::marker::PhantomData;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -346,6 +347,212 @@ impl Client {
             await
         )
     }
+
+    /// Returns an auto-paginator over a paged endpoint (see [`Paginated`]).
+    ///
+    /// `params` seeds the query string for every page (e.g. `limit`, `sort`,
+    /// filters); a `page` key in `params` sets the starting page (defaults to
+    /// `1`) and is overwritten on each subsequent request as the paginator
+    /// advances. Call [`Paginator::next_page`] in a loop to walk forward.
+    pub fn paginate<T>(
+        &self,
+        endpoint: impl Into<String>,
+        params: BTreeMap<String, String>,
+    ) -> Paginator<T>
+    where
+        T: Paginated + DeserializeOwned,
+    {
+        Paginator::new(self.clone(), endpoint, params)
+    }
+}
+
+/// Implemented by paged response envelopes — the `page`/`limit`/`total`/`data`
+/// shape shared by several Datamaxi+ endpoints (e.g. `CexAnnouncementsResponse`) —
+/// so [`Client::paginate`] / [`blocking::Client::paginate`] can drive a generic
+/// auto-paginator over them without codegen needing to emit a bespoke helper
+/// per endpoint.
+///
+/// Only response envelopes that report all three of `page`, `limit`, and
+/// `total` implement this trait today; a handful of generated responses carry
+/// `page`/`limit`/`data` without a `total` (e.g. `FundingRateHistoryResponse`)
+/// and are not yet covered — see the crate's pagination docs.
+pub trait Paginated {
+    /// The item type yielded per page (the envelope's `data` element type).
+    type Item;
+
+    /// The 1-based page number this response represents.
+    fn page(&self) -> i64;
+
+    /// The page size requested/echoed back by the server.
+    fn limit(&self) -> i64;
+
+    /// The total number of items across all pages, if the envelope reports one.
+    fn total(&self) -> Option<i64>;
+
+    /// Consumes the response, yielding this page's items.
+    fn into_items(self) -> Vec<Self::Item>;
+}
+
+/// Implements [`Paginated`] for a `page`/`limit`/`total`/`data` response
+/// envelope, mapping its fields directly (`data` -> items).
+macro_rules! impl_paginated {
+    ($response:ty, $item:ty) => {
+        impl Paginated for $response {
+            type Item = $item;
+
+            fn page(&self) -> i64 {
+                self.page
+            }
+
+            fn limit(&self) -> i64 {
+                self.limit
+            }
+
+            fn total(&self) -> Option<i64> {
+                Some(self.total)
+            }
+
+            fn into_items(self) -> Vec<Self::Item> {
+                self.data
+            }
+        }
+    };
+}
+
+impl_paginated!(
+    crate::generated::CexAnnouncementsResponse,
+    crate::generated::CexAnnouncementsView
+);
+impl_paginated!(
+    crate::generated::CexTokenUpdatesResponse,
+    crate::generated::CexTokenUpdatesView
+);
+impl_paginated!(
+    crate::generated::OpenInterestOverviewResponse,
+    crate::generated::OpenInterestOverviewView
+);
+impl_paginated!(
+    crate::generated::PremiumResponse,
+    crate::generated::PremiumView
+);
+impl_paginated!(
+    crate::generated::TelegramChannelsResponse,
+    crate::generated::TelegramChannelsView
+);
+impl_paginated!(
+    crate::generated::TelegramMessagesResponse,
+    crate::generated::TelegramMessagesView
+);
+
+/// Async auto-paginator returned by [`Client::paginate`].
+///
+/// Not a [`futures::Stream`](https://docs.rs/futures) — the crate takes no
+/// dependency on `futures` for this — `next_page` is a plain cursor:
+///
+/// ```no_run
+/// use datamaxi::api::ClientBuilder;
+/// use datamaxi::CexAnnouncementsResponse;
+/// use std::collections::BTreeMap;
+///
+/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = ClientBuilder::new().api_key("my_api_key").build()?;
+/// let mut pages = client
+///     .paginate::<CexAnnouncementsResponse>("/api/v1/cex/announcements", BTreeMap::new());
+///
+/// while let Some(items) = pages.next_page().await? {
+///     for item in items {
+///         println!("{}", item.title);
+///     }
+/// }
+/// # Ok(())
+/// # }
+/// ```
+pub struct Paginator<T: Paginated> {
+    client: Client,
+    endpoint: String,
+    params: BTreeMap<String, String>,
+    next_page: i64,
+    done: bool,
+    _marker: PhantomData<T>,
+}
+
+impl<T> Paginator<T>
+where
+    T: Paginated + DeserializeOwned,
+{
+    fn new(client: Client, endpoint: impl Into<String>, params: BTreeMap<String, String>) -> Self {
+        let next_page = starting_page(&params);
+        Paginator {
+            client,
+            endpoint: endpoint.into(),
+            params,
+            next_page,
+            done: false,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Fetches and returns the next page's items, or `Ok(None)` once the
+    /// server has no more data: an empty page, or (when the envelope reports
+    /// a `total`) a page reaching `page * limit >= total`. Once exhausted,
+    /// further calls keep returning `Ok(None)` rather than re-fetching.
+    pub async fn next_page(&mut self) -> Result<Option<Vec<T::Item>>> {
+        if self.done {
+            return Ok(None);
+        }
+
+        let mut params = self.params.clone();
+        params.insert("page".to_string(), self.next_page.to_string());
+
+        let response: T = self.client.get(&self.endpoint, Some(params)).await?;
+        Ok(self.consume_response(response))
+    }
+
+    /// Shared bookkeeping for a fetched page: advances `next_page`, marks
+    /// [`Paginator::done`] on an empty page or on reaching `total`, and
+    /// extracts the items. Kept free of `async`/blocking specifics so both
+    /// flavors share the exact same terminal-condition logic.
+    fn consume_response(&mut self, response: T) -> Option<Vec<T::Item>> {
+        consume_page(&mut self.next_page, &mut self.done, response)
+    }
+}
+
+/// The starting page for a paginator: the caller-supplied `page` param when
+/// present and positive, otherwise `1`.
+fn starting_page(params: &BTreeMap<String, String>) -> i64 {
+    params
+        .get("page")
+        .and_then(|p| p.parse::<i64>().ok())
+        .filter(|&p| p > 0)
+        .unwrap_or(1)
+}
+
+/// Shared terminal-condition logic for both the async and blocking
+/// paginators: given a fetched `response`, updates `next_page`/`done` and
+/// returns `Some(items)`, or `None` once there is nothing left to yield.
+fn consume_page<T: Paginated>(
+    next_page: &mut i64,
+    done: &mut bool,
+    response: T,
+) -> Option<Vec<T::Item>> {
+    let page = response.page();
+    let limit = response.limit();
+    let total = response.total();
+    let items = response.into_items();
+
+    if items.is_empty() {
+        *done = true;
+        return None;
+    }
+
+    *next_page = page + 1;
+    if let Some(total) = total {
+        if limit > 0 && page.saturating_mul(limit) >= total {
+            *done = true;
+        }
+    }
+
+    Some(items)
 }
 
 /// Reads at most [`MAX_ERROR_BODY_BYTES`] of an async response body, streaming
@@ -542,15 +749,16 @@ pub enum Error {
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use super::{
-        backoff_delay, is_retryable_error, is_retryable_status, map_error_status,
-        retry_delay_for_response, truncate_body, user_agent, BuilderState, Error, Result,
-        RetryConfig, BASE_URL, DEFAULT_TIMEOUT, MAX_ERROR_BODY_BYTES,
+        backoff_delay, consume_page, is_retryable_error, is_retryable_status, map_error_status,
+        retry_delay_for_response, starting_page, truncate_body, user_agent, BuilderState, Error,
+        Paginated, Result, RetryConfig, BASE_URL, DEFAULT_TIMEOUT, MAX_ERROR_BODY_BYTES,
     };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
     use serde::de::DeserializeOwned;
     use std::collections::BTreeMap;
     use std::io::Read;
+    use std::marker::PhantomData;
     use std::time::Duration;
 
     /// Build the underlying blocking HTTP client with our defaults. Falls back
@@ -616,6 +824,99 @@ pub mod blocking {
                 handle_response,
                 std::thread::sleep
             )
+        }
+
+        /// Returns an auto-paginator over a paged endpoint (see
+        /// [`super::Paginated`]). Mirrors the async [`super::Client::paginate`];
+        /// see its docs for how `params` and the starting page work.
+        pub fn paginate<T>(
+            &self,
+            endpoint: impl Into<String>,
+            params: BTreeMap<String, String>,
+        ) -> Paginator<T>
+        where
+            T: Paginated + DeserializeOwned,
+        {
+            Paginator::new(self.clone(), endpoint, params)
+        }
+    }
+
+    /// Blocking auto-paginator returned by [`Client::paginate`], implementing
+    /// [`Iterator`] over pages of items (one `Result<Vec<T::Item>>` per page).
+    /// Iteration stops (yields `None`) once the server reports no more data,
+    /// and after the first `Err`, so a caller can `?`-propagate mid-loop
+    /// without risking a retry of the same failing page.
+    ///
+    /// ```no_run
+    /// use datamaxi::api::blocking::ClientBuilder;
+    /// use datamaxi::CexAnnouncementsResponse;
+    /// use std::collections::BTreeMap;
+    ///
+    /// # fn run() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ClientBuilder::new().api_key("my_api_key").build()?;
+    /// for page in
+    ///     client.paginate::<CexAnnouncementsResponse>("/api/v1/cex/announcements", BTreeMap::new())
+    /// {
+    ///     for item in page? {
+    ///         println!("{}", item.title);
+    ///     }
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub struct Paginator<T: Paginated> {
+        client: Client,
+        endpoint: String,
+        params: BTreeMap<String, String>,
+        next_page: i64,
+        done: bool,
+        _marker: PhantomData<T>,
+    }
+
+    impl<T> Paginator<T>
+    where
+        T: Paginated + DeserializeOwned,
+    {
+        fn new(
+            client: Client,
+            endpoint: impl Into<String>,
+            params: BTreeMap<String, String>,
+        ) -> Self {
+            let next_page = starting_page(&params);
+            Paginator {
+                client,
+                endpoint: endpoint.into(),
+                params,
+                next_page,
+                done: false,
+                _marker: PhantomData,
+            }
+        }
+    }
+
+    impl<T> Iterator for Paginator<T>
+    where
+        T: Paginated + DeserializeOwned,
+    {
+        type Item = Result<Vec<T::Item>>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.done {
+                return None;
+            }
+
+            let mut params = self.params.clone();
+            params.insert("page".to_string(), self.next_page.to_string());
+
+            match self.client.get::<T>(&self.endpoint, Some(params)) {
+                Ok(response) => consume_page(&mut self.next_page, &mut self.done, response).map(Ok),
+                Err(error) => {
+                    // Stop iterating after an error rather than retrying the
+                    // same page forever.
+                    self.done = true;
+                    Some(Err(error))
+                }
+            }
         }
     }
 
@@ -815,6 +1116,135 @@ mod tests {
         assert_eq!(
             retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &headers, 0),
             RETRY_MAX_DELAY
+        );
+    }
+
+    // --- Pagination (issue #88) --------------------------------------------
+
+    /// A minimal `page`/`limit`/`total`/`data` envelope for exercising
+    /// [`consume_page`] / [`starting_page`] without a real generated response
+    /// type.
+    #[derive(Debug)]
+    struct DummyPage {
+        page: i64,
+        limit: i64,
+        total: Option<i64>,
+        data: Vec<i32>,
+    }
+
+    impl Paginated for DummyPage {
+        type Item = i32;
+
+        fn page(&self) -> i64 {
+            self.page
+        }
+
+        fn limit(&self) -> i64 {
+            self.limit
+        }
+
+        fn total(&self) -> Option<i64> {
+            self.total
+        }
+
+        fn into_items(self) -> Vec<i32> {
+            self.data
+        }
+    }
+
+    #[test]
+    fn starting_page_defaults_to_one_when_absent_or_invalid() {
+        assert_eq!(starting_page(&BTreeMap::new()), 1);
+
+        let mut params = BTreeMap::new();
+        params.insert("page".to_string(), "not-a-number".to_string());
+        assert_eq!(starting_page(&params), 1);
+
+        params.insert("page".to_string(), "0".to_string());
+        assert_eq!(starting_page(&params), 1);
+
+        params.insert("page".to_string(), "-1".to_string());
+        assert_eq!(starting_page(&params), 1);
+    }
+
+    #[test]
+    fn starting_page_honors_explicit_positive_page() {
+        let mut params = BTreeMap::new();
+        params.insert("page".to_string(), "5".to_string());
+        assert_eq!(starting_page(&params), 5);
+    }
+
+    #[test]
+    fn consume_page_continues_while_below_total() {
+        let mut next_page = 1;
+        let mut done = false;
+        let page = DummyPage {
+            page: 1,
+            limit: 2,
+            total: Some(5),
+            data: vec![1, 2],
+        };
+
+        let items = consume_page(&mut next_page, &mut done, page);
+
+        assert_eq!(items, Some(vec![1, 2]));
+        assert_eq!(next_page, 2);
+        assert!(!done);
+    }
+
+    #[test]
+    fn consume_page_terminates_when_total_reached() {
+        let mut next_page = 2;
+        let mut done = false;
+        // page * limit == 4 >= total (3): last page.
+        let page = DummyPage {
+            page: 2,
+            limit: 2,
+            total: Some(3),
+            data: vec![3],
+        };
+
+        let items = consume_page(&mut next_page, &mut done, page);
+
+        assert_eq!(items, Some(vec![3]));
+        assert!(done, "reaching total must mark the paginator done");
+    }
+
+    #[test]
+    fn consume_page_terminates_on_empty_data_regardless_of_total() {
+        let mut next_page = 2;
+        let mut done = false;
+        // total (100) not yet reached, but an empty page still terminates.
+        let page = DummyPage {
+            page: 2,
+            limit: 1,
+            total: Some(100),
+            data: Vec::<i32>::new(),
+        };
+
+        let items = consume_page(&mut next_page, &mut done, page);
+
+        assert_eq!(items, None);
+        assert!(done);
+    }
+
+    #[test]
+    fn consume_page_without_total_relies_on_empty_page() {
+        let mut next_page = 1;
+        let mut done = false;
+        let page = DummyPage {
+            page: 1,
+            limit: 10,
+            total: None,
+            data: vec![1],
+        };
+
+        let items = consume_page(&mut next_page, &mut done, page);
+
+        assert_eq!(items, Some(vec![1]));
+        assert!(
+            !done,
+            "without a reported total, only an empty page should terminate"
         );
     }
 }
