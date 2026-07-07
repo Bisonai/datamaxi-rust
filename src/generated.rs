@@ -593,7 +593,6 @@ pub struct LiquidationMapResponse {
     pub assumptions: LiquidationMapAssumptions,
     pub base: String,
     pub buckets: Vec<LiquidationMapBucket>,
-    /// Cumulative totals — separately surfaced so the FE doesn't have to re-sum to drive the cumulative line series (Coinglass-style).
     #[serde(rename = "cumulativeLongUsd")]
     pub cumulative_long_usd: f64,
     #[serde(rename = "cumulativeShortUsd")]
@@ -666,18 +665,13 @@ pub struct LiquidationStatsResponse {
 #[serde(default)]
 #[non_exhaustive]
 pub struct LiquidationSymbolHistoryBucket {
-    /// Liquidated long positions in USD over this bucket (Side='sell').
     #[serde(rename = "longUsd")]
     pub long_usd: f64,
-    /// Candle close mid for the same bucket. nil when no candle exists (very early in a newly listed pair, or when the price feed is down). FE renders the price line with `connectNulls=false` so gaps stay visible instead of being smoothed across.
     pub price: Option<f64>,
-    /// Liquidated short positions in USD over this bucket (Side='buy').
     #[serde(rename = "shortUsd")]
     pub short_usd: f64,
-    /// Convenience sum so the FE can drive a "total" line without re-add.
     #[serde(rename = "totalUsd")]
     pub total_usd: f64,
-    /// Unix ms timestamp at the start of the interval bucket.
     pub ts: i64,
 }
 
@@ -692,7 +686,6 @@ pub struct LiquidationSymbolHistoryResponse {
     pub interval: String,
     pub quote: String,
     pub symbol: String,
-    /// Totals over the window — handy for a header line without making the FE re-aggregate the bucket list.
     #[serde(rename = "totalLongUsd")]
     pub total_long_usd: f64,
     #[serde(rename = "totalShortUsd")]
@@ -817,7 +810,6 @@ pub struct OpenInterestSummaryExchangesummary {
     pub exchange: String,
     #[serde(rename = "openInterestUsd")]
     pub open_interest_usd: f64,
-    /// Number of tokens this exchange has non-zero OI for.
     pub tokens: i64,
 }
 
@@ -825,15 +817,12 @@ pub struct OpenInterestSummaryExchangesummary {
 #[serde(default)]
 #[non_exhaustive]
 pub struct OpenInterestSummaryResponse {
-    /// sorted desc, all venues with data
     pub exchanges: Vec<OpenInterestSummaryExchangesummary>,
     #[serde(rename = "generatedAt")]
     pub generated_at: i64,
     #[serde(rename = "grandTotal")]
     pub grand_total: f64,
-    /// top N by OI desc
     pub tokens: Vec<OpenInterestSummaryTokensummary>,
-    /// Token universe size — useful in the FE to label the KPI as "BTC of 1,234 tokens" instead of just "BTC".
     #[serde(rename = "totalTokens")]
     pub total_tokens: i64,
 }
@@ -850,7 +839,6 @@ pub struct OpenInterestSummaryTokensummary {
     pub symbol: String,
     #[serde(rename = "tokenId")]
     pub token_id: String,
-    /// Number of exchanges this token is listed on with non-zero OI. Useful for the breakdown card to show e.g. "BTC · 8 venues".
     pub venues: i64,
 }
 
