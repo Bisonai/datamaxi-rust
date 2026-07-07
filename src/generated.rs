@@ -19,7 +19,7 @@ pub struct CexAnnouncementsResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
@@ -269,7 +269,7 @@ pub struct CexTokenUpdatesResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
@@ -736,7 +736,7 @@ pub struct OpenInterestOverviewResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
@@ -968,7 +968,7 @@ pub struct PremiumResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
@@ -990,7 +990,7 @@ pub struct TelegramChannelsResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
@@ -1027,7 +1027,7 @@ pub struct TelegramMessagesResponse {
     pub key: Option<String>,
     pub limit: i64,
     pub page: i64,
-    pub sort: Option<String>,
+    pub sort: String,
     pub total: i64,
 }
 
