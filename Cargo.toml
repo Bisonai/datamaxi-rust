@@ -5,6 +5,13 @@ edition = "2021"
 rust-version = "1.86"
 readme = "README.md"
 license = "MIT"
+description = "Official Rust SDK for the DataMaxi+ API: fetch historical and latest crypto/market data."
+repository = "https://github.com/Bisonai/datamaxi-rust"
+documentation = "https://docs.rs/datamaxi"
+homepage = "https://datamaxiplus.com/"
+keywords = ["datamaxi", "crypto", "api", "sdk", "trading"]
+categories = ["api-bindings"]
+authors = ["Bisonai"]
 
 [dependencies]
 reqwest = { version = "0.12.7", features = ["json"] }
