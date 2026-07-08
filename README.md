@@ -40,6 +40,19 @@ Two independent, opt-in hooks:
   let client = ClientBuilder::new().api_key("my_api_key").http_client(http).build()?;
   ```
 
+### Pagination
+
+`Client::paginate` / `blocking::Client::paginate` auto-paginate any paged
+response envelope, with or without a reported `total`. The async paginator
+is a plain `next_page()` cursor by default; enable the opt-in `stream`
+feature to also drive it as a `futures::Stream` (adds no dependency unless
+enabled):
+
+```toml
+[dependencies]
+datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["stream"] }
+```
+
 ### Minimum Supported Rust Version (MSRV)
 
 This crate requires **Rust 1.86** or newer. The MSRV is verified in CI and
