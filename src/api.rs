@@ -58,9 +58,12 @@ const MAX_ERROR_BODY_BYTES: usize = 1000;
 /// Transient conditions — request timeouts, connection errors, `429 Too Many
 /// Requests`, and `5xx` server errors — are retried up to `max_retries` times
 /// with exponential backoff (`base_delay * 2^attempt`, capped at
-/// [`RETRY_MAX_DELAY`]). A `429` response honors its `Retry-After` header (in
-/// seconds) when present. Fatal statuses (`400`/`401`/`403`/`404`, and every
-/// other `4xx`) are never retried.
+/// [`RETRY_MAX_DELAY`]) plus full jitter (see [`apply_jitter`]), so many
+/// clients retrying at once don't thundering-herd the server in lockstep. A
+/// `429` response honors its `Retry-After` header (in seconds) when present —
+/// that's an explicit server-suggested delay, so it is used as-is, without
+/// jitter. Fatal statuses (`400`/`401`/`403`/`404`, and every other `4xx`)
+/// are never retried.
 #[derive(Debug, Clone)]
 struct RetryConfig {
     max_retries: u32,
@@ -91,6 +94,10 @@ fn is_retryable_error(error: &reqwest::Error) -> bool {
 
 /// Exponential backoff for the given zero-based `attempt`: `base * 2^attempt`,
 /// saturating and capped at [`RETRY_MAX_DELAY`].
+///
+/// This is the pure upper bound only — no jitter — so it stays exactly
+/// testable. Retry call sites should use [`jittered_backoff_delay`], which
+/// applies full jitter on top of this value.
 fn backoff_delay(config: &RetryConfig, attempt: u32) -> Duration {
     let factor = 1u32.checked_shl(attempt).unwrap_or(u32::MAX);
     config
@@ -98,6 +105,38 @@ fn backoff_delay(config: &RetryConfig, attempt: u32) -> Duration {
         .checked_mul(factor)
         .unwrap_or(RETRY_MAX_DELAY)
         .min(RETRY_MAX_DELAY)
+}
+
+/// Full-jitter [`backoff_delay`]: a uniformly random duration in
+/// `[0, backoff_delay(config, attempt)]`. Chosen over equal-jitter because it
+/// spreads retries over the widest possible range, which minimizes
+/// thundering-herd risk the most (see the "Exponential Backoff and Jitter"
+/// AWS Architecture Blog post, which found full jitter performs best of the
+/// strategies it benchmarks). Still bounded by [`RETRY_MAX_DELAY`], since the
+/// underlying `backoff_delay` upper bound already is.
+fn jittered_backoff_delay(config: &RetryConfig, attempt: u32) -> Duration {
+    apply_jitter(backoff_delay(config, attempt))
+}
+
+/// Picks a uniformly random duration in `[0, upper]` using the process-wide
+/// `fastrand` source. `upper` is expected to already be capped (see
+/// [`backoff_delay`]), so the result is too.
+fn apply_jitter(upper: Duration) -> Duration {
+    jitter_in_range(upper, fastrand::u64)
+}
+
+/// Same computation as [`apply_jitter`], with the random-number source
+/// injected so tests can assert exact, deterministic output instead of
+/// depending on real randomness.
+fn jitter_in_range(
+    upper: Duration,
+    random_u64: impl FnOnce(std::ops::RangeInclusive<u64>) -> u64,
+) -> Duration {
+    let upper_millis = u64::try_from(upper.as_millis()).unwrap_or(u64::MAX);
+    if upper_millis == 0 {
+        return Duration::ZERO;
+    }
+    Duration::from_millis(random_u64(0..=upper_millis))
 }
 
 /// Parse a `Retry-After` header into a [`Duration`], expressed as an integer
@@ -122,8 +161,9 @@ fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
 }
 
 /// The delay to wait before retrying a retryable response: a `429`'s
-/// `Retry-After` when present (capped at [`RETRY_MAX_DELAY`]), otherwise
-/// exponential backoff.
+/// `Retry-After` when present (capped at [`RETRY_MAX_DELAY`], not jittered —
+/// it's an explicit server-suggested delay), otherwise jittered exponential
+/// backoff (see [`jittered_backoff_delay`]).
 fn retry_delay_for_response(
     config: &RetryConfig,
     status: StatusCode,
@@ -135,7 +175,7 @@ fn retry_delay_for_response(
             return delay.min(RETRY_MAX_DELAY);
         }
     }
-    backoff_delay(config, attempt)
+    jittered_backoff_delay(config, attempt)
 }
 
 /// The `User-Agent` sent with every request, e.g. `datamaxi-rust/0.4.0`.
@@ -296,7 +336,7 @@ macro_rules! get_loop {
                 }
                 Err(error) => {
                     if attempt < $self.retry.max_retries && is_retryable_error(&error) {
-                        let delay = backoff_delay(&$self.retry, attempt);
+                        let delay = jittered_backoff_delay(&$self.retry, attempt);
                         #[cfg(feature = "tracing")]
                         tracing::debug!(
                             target: "datamaxi::retry",
@@ -821,9 +861,10 @@ pub enum Error {
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use super::{
-        backoff_delay, consume_page, is_retryable_error, is_retryable_status, map_error_status,
-        retry_delay_for_response, starting_page, truncate_body, user_agent, BuilderState, Error,
-        Paginated, Result, RetryConfig, BASE_URL, DEFAULT_TIMEOUT, MAX_ERROR_BODY_BYTES,
+        consume_page, is_retryable_error, is_retryable_status, jittered_backoff_delay,
+        map_error_status, retry_delay_for_response, starting_page, truncate_body, user_agent,
+        BuilderState, Error, Paginated, Result, RetryConfig, BASE_URL, DEFAULT_TIMEOUT,
+        MAX_ERROR_BODY_BYTES,
     };
     use reqwest::blocking::Response;
     use reqwest::StatusCode;
@@ -1151,6 +1192,60 @@ mod tests {
     }
 
     #[test]
+    fn jitter_in_range_is_exact_and_deterministic_with_injected_source() {
+        let upper = Duration::from_millis(400);
+
+        // A stand-in "random" source that always returns the range's upper
+        // bound picks exactly `upper`.
+        assert_eq!(jitter_in_range(upper, |range| *range.end()), upper);
+        // ...and one that always returns the range's lower bound picks zero.
+        assert_eq!(
+            jitter_in_range(upper, |range| *range.start()),
+            Duration::ZERO
+        );
+
+        // A zero upper bound short-circuits to zero without even consulting
+        // the random source.
+        assert_eq!(
+            jitter_in_range(Duration::ZERO, |_| panic!("must not be called")),
+            Duration::ZERO
+        );
+    }
+
+    #[test]
+    fn apply_jitter_stays_within_zero_and_upper() {
+        // Property check over the real `fastrand` source: the result must
+        // always land in `[0, upper]`, regardless of the actual random draw,
+        // so this stays deterministic (always passes) without seeding.
+        for millis in [0, 1, 100, 30_000, 45_000] {
+            let upper = Duration::from_millis(millis).min(RETRY_MAX_DELAY);
+            for _ in 0..200 {
+                let jittered = apply_jitter(upper);
+                assert!(
+                    jittered <= upper,
+                    "jittered delay {jittered:?} exceeded upper bound {upper:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn jittered_backoff_delay_stays_within_zero_and_backoff_delay() {
+        let config = RetryConfig {
+            max_retries: 5,
+            base_delay: Duration::from_millis(100),
+        };
+        for attempt in [0, 1, 2, 3, 1000] {
+            let upper = backoff_delay(&config, attempt);
+            for _ in 0..200 {
+                let jittered = jittered_backoff_delay(&config, attempt);
+                assert!(jittered <= upper);
+                assert!(jittered <= RETRY_MAX_DELAY);
+            }
+        }
+    }
+
+    #[test]
     fn parse_retry_after_parses_integer_seconds_uncapped() {
         let mut headers = HeaderMap::new();
         headers.insert(RETRY_AFTER, HeaderValue::from_static("2"));
@@ -1188,16 +1283,17 @@ mod tests {
             retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &headers, 0),
             Duration::from_secs(5)
         );
-        // 5xx ignores Retry-After and uses backoff.
-        assert_eq!(
-            retry_delay_for_response(&config, StatusCode::BAD_GATEWAY, &headers, 1),
-            Duration::from_millis(200)
+        // 5xx ignores Retry-After and uses jittered backoff, bounded by the
+        // unjittered upper bound (see `backoff_is_exponential_and_capped`).
+        assert!(
+            retry_delay_for_response(&config, StatusCode::BAD_GATEWAY, &headers, 1)
+                <= Duration::from_millis(200)
         );
-        // 429 without Retry-After falls back to backoff.
+        // 429 without Retry-After falls back to jittered backoff, same bound.
         let empty = HeaderMap::new();
-        assert_eq!(
-            retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &empty, 2),
-            Duration::from_millis(400)
+        assert!(
+            retry_delay_for_response(&config, StatusCode::TOO_MANY_REQUESTS, &empty, 2)
+                <= Duration::from_millis(400)
         );
     }
 
