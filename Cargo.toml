@@ -28,11 +28,17 @@ tokio = { version = "1", default-features = false, features = ["time"] }
 # Optional: request-level spans/events in `get_loop!`, behind the `tracing`
 # feature. Compiles away entirely (no dependency pulled in) when disabled.
 tracing = { version = "0.1", optional = true }
+# Optional: `futures::Stream` impl for the async `Paginator`, behind the
+# `stream` feature. Only `futures-core` (the trait, no executor/combinators)
+# is pulled in; MSRV well under our 1.86 floor. Compiles away entirely when
+# disabled.
+futures-core = { version = "0.3", optional = true }
 
 [features]
 default = []
 blocking = ["reqwest/blocking"]
 tracing = ["dep:tracing"]
+stream = ["dep:futures-core"]
 
 [dev-dependencies]
 dotenvy = "0.15.7"
@@ -41,3 +47,6 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 # Unconditional dev-dependency so tests can assert on emitted spans/events
 # when built with `--features tracing`; does not affect release builds.
 tracing = "0.1"
+# Unconditional dev-dependency so the `stream`-gated pagination test can drive
+# the `Stream` impl with `StreamExt::next`; does not affect release builds.
+futures = "0.3"

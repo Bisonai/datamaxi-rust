@@ -1,13 +1,18 @@
 //! Integration tests for the auto-paginator added for issue #88
-//! ([`datamaxi::api::Client::paginate`] / [`datamaxi::api::blocking::Client::paginate`]).
+//! ([`datamaxi::api::Client::paginate`] / [`datamaxi::api::blocking::Client::paginate`]),
+//! plus the total-less envelope coverage and `stream` feature added for
+//! issue #102.
 //!
 //! These drive a real `page`/`limit`/`total`/`data` envelope
 //! (`CexAnnouncementsResponse`) through a mock server and lock: multi-page
 //! traversal, the `page * limit >= total` terminal condition, the empty-page
-//! terminal condition, and honoring a caller-supplied starting page.
+//! terminal condition, and honoring a caller-supplied starting page. A
+//! separate test drives `FundingRateHistoryResponse`, a `page`/`limit`/`data`
+//! envelope with no `total`, confirming it also auto-paginates and terminates
+//! on an empty page.
 
 use datamaxi::api::{Client, ClientBuilder};
-use datamaxi::CexAnnouncementsResponse;
+use datamaxi::{CexAnnouncementsResponse, FundingRateHistoryResponse};
 use mockito::Matcher;
 use std::collections::BTreeMap;
 
@@ -208,4 +213,109 @@ fn blocking_paginate_walks_multiple_pages_until_total_reached() {
 
     page1.assert();
     page2.assert();
+}
+
+// --- Total-less envelopes (issue #102) ----------------------------------
+
+/// A page body for `FundingRateHistoryResponse`: `n` funding-rate points,
+/// plus the envelope's `page`/`limit`/`data` (no `total` field).
+fn funding_rate_history_page_body(page: i64, limit: i64, n: usize) -> String {
+    let data: Vec<String> = (0..n).map(|i| format!(r#"{{"d":{i},"f":0.01}}"#)).collect();
+    format!(
+        r#"{{"data":[{}],"exchange":"binance","limit":{limit},"page":{page},"sort":"asc","symbol":"BTCUSDT"}}"#,
+        data.join(",")
+    )
+}
+
+/// `FundingRateHistoryResponse` has no `total` field, so the paginator must
+/// rely solely on the empty-page terminal condition: it walks forward while
+/// pages return data, then stops on the first empty page.
+#[tokio::test]
+async fn paginate_walks_total_less_envelope_until_empty_page() {
+    let mut server = mockito::Server::new_async().await;
+
+    let page1 = server
+        .mock("GET", "/api/v1/funding-rate/history")
+        .match_query(Matcher::UrlEncoded("page".into(), "1".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(funding_rate_history_page_body(1, 2, 2))
+        .expect(1)
+        .create_async()
+        .await;
+
+    let page2 = server
+        .mock("GET", "/api/v1/funding-rate/history")
+        .match_query(Matcher::UrlEncoded("page".into(), "2".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(funding_rate_history_page_body(2, 2, 0))
+        .expect(1)
+        .create_async()
+        .await;
+
+    let client = mock_client(server.url());
+    let mut pages = client
+        .paginate::<FundingRateHistoryResponse>("/api/v1/funding-rate/history", BTreeMap::new());
+
+    let first = pages.next_page().await.expect("first page ok");
+    assert_eq!(first.map(|items| items.len()), Some(2));
+
+    let second = pages.next_page().await.expect("empty page ok");
+    assert!(second.is_none(), "empty page must terminate the paginator");
+
+    page1.assert_async().await;
+    page2.assert_async().await;
+}
+
+// --- Async Stream support (issue #102), `stream` feature ----------------
+
+/// [`Paginator`](datamaxi::api::Paginator) implements [`futures::Stream`]
+/// under the `stream` feature: `.next().await` walks pages the same way
+/// `next_page()` does, stopping once the server has no more data.
+#[cfg(feature = "stream")]
+#[tokio::test]
+async fn paginate_stream_walks_multiple_pages_until_total_reached() {
+    use futures::StreamExt;
+
+    let mut server = mockito::Server::new_async().await;
+
+    let page1 = server
+        .mock("GET", "/api/v1/cex/announcements")
+        .match_query(Matcher::UrlEncoded("page".into(), "1".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(page_body(1, 2, 3, 2))
+        .expect(1)
+        .create_async()
+        .await;
+
+    let page2 = server
+        .mock("GET", "/api/v1/cex/announcements")
+        .match_query(Matcher::UrlEncoded("page".into(), "2".into()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(page_body(2, 2, 3, 1))
+        .expect(1)
+        .create_async()
+        .await;
+
+    let client = mock_client(server.url());
+    let mut params = BTreeMap::new();
+    params.insert("limit".to_string(), "2".to_string());
+    let mut pages =
+        client.paginate::<CexAnnouncementsResponse>("/api/v1/cex/announcements", params);
+
+    let first = pages.next().await.expect("first page present");
+    assert_eq!(first.expect("first page ok").len(), 2);
+
+    let second = pages.next().await.expect("second page present");
+    assert_eq!(second.expect("second page ok").len(), 1);
+
+    // Terminal: the stream yields `None` once `total` is reached, without a
+    // third HTTP call.
+    assert!(pages.next().await.is_none());
+
+    page1.assert_async().await;
+    page2.assert_async().await;
 }

@@ -14,6 +14,19 @@
 //!   custom auth, metrics, or logging middleware. When omitted, the client
 //!   falls back to the built-in defaults (`User-Agent`, unbounded idle pool,
 //!   the configured timeout).
+//!
+//! ## Pagination
+//!
+//! [`Client::paginate`] / [`blocking::Client::paginate`] auto-paginate any
+//! [`Paginated`] response envelope, whether or not it reports a `total` (see
+//! [`Paginated::total`]). The async [`Paginator`] is a plain `next_page()`
+//! cursor by default; enabling the opt-in **`stream` feature** additionally
+//! implements
+//! [`Stream`](https://docs.rs/futures-core/latest/futures_core/stream/trait.Stream.html)
+//! for it, so it composes with `futures`/`StreamExt` combinators and
+//! `.next().await`. Off by default and compiles away entirely (no
+//! `futures-core` dependency pulled in) when disabled. The blocking
+//! [`blocking::Paginator`] already implements [`Iterator`] unconditionally.
 
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
@@ -460,16 +473,16 @@ impl Client {
     }
 }
 
-/// Implemented by paged response envelopes — the `page`/`limit`/`total`/`data`
-/// shape shared by several Datamaxi+ endpoints (e.g. `CexAnnouncementsResponse`) —
-/// so [`Client::paginate`] / [`blocking::Client::paginate`] can drive a generic
-/// auto-paginator over them without codegen needing to emit a bespoke helper
-/// per endpoint.
+/// Implemented by paged response envelopes — the `page`/`limit`/`data` shape
+/// shared by several Datamaxi+ endpoints, with or without a `total` (e.g.
+/// `CexAnnouncementsResponse` reports `total`; `FundingRateHistoryResponse`
+/// does not) — so [`Client::paginate`] / [`blocking::Client::paginate`] can
+/// drive a generic auto-paginator over them without codegen needing to emit a
+/// bespoke helper per endpoint.
 ///
-/// Only response envelopes that report all three of `page`, `limit`, and
-/// `total` implement this trait today; a handful of generated responses carry
-/// `page`/`limit`/`data` without a `total` (e.g. `FundingRateHistoryResponse`)
-/// and are not yet covered — see the crate's pagination docs.
+/// Envelopes without a `total` (see [`Paginated::total`]) auto-paginate the
+/// same way, just terminating only on an empty page rather than also on
+/// `page * limit >= total`.
 pub trait Paginated {
     /// The item type yielded per page (the envelope's `data` element type).
     type Item;
@@ -489,6 +502,10 @@ pub trait Paginated {
 
 /// Implements [`Paginated`] for a `page`/`limit`/`total`/`data` response
 /// envelope, mapping its fields directly (`data` -> items).
+///
+/// A second arm, `impl_paginated!($response, $item, no_total)`, covers the
+/// `page`/`limit`/`data` shape without a `total` field: [`Paginated::total`]
+/// returns `None`, so [`consume_page`] terminates only on an empty page.
 macro_rules! impl_paginated {
     ($response:ty, $item:ty) => {
         impl Paginated for $response {
@@ -504,6 +521,27 @@ macro_rules! impl_paginated {
 
             fn total(&self) -> Option<i64> {
                 Some(self.total)
+            }
+
+            fn into_items(self) -> Vec<Self::Item> {
+                self.data
+            }
+        }
+    };
+    ($response:ty, $item:ty, no_total) => {
+        impl Paginated for $response {
+            type Item = $item;
+
+            fn page(&self) -> i64 {
+                self.page
+            }
+
+            fn limit(&self) -> i64 {
+                self.limit
+            }
+
+            fn total(&self) -> Option<i64> {
+                None
             }
 
             fn into_items(self) -> Vec<Self::Item> {
@@ -537,11 +575,15 @@ impl_paginated!(
     crate::generated::TelegramMessagesResponse,
     crate::generated::TelegramMessagesView
 );
+impl_paginated!(
+    crate::generated::FundingRateHistoryResponse,
+    crate::generated::FundingRateHistoryView,
+    no_total
+);
 
 /// Async auto-paginator returned by [`Client::paginate`].
 ///
-/// Not a [`futures::Stream`](https://docs.rs/futures) — the crate takes no
-/// dependency on `futures` for this — `next_page` is a plain cursor:
+/// `next_page` is a plain cursor, with no dependency on `futures`:
 ///
 /// ```no_run
 /// use datamaxi::api::ClientBuilder;
@@ -561,6 +603,34 @@ impl_paginated!(
 /// # Ok(())
 /// # }
 /// ```
+///
+/// With the opt-in `stream` feature, [`Paginator`] also implements
+/// [`Stream`](https://docs.rs/futures-core/latest/futures_core/stream/trait.Stream.html)
+/// (the trait re-exported as `futures::Stream` by the
+/// [`futures`](https://docs.rs/futures) crate), yielding one
+/// `Result<Vec<T::Item>>` per page, so it composes with `futures`/`StreamExt`
+/// combinators and `.next().await`:
+///
+/// ```no_run
+/// # #[cfg(feature = "stream")]
+/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+/// use datamaxi::api::ClientBuilder;
+/// use datamaxi::CexAnnouncementsResponse;
+/// use futures::StreamExt;
+/// use std::collections::BTreeMap;
+///
+/// let client = ClientBuilder::new().api_key("my_api_key").build()?;
+/// let mut pages = client
+///     .paginate::<CexAnnouncementsResponse>("/api/v1/cex/announcements", BTreeMap::new());
+///
+/// while let Some(page) = pages.next().await {
+///     for item in page? {
+///         println!("{}", item.title);
+///     }
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub struct Paginator<T: Paginated> {
     client: Client,
     endpoint: String,
@@ -568,6 +638,12 @@ pub struct Paginator<T: Paginated> {
     next_page: i64,
     done: bool,
     _marker: PhantomData<T>,
+    /// The in-flight `next_page()` future backing [`futures_core::Stream::poll_next`],
+    /// present only under the `stream` feature. Built from owned clones of
+    /// `client`/`endpoint`/`params` (rather than borrowing `self`) so it can
+    /// be stored across `poll_next` calls without a self-referential struct.
+    #[cfg(feature = "stream")]
+    pending: Option<std::pin::Pin<Box<dyn std::future::Future<Output = Result<T>> + Send>>>,
 }
 
 impl<T> Paginator<T>
@@ -583,6 +659,8 @@ where
             next_page,
             done: false,
             _marker: PhantomData,
+            #[cfg(feature = "stream")]
+            pending: None,
         }
     }
 
@@ -608,6 +686,71 @@ where
     /// flavors share the exact same terminal-condition logic.
     fn consume_response(&mut self, response: T) -> Option<Vec<T::Item>> {
         consume_page(&mut self.next_page, &mut self.done, response)
+    }
+}
+
+/// [`futures_core::Stream`] over [`Paginator`]'s pages, gated by the `stream`
+/// feature so the `futures-core` dependency stays opt-in. Yields one
+/// `Result<Vec<T::Item>>` per page and, like [`Iterator`] for
+/// [`blocking::Paginator`], stops (yields `None`) once the server reports no
+/// more data, and after the first `Err`.
+///
+/// Each poll drives an owned future built from clones of `client`/`endpoint`/
+/// `params` (see [`Paginator::pending`]) rather than borrowing `self`, so the
+/// future can be stored across `poll_next` calls without a self-referential
+/// struct; on `Poll::Ready`, the same [`consume_page`] bookkeeping used by
+/// `next_page` updates `next_page`/`done`.
+#[cfg(feature = "stream")]
+impl<T> futures_core::Stream for Paginator<T>
+where
+    T: Paginated + DeserializeOwned + Send + Unpin + 'static,
+{
+    type Item = Result<Vec<T::Item>>;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        use std::task::Poll;
+
+        let this = self.get_mut();
+
+        if this.done {
+            return Poll::Ready(None);
+        }
+
+        if this.pending.is_none() {
+            let client = this.client.clone();
+            let endpoint = this.endpoint.clone();
+            let mut params = this.params.clone();
+            params.insert("page".to_string(), this.next_page.to_string());
+            this.pending = Some(Box::pin(async move {
+                client.get::<T>(&endpoint, Some(params)).await
+            }));
+        }
+
+        let pending = this
+            .pending
+            .as_mut()
+            .expect("pending future was just set above");
+        match pending.as_mut().poll(cx) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(result) => {
+                this.pending = None;
+                match result {
+                    Ok(response) => Poll::Ready(
+                        consume_page(&mut this.next_page, &mut this.done, response).map(Ok),
+                    ),
+                    Err(error) => {
+                        // Stop the stream after an error rather than retrying
+                        // the same page forever, mirroring the blocking
+                        // `Iterator` impl.
+                        this.done = true;
+                        Poll::Ready(Some(Err(error)))
+                    }
+                }
+            }
+        }
     }
 }
 
