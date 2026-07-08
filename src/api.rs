@@ -289,6 +289,38 @@ impl BuilderState {
 /// whether `send`, the backoff sleep, and `handle_response` are awaited: pass
 /// `await` as the trailing argument for the async flavor, and omit it for the
 /// blocking flavor.
+///
+/// ## Why a macro (issue #103)
+///
+/// This was evaluated for a non-macro replacement and the macro was kept.
+/// The interesting, error-prone parts of the loop — backoff math, jitter,
+/// `Retry-After` parsing, retryable-status/error classification — are
+/// already ordinary, independently unit-tested functions ([`backoff_delay`],
+/// [`apply_jitter`], [`retry_delay_for_response`], [`is_retryable_status`],
+/// [`is_retryable_error`]); the macro's only remaining job is the thin,
+/// mechanical glue around a single `await`-or-not difference. Alternatives
+/// considered:
+/// - **Two plain functions (one `async fn`, one sync `fn`), each calling the
+///   shared helpers above.** This is real Rust, no macro syntax, but an
+///   `async fn` can't conditionally await, so the ~30-line loop skeleton
+///   itself (request building, the retry/return branch, tracing) would still
+///   have to be written out twice and kept in sync by hand — exactly the
+///   duplication [#76](https://github.com/Bisonai/datamaxi-rust/issues/76)
+///   removed by introducing this macro.
+/// - **Async-fn-in-traits / async closures** (both stable at MSRV 1.86) to
+///   express `send`/`sleep`/`handle_response` as one generic driver. This
+///   only unifies the *async* call site; running that same async driver from
+///   the blocking flavor still needs something to poll the future to
+///   completion, which means either a new dependency (e.g. `pollster`) or
+///   hand-rolled `Waker`/`Future::poll` plumbing — more moving parts, no
+///   dependency-free win, and strictly harder to read/debug than this macro.
+/// - **A `maybe-async`-style attribute macro.** Trades one macro for a
+///   proc-macro dependency; no readability or debuggability improvement, and
+///   adds a build dependency where there is none today.
+///
+/// None of these are genuinely clearer while preserving identical
+/// async/blocking behavior, zero extra runtime deps, and MSRV 1.86, so the
+/// macro stays.
 macro_rules! get_loop {
     ($self:expr, $endpoint:expr, $parameters:expr, $handle_response:path, $sleep:path $(, $aw:ident)?) => {{
         let url: String = format!("{}{}", $self.base_url, $endpoint);
