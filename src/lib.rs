@@ -99,14 +99,17 @@ pub mod generated;
 /// `blocking` feature, a parallel [`blocking`] module offers synchronous
 /// equivalents.
 ///
-/// ```ignore
+/// ```no_run
 /// use datamaxi::{Client, LiquidationHeatmapOptions};
 ///
+/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
 /// let client = Client::new("YOUR_API_KEY");
 /// let heatmap = client
 ///     .liquidation()
 ///     .heatmap(LiquidationHeatmapOptions::new())
 ///     .await?;
+/// # Ok(())
+/// # }
 /// ```
 pub use generated::*;
 
