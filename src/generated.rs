@@ -7,7 +7,6 @@ use std::collections::BTreeMap;
 // --- Response models ---
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexAnnouncementsResponse {
     /// specifies the exchanges of the announcements
     #[serde(default)]
@@ -26,7 +25,6 @@ pub struct CexAnnouncementsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexAnnouncementsView {
     /// specifies the category of the announcement
     #[serde(rename = "c")]
@@ -49,7 +47,6 @@ pub struct CexAnnouncementsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexCandleResponse {
     pub currency: String,
     pub data: Vec<CexCandleView>,
@@ -60,7 +57,6 @@ pub struct CexCandleResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexCandleSymbolsView {
     /// specifies the base symbol
     #[serde(rename = "b")]
@@ -82,7 +78,6 @@ pub struct CexCandleSymbolsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexCandleView {
     /// specifies close price of the candle
     #[serde(rename = "c")]
@@ -105,7 +100,6 @@ pub struct CexCandleView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexFeesView {
     /// specifies base symbol
     pub base: String,
@@ -130,7 +124,6 @@ pub struct CexFeesView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolCautionsView {
     #[serde(rename = "b")]
     pub base: String,
@@ -150,7 +143,6 @@ pub struct CexSymbolCautionsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolDelistingsView {
     #[serde(rename = "b")]
     pub base: String,
@@ -170,7 +162,6 @@ pub struct CexSymbolDelistingsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolLiquidationView {
     #[serde(rename = "b")]
     pub base: String,
@@ -194,7 +185,6 @@ pub struct CexSymbolLiquidationView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolMetadataView {
     #[serde(rename = "b")]
     pub base: String,
@@ -224,7 +214,6 @@ pub struct CexSymbolMetadataView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolOiStatsView {
     #[serde(rename = "b")]
     pub base: String,
@@ -257,7 +246,6 @@ pub struct CexSymbolOiStatsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolOiView {
     #[serde(rename = "b")]
     pub base: String,
@@ -275,7 +263,6 @@ pub struct CexSymbolOiView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolTagsView {
     #[serde(rename = "b")]
     pub base: String,
@@ -291,7 +278,6 @@ pub struct CexSymbolTagsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexSymbolVolumeView {
     #[serde(rename = "b")]
     pub base: String,
@@ -311,7 +297,6 @@ pub struct CexSymbolVolumeView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexTokenUpdatesResponse {
     /// `data` specifies an array of the token updates
     pub data: Vec<CexTokenUpdatesView>,
@@ -324,7 +309,6 @@ pub struct CexTokenUpdatesResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct CexTokenUpdatesView {
     /// Specifies the base token
     #[serde(rename = "b")]
@@ -347,7 +331,6 @@ pub struct CexTokenUpdatesView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct ForexResponse {
     /// specifies the unix timestamp of the forex rate
     #[serde(rename = "d")]
@@ -361,7 +344,6 @@ pub struct ForexResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct FundingRateHistoryResponse {
     pub data: Vec<FundingRateHistoryView>,
     pub exchange: String,
@@ -372,7 +354,6 @@ pub struct FundingRateHistoryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct FundingRateHistoryView {
     /// specifies the date and time in UNIX timestamp format
     #[serde(rename = "d")]
@@ -383,7 +364,6 @@ pub struct FundingRateHistoryView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct FundingRateLatestResponse {
     /// Specifies the base
     #[serde(rename = "b")]
@@ -412,7 +392,6 @@ pub struct FundingRateLatestResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct FundingRateSymbolsView {
     /// specifies the base symbol
     #[serde(rename = "b")]
@@ -434,13 +413,11 @@ pub struct FundingRateSymbolsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct IndexPriceResponse {
     pub data: Vec<IndexPriceView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct IndexPriceView {
     pub price: f64,
     pub timestamp: i64,
@@ -448,7 +425,6 @@ pub struct IndexPriceView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationEntry {
     pub base: String,
     pub exchange: String,
@@ -467,7 +443,6 @@ pub struct LiquidationEntry {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationFeedEntry {
     pub base: String,
     pub exchange: String,
@@ -486,13 +461,11 @@ pub struct LiquidationFeedEntry {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationFeedResponse {
     pub data: Vec<LiquidationFeedEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationHeatmapCell {
     pub base: String,
     pub exchange: String,
@@ -507,7 +480,6 @@ pub struct LiquidationHeatmapCell {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationHeatmapExchangesummary {
     pub exchange: String,
     #[serde(rename = "longUsd")]
@@ -519,7 +491,6 @@ pub struct LiquidationHeatmapExchangesummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationHeatmapResponse {
     /// (top tokens) × (all exchanges with data)
     pub cells: Vec<LiquidationHeatmapCell>,
@@ -537,7 +508,6 @@ pub struct LiquidationHeatmapResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationHeatmapTokensummary {
     pub base: String,
     #[serde(rename = "longUsd")]
@@ -553,7 +523,6 @@ pub struct LiquidationHeatmapTokensummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationMapAssumptions {
     #[serde(rename = "entrySamples")]
     pub entry_samples: i64,
@@ -566,7 +535,6 @@ pub struct LiquidationMapAssumptions {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationMapBucket {
     #[serde(rename = "l100xUsd")]
     pub l100x_usd: f64,
@@ -583,7 +551,6 @@ pub struct LiquidationMapBucket {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationMapResponse {
     pub assumptions: LiquidationMapAssumptions,
     pub base: String,
@@ -604,20 +571,17 @@ pub struct LiquidationMapResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationMapTierassumption {
     pub leverage: i64,
     pub share: f64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationResponse {
     pub data: Vec<LiquidationEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationStatsBiggest {
     pub base: String,
     pub exchange: String,
@@ -627,7 +591,6 @@ pub struct LiquidationStatsBiggest {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationStatsResponse {
     #[serde(default)]
     pub biggest: Option<LiquidationStatsBiggest>,
@@ -654,7 +617,6 @@ pub struct LiquidationStatsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationSymbolHistoryBucket {
     #[serde(rename = "longUsd")]
     pub long_usd: f64,
@@ -668,7 +630,6 @@ pub struct LiquidationSymbolHistoryBucket {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct LiquidationSymbolHistoryResponse {
     pub buckets: Vec<LiquidationSymbolHistoryBucket>,
     pub exchange: String,
@@ -685,13 +646,11 @@ pub struct LiquidationSymbolHistoryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct ListingsHistoricalResponse {
     pub data: Vec<ListingsHistoricalView>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct ListingsHistoricalView {
     pub announced_at: i64,
     pub base: String,
@@ -706,14 +665,12 @@ pub struct ListingsHistoricalView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct MarginBorrowResponse {
     pub cross: serde_json::Value,
     pub isolated: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct NaverTrendView {
     #[serde(rename = "d")]
     pub timestamp: i64,
@@ -722,7 +679,6 @@ pub struct NaverTrendView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestHistoryAggregatedResponse {
     /// Data is keyed by exchange id → time-series points ordered by t asc.
     pub data: serde_json::Value,
@@ -731,7 +687,6 @@ pub struct OpenInterestHistoryAggregatedResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestListEntry {
     pub base: String,
     pub exchange: String,
@@ -747,13 +702,11 @@ pub struct OpenInterestListEntry {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestListResponse {
     pub data: Vec<OpenInterestListEntry>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestOverviewResponse {
     pub data: Vec<OpenInterestOverviewView>,
     #[serde(default)]
@@ -765,7 +718,6 @@ pub struct OpenInterestOverviewResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestOverviewView {
     pub exchanges: serde_json::Value,
     pub id: String,
@@ -773,7 +725,6 @@ pub struct OpenInterestOverviewView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestResponse {
     pub base: String,
     pub exchange: String,
@@ -789,7 +740,6 @@ pub struct OpenInterestResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestSummaryExchangesummary {
     pub exchange: String,
     #[serde(rename = "openInterestUsd")]
@@ -798,7 +748,6 @@ pub struct OpenInterestSummaryExchangesummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestSummaryResponse {
     pub exchanges: Vec<OpenInterestSummaryExchangesummary>,
     #[serde(rename = "generatedAt")]
@@ -811,7 +760,6 @@ pub struct OpenInterestSummaryResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct OpenInterestSummaryTokensummary {
     pub base: String,
     pub icon: String,
@@ -825,7 +773,6 @@ pub struct OpenInterestSummaryTokensummary {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct PremiumDetail {
     pub bid: String,
     /// specifies the date and the time in UTC milliseconds
@@ -1035,7 +982,6 @@ pub struct PremiumDetail {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct PremiumResponse {
     #[serde(default)]
     pub conversion_base: Option<String>,
@@ -1051,7 +997,6 @@ pub struct PremiumResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct PremiumView {
     pub detail: PremiumDetail,
     #[serde(default)]
@@ -1061,7 +1006,6 @@ pub struct PremiumView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TelegramChannelsResponse {
     #[serde(default)]
     pub category: Option<String>,
@@ -1075,7 +1019,6 @@ pub struct TelegramChannelsResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TelegramChannelsView {
     /// specifies the channel category
     pub category: String,
@@ -1097,7 +1040,6 @@ pub struct TelegramChannelsView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TelegramMessagesResponse {
     #[serde(default)]
     pub category: Option<String>,
@@ -1112,7 +1054,6 @@ pub struct TelegramMessagesResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TelegramMessagesView {
     /// specifies the channel handle
     #[serde(rename = "channelHandle")]
@@ -1143,7 +1084,6 @@ pub struct TelegramMessagesView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TickerResponse {
     pub currency: String,
     pub data: TickerView,
@@ -1154,7 +1094,6 @@ pub struct TickerResponse {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TickerView {
     /// specifies the base token
     #[serde(rename = "b")]
@@ -1201,7 +1140,6 @@ pub struct TickerView {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct TokenDetail {
     /// specifies cmc id of the token
     #[serde(default)]
@@ -1217,7 +1155,6 @@ pub struct TokenDetail {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[non_exhaustive]
 pub struct WalletStatusView {
     pub currency: String,
     pub deposit_message: String,
