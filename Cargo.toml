@@ -14,7 +14,11 @@ categories = ["api-bindings"]
 authors = ["Bisonai"]
 
 [dependencies]
-reqwest = { version = "0.12.7", features = ["json"] }
+# default-features off so callers can pick `native-tls` (default) or
+# `rustls-tls`; re-enable everything else reqwest's own defaults bring
+# (charset, http2, macos-system-configuration) so opting out of TLS choice
+# is the only behavior change.
+reqwest = { version = "0.12.7", default-features = false, features = ["json", "charset", "http2", "macos-system-configuration"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 thiserror = "2.0.11"
@@ -35,7 +39,12 @@ tracing = { version = "0.1", optional = true }
 futures-core = { version = "0.3", optional = true }
 
 [features]
-default = []
+default = ["native-tls"]
+# Forwards to reqwest's `default-tls` (not reqwest's own `native-tls`
+# feature) to preserve today's exact behavior without also exposing
+# native-tls types in reqwest's public API.
+native-tls = ["reqwest/default-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
 blocking = ["reqwest/blocking"]
 tracing = ["dep:tracing"]
 stream = ["dep:futures-core"]
