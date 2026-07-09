@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 //! # DataMaxi+ Rust SDK
 //!
 //! This is the official implementation of Rust SDK for [DataMaxi+](https://datamaxiplus.com/).

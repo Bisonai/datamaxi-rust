@@ -701,6 +701,7 @@ where
 /// struct; on `Poll::Ready`, the same [`consume_page`] bookkeeping used by
 /// `next_page` updates `next_page`/`done`.
 #[cfg(feature = "stream")]
+#[cfg_attr(docsrs, doc(cfg(feature = "stream")))]
 impl<T> futures_core::Stream for Paginator<T>
 where
     T: Paginated + DeserializeOwned + Send + Unpin + 'static,
@@ -1004,6 +1005,7 @@ pub enum Error {
 /// scripts, notebooks, and other callers that don't run an async runtime. The
 /// generated endpoint wrappers under [`crate::generated::blocking`] use this.
 #[cfg(feature = "blocking")]
+#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
 pub mod blocking {
     use super::{
         consume_page, is_retryable_error, is_retryable_status, jittered_backoff_delay,
