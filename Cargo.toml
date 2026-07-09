@@ -50,3 +50,7 @@ tracing = "0.1"
 # Unconditional dev-dependency so the `stream`-gated pagination test can drive
 # the `Stream` impl with `StreamExt::next`; does not affect release builds.
 futures = "0.3"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
