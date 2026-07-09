@@ -32,6 +32,10 @@ static/`scratch`/distroless builds with no OpenSSL system dependency):
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", default-features = false, features = ["rustls-tls"] }
 ```
 
+`default-features = false` without also selecting `rustls-tls` fails to
+build (no TLS backend selected) rather than silently linking a client
+with no HTTPS support.
+
 ### Observability
 
 Two independent, opt-in hooks:
