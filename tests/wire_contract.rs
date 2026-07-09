@@ -13,8 +13,8 @@
 
 use datamaxi::api::{Client, ClientBuilder, Error};
 use datamaxi::{
-    CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexFeesOptions, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions,
+    CexCandle, CexCandleCurrency, CexCandleExchangesMarket, CexCandleInterval, CexCandleMarket,
+    CexCandleOptions, CexFeesOptions, CexSymbolCautionsMinLevel, CexSymbolCautionsOptions,
     CexSymbolLiquidationOptions, LiquidationHeatmapOptions, LiquidationHeatmapResponse,
     LiquidationHeatmapWindow, LiquidationStatsOptions, LiquidationStatsWindow,
     OpenInterestSummaryOptions, PremiumOptions, PremiumPremiumType,
@@ -136,7 +136,7 @@ async fn cex_candle_sends_required_and_optional_keys() {
     let candle = mock_client(server.url()).cex_candle();
     let opts = CexCandleOptions::new()
         .market(CexCandleMarket::Spot)
-        .interval("1h")
+        .interval(CexCandleInterval::_1h)
         .currency(CexCandleCurrency::USD);
     let res = candle.get("binance", "BTC-USDT", opts).await;
 
@@ -1050,7 +1050,7 @@ async fn cex_candle_decodes_renamed_ohlcv_fields() {
             "BTC-USDT",
             CexCandleOptions::new()
                 .market(CexCandleMarket::Spot)
-                .interval("1h")
+                .interval(CexCandleInterval::_1h)
                 .currency(CexCandleCurrency::USD),
         )
         .await
