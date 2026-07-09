@@ -126,3 +126,10 @@ pub use api::{Client, ClientBuilder};
 /// `reqwest` to their own `Cargo.toml` and risking a version mismatch with
 /// this crate's dependency.
 pub use reqwest;
+
+#[cfg(not(any(feature = "native-tls", feature = "rustls-tls")))]
+compile_error!(
+    "datamaxi requires a TLS backend: enable either the `native-tls` (default) \
+     or `rustls-tls` feature. If you set `default-features = false`, add \
+     `features = [\"rustls-tls\"]`."
+);

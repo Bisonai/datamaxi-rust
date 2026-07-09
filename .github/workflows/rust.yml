@@ -50,3 +50,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --all-features
       - run: cargo test --all-features
+
+  rustls:
+    name: rustls-tls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --no-default-features --features rustls-tls
+      - run: cargo build --no-default-features --features rustls-tls,blocking

@@ -22,6 +22,20 @@ wrappers under `datamaxi::blocking`:
 datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["blocking"] }
 ```
 
+### TLS backend
+
+`native-tls` (OpenSSL) is on by default. To use `rustls` instead (e.g. for
+static/`scratch`/distroless builds with no OpenSSL system dependency):
+
+```toml
+[dependencies]
+datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", default-features = false, features = ["rustls-tls"] }
+```
+
+`default-features = false` without also selecting `rustls-tls` fails to
+build (no TLS backend selected) rather than silently linking a client
+with no HTTPS support.
+
 ### Observability
 
 Two independent, opt-in hooks:
