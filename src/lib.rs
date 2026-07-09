@@ -114,3 +114,11 @@ pub use generated::*;
 /// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
 /// off the client via generated accessors, e.g. `client.cex_candle()`.
 pub use api::{Client, ClientBuilder};
+
+/// Re-exported so callers can name the exact `reqwest::Client` /
+/// `reqwest::blocking::Client` type expected by
+/// [`ClientBuilder::http_client`] / `blocking::ClientBuilder::http_client`
+/// (and the `reqwest::Error` wrapped by [`api::Error::Http`]) without adding
+/// `reqwest` to their own `Cargo.toml` and risking a version mismatch with
+/// this crate's dependency.
+pub use reqwest;

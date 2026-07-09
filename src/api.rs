@@ -900,10 +900,12 @@ impl ClientBuilder {
         self
     }
 
-    /// Overrides the internally-built `reqwest::Client` with a caller-supplied
-    /// one — the escape hatch for custom middleware, timeouts, proxies, or
-    /// instrumentation (e.g. a `reqwest-middleware` client wrapped down to its
-    /// inner `reqwest::Client`, or one built with `reqwest_tracing`).
+    /// Overrides the internally-built `datamaxi::reqwest::Client` with a
+    /// caller-supplied one — the escape hatch for custom middleware,
+    /// timeouts, proxies, or instrumentation (e.g. a `reqwest-middleware`
+    /// client wrapped down to its inner `reqwest::Client`, or one built with
+    /// `reqwest_tracing`). Use the crate's re-exported [`crate::reqwest`] to
+    /// build it, so the type always matches without a version mismatch.
     ///
     /// When set, [`ClientBuilder::timeout`] is ignored for HTTP-level
     /// settings (the caller's client is used as-is); [`build`](Self::build)
@@ -1264,9 +1266,11 @@ pub mod blocking {
             self
         }
 
-        /// Overrides the internally-built `reqwest::blocking::Client` with a
-        /// caller-supplied one. Mirrors [`super::ClientBuilder::http_client`]
-        /// for the blocking flavor.
+        /// Overrides the internally-built `datamaxi::reqwest::blocking::Client`
+        /// with a caller-supplied one. Mirrors
+        /// [`super::ClientBuilder::http_client`] for the blocking flavor; use
+        /// the crate's re-exported [`crate::reqwest`] to build it, so the
+        /// type always matches without a version mismatch.
         pub fn http_client(mut self, client: reqwest::blocking::Client) -> Self {
             self.http_client = Some(client);
             self

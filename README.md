@@ -34,9 +34,11 @@ Two independent, opt-in hooks:
   ```
 - **Custom HTTP client** — `ClientBuilder::http_client` (and the `blocking`
   mirror) let you supply your own pre-built `reqwest::Client`, e.g. wrapped
-  with `reqwest-middleware` for custom auth, metrics, or logging:
+  with `reqwest-middleware` for custom auth, metrics, or logging. Use the
+  crate's re-exported `datamaxi::reqwest` to build it, so the type always
+  matches without a version mismatch:
   ```rust,ignore
-  let http = reqwest::Client::builder().build()?;
+  let http = datamaxi::reqwest::Client::builder().build()?;
   let client = ClientBuilder::new().api_key("my_api_key").http_client(http).build()?;
   ```
 
