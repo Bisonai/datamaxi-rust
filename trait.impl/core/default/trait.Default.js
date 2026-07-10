@@ -1,5 +1,5 @@
 (function() {
-    const implementors = Object.fromEntries([["datamaxi",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.96.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"datamaxi/api/struct.ClientBuilder.html\" title=\"struct datamaxi::api::ClientBuilder\">ClientBuilder</a>",0]]]]);
+    const implementors = Object.fromEntries([["datamaxi",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.97.0/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"datamaxi/api/struct.ClientBuilder.html\" title=\"struct datamaxi::api::ClientBuilder\">ClientBuilder</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
