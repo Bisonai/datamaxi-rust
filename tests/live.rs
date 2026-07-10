@@ -24,11 +24,12 @@
 
 use datamaxi::Client;
 use datamaxi::{
-    CexAnnouncementsOptions, CexCandleExchangesMarket, CexCandleMarket, CexCandleOptions,
-    CexTokenUpdatesOptions, FundingRateHistoryOptions, IndexPriceOptions, LiquidationFeedOptions,
-    LiquidationHeatmapOptions, LiquidationHeatmapWindow, LiquidationMapOptions, LiquidationOptions,
-    LiquidationStatsOptions, LiquidationStatsWindow, LiquidationSymbolHistoryInterval,
-    LiquidationSymbolHistoryOptions, LiquidationSymbolHistoryWindow, ListingsHistoricalOptions,
+    CexAnnouncementsOptions, CexCandleExchangesMarket, CexCandleInterval, CexCandleMarket,
+    CexCandleOptions, CexTokenUpdatesOptions, FundingRateHistoryOptions, IndexPriceOptions,
+    LiquidationFeedOptions, LiquidationHeatmapOptions, LiquidationHeatmapWindow,
+    LiquidationMapOptions, LiquidationOptions, LiquidationStatsOptions, LiquidationStatsWindow,
+    LiquidationSymbolHistoryInterval, LiquidationSymbolHistoryOptions,
+    LiquidationSymbolHistoryWindow, ListingsHistoricalOptions,
     OpenInterestHistoryAggregatedOptions, OpenInterestListOptions, OpenInterestOverviewOptions,
     OpenInterestSummaryOptions, PremiumOptions, TelegramChannelsOptions, TelegramMessagesOptions,
     TickerMarket, TickerOptions,
@@ -84,7 +85,7 @@ async fn live_cex_candle_get() {
 
     let opts = CexCandleOptions::new()
         .market(CexCandleMarket::Spot)
-        .interval("1h");
+        .interval(CexCandleInterval::_1h);
     let v = candle
         .get("binance", "BTC-USDT", opts)
         .await

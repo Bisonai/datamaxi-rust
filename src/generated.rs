@@ -1403,6 +1403,41 @@ impl std::fmt::Display for CexCandleCurrency {
     }
 }
 
+/// Specifies interval
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+#[non_exhaustive]
+pub enum CexCandleInterval {
+    _1m,
+    _5m,
+    _15m,
+    _1h,
+    _4h,
+    _12h,
+    _1d,
+}
+
+impl CexCandleInterval {
+    /// The exact wire value this variant serializes to.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CexCandleInterval::_1m => "1m",
+            CexCandleInterval::_5m => "5m",
+            CexCandleInterval::_15m => "15m",
+            CexCandleInterval::_1h => "1h",
+            CexCandleInterval::_4h => "4h",
+            CexCandleInterval::_12h => "12h",
+            CexCandleInterval::_1d => "1d",
+        }
+    }
+}
+
+impl std::fmt::Display for CexCandleInterval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Specifies market type
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -1532,7 +1567,7 @@ pub struct CexCandleOptions {
     /// Specifies currency (e.g. `USD`)
     pub currency: Option<CexCandleCurrency>,
     /// Specifies interval (e.g. `1d`)
-    pub interval: Option<String>,
+    pub interval: Option<CexCandleInterval>,
     /// Specifies from (unix seconds) (e.g. `1735657200`)
     pub from: Option<i64>,
     /// Specifies to (unix seconds) (e.g. `1735693200`)
@@ -1560,8 +1595,8 @@ impl CexCandleOptions {
         self
     }
 
-    pub fn interval(mut self, interval: impl Into<String>) -> Self {
-        self.interval = Some(interval.into());
+    pub fn interval(mut self, interval: CexCandleInterval) -> Self {
+        self.interval = Some(interval);
         self
     }
 
@@ -2217,7 +2252,7 @@ impl CexSymbolMetadataOptions {
 
 #[derive(Default, Clone)]
 pub struct CexSymbolOiOptions {
-    /// Exchange filter (narrows the Redis scan)
+    /// Exchange filter (narrows to a single venue)
     pub exchange: Option<String>,
 }
 
@@ -2551,6 +2586,39 @@ impl FundingRateSymbolsOptions {
 
 // --- IndexPrice ---
 
+/// interval
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+#[non_exhaustive]
+pub enum IndexPriceInterval {
+    _5m,
+    _15m,
+    _1h,
+    _4h,
+    _12h,
+    _1d,
+}
+
+impl IndexPriceInterval {
+    /// The exact wire value this variant serializes to.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            IndexPriceInterval::_5m => "5m",
+            IndexPriceInterval::_15m => "15m",
+            IndexPriceInterval::_1h => "1h",
+            IndexPriceInterval::_4h => "4h",
+            IndexPriceInterval::_12h => "12h",
+            IndexPriceInterval::_1d => "1d",
+        }
+    }
+}
+
+impl std::fmt::Display for IndexPriceInterval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Clone)]
 pub struct IndexPrice {
     client: Client,
@@ -2592,7 +2660,7 @@ pub struct IndexPriceOptions {
     /// Specifies to (unix seconds) (e.g. `1735693200`)
     pub to: Option<i64>,
     /// interval (e.g. `5m`)
-    pub interval: Option<String>,
+    pub interval: Option<IndexPriceInterval>,
 }
 
 impl IndexPriceOptions {
@@ -2614,8 +2682,8 @@ impl IndexPriceOptions {
         self
     }
 
-    pub fn interval(mut self, interval: impl Into<String>) -> Self {
-        self.interval = Some(interval.into());
+    pub fn interval(mut self, interval: IndexPriceInterval) -> Self {
+        self.interval = Some(interval);
         self
     }
 }
