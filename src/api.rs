@@ -825,7 +825,13 @@ async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Re
         StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response).await)),
         status => match map_error_status(status, response.headers()) {
             Some(err) => Err(err),
-            None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+            None => {
+                let code = status.as_u16();
+                Err(Error::UnexpectedStatusCode {
+                    status: code,
+                    body: read_body_capped(response).await,
+                })
+            }
         },
     }
 }
@@ -987,8 +993,19 @@ pub enum Error {
     InternalServerError(String),
 
     /// The API returned a status code the client does not specifically handle.
-    #[error("Received unexpected status code: {0}")]
-    UnexpectedStatusCode(u16),
+    ///
+    /// Carries both the raw status code and the (capped) response body. An
+    /// unexpected status is exactly the case where the body is most useful for
+    /// diagnosis, so — like [`Error::BadRequest`] / [`Error::InternalServerError`]
+    /// — it is preserved rather than discarded. The body is truncated to at most
+    /// [`MAX_ERROR_BODY_BYTES`] bytes on a UTF-8 char boundary.
+    #[error("Received unexpected status code {status}: {body}")]
+    UnexpectedStatusCode {
+        /// The raw HTTP status code.
+        status: u16,
+        /// The response body (capped, possibly empty).
+        body: String,
+    },
 
     /// The underlying HTTP request failed, or the response body could not be decoded.
     #[error(transparent)]
@@ -1215,7 +1232,13 @@ pub mod blocking {
             StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response)?)),
             status => match map_error_status(status, response.headers()) {
                 Some(err) => Err(err),
-                None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+                None => {
+                    let code = status.as_u16();
+                    Err(Error::UnexpectedStatusCode {
+                        status: code,
+                        body: read_body_capped(response)?,
+                    })
+                }
             },
         }
     }

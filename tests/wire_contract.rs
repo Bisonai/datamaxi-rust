@@ -315,17 +315,20 @@ async fn status_404_maps_to_not_found() {
 }
 
 /// An unmapped status (here `502`) still falls through to the catch-all
-/// `UnexpectedStatusCode`, carrying the raw code.
+/// `UnexpectedStatusCode`, carrying the raw code AND the response body (the body
+/// is no longer discarded — issue #116).
 #[tokio::test]
 async fn status_502_maps_to_unexpected_status_code() {
     let err = call_with_status(502, "bad gateway")
         .await
         .expect_err("502 should be Err");
-    assert!(
-        matches!(err, Error::UnexpectedStatusCode(502)),
-        "502 should map to UnexpectedStatusCode(502), got {:?}",
-        err
-    );
+    match err {
+        Error::UnexpectedStatusCode { status, body } => {
+            assert_eq!(status, 502);
+            assert_eq!(body, "bad gateway", "the response body must be carried");
+        }
+        other => panic!("expected UnexpectedStatusCode {{ 502, .. }}, got {:?}", other),
+    }
 }
 
 #[tokio::test]
@@ -834,7 +837,7 @@ async fn retry_exhaustion_returns_error() {
 
     mock.assert_async().await; // exactly 3 attempts
     assert!(
-        matches!(res, Err(Error::UnexpectedStatusCode(503))),
+        matches!(res, Err(Error::UnexpectedStatusCode { status: 503, .. })),
         "expected exhausted retries to surface the 503, got {:?}",
         res
     );
