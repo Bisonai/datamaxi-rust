@@ -1088,9 +1088,6 @@ pub struct TickerResponse {
     pub currency: String,
     pub data: TickerView,
     pub market: String,
-    /// Source is populated only when ?include_source=true; omitempty drops the key for default callers, preserving the pre-Phase-1 JSON byte shape (strict-decoder safe).
-    #[serde(default)]
-    pub src: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -4350,9 +4347,6 @@ impl Ticker {
         if let Some(v) = options.conversion_base {
             parameters.insert("conversion_base".to_string(), v.to_string());
         }
-        if let Some(v) = options.include_source {
-            parameters.insert("include_source".to_string(), v.to_string());
-        }
         self.client.get("/api/v1/ticker", Some(parameters)).await
     }
 
@@ -4386,8 +4380,6 @@ pub struct TickerOptions {
     pub currency: Option<TickerCurrency>,
     /// Specifies conversion base applied to price values (e.g. `USDT`)
     pub conversion_base: Option<TickerConversionBase>,
-    /// When true, include the frame's transport source (ws|rest) in the response. (e.g. `true`)
-    pub include_source: Option<bool>,
 }
 
 impl TickerOptions {
@@ -4395,7 +4387,6 @@ impl TickerOptions {
         TickerOptions {
             currency: None,
             conversion_base: None,
-            include_source: None,
         }
     }
 
@@ -4406,11 +4397,6 @@ impl TickerOptions {
 
     pub fn conversion_base(mut self, conversion_base: TickerConversionBase) -> Self {
         self.conversion_base = Some(conversion_base);
-        self
-    }
-
-    pub fn include_source(mut self, include_source: bool) -> Self {
-        self.include_source = Some(include_source);
         self
     }
 }
@@ -5659,9 +5645,6 @@ pub mod blocking {
             }
             if let Some(v) = options.conversion_base {
                 parameters.insert("conversion_base".to_string(), v.to_string());
-            }
-            if let Some(v) = options.include_source {
-                parameters.insert("include_source".to_string(), v.to_string());
             }
             self.client.get("/api/v1/ticker", Some(parameters))
         }

@@ -2497,7 +2497,6 @@ fn contract_ticker_response() {
             "v": 1.5,
         },
         "market": "s",
-        "src": "s",
     });
     assert_roundtrip::<datamaxi::TickerResponse>(fixture);
 }
@@ -2523,7 +2522,6 @@ fn contract_ticker_response_missing_required() {
             "v": 1.5,
         },
         "market": "s",
-        "src": "s",
     });
     assert_missing_required::<datamaxi::TickerResponse>(fixture, "currency");
 }
