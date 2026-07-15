@@ -1,0 +1,30 @@
+# Supply-chain audit: runs `cargo deny check` against the RustSec advisory
+# database plus the license / bans / sources policy in `deny.toml`. The crate's
+# whole job is to make network calls, so a vulnerable transitive dependency is
+# a real risk worth catching in CI.
+#
+# Triggers on push to main and on every PR, matching rust.yml. Also runs on
+# changes to deny.toml itself and weekly, so newly-published advisories against
+# already-pinned dependencies surface even without a code change.
+
+name: cargo-deny
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories bans licenses sources

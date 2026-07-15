@@ -1,4 +1,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![forbid(unsafe_code)]
+#![warn(missing_docs)]
 //! # DataMaxi+ Rust SDK
 //!
 //! This is the official implementation of Rust SDK for [DataMaxi+](https://datamaxiplus.com/).
@@ -91,7 +93,7 @@ pub mod api;
 // compatibility. The lint allows reflect the generator's unconditional imports
 // and its `new()`-only option constructors.
 #[doc(hidden)]
-#[allow(unused_imports, clippy::new_without_default)]
+#[allow(unused_imports, clippy::new_without_default, missing_docs)]
 pub mod generated;
 
 /// Typed wrappers for every REST endpoint on the data API — the canonical

@@ -1,0 +1,51 @@
+# cargo-deny configuration — supply-chain checks for the datamaxi crate.
+# Run locally with `cargo deny check`; enforced in CI (.github/workflows/deny.yml).
+# Schema targets cargo-deny 0.16+ (the version cargo-deny-action@v2 ships).
+
+# ── Security advisories ──────────────────────────────────────────────────────
+# Checks dependencies against the RustSec advisory database. In cargo-deny
+# 0.16+ vulnerabilities / unmaintained / unsound / notice always error unless
+# explicitly listed in `ignore`, so there are no per-severity knobs here.
+[advisories]
+db-urls = ["https://github.com/rustsec/advisory-db"]
+# Refuse yanked crates.
+yanked = "deny"
+# Advisory IDs to ignore, with a justification comment each. Keep empty.
+ignore = []
+
+# ── Licenses ─────────────────────────────────────────────────────────────────
+# Allow-list of SPDX identifiers. This set covers every license currently in
+# the dependency tree (all permissive / weak-copyleft). A new dependency under
+# a license not listed here fails CI on purpose — add it deliberately.
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "BSL-1.0",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+exceptions = []
+
+# ── Banned / duplicate crates ────────────────────────────────────────────────
+[bans]
+# Duplicate versions of a crate are common in transitive trees and shouldn't
+# fail the build; surface them as warnings instead.
+multiple-versions = "warn"
+# No dependency should use a `*` version requirement.
+wildcards = "deny"
+allow = []
+deny = []
+
+# ── Sources ──────────────────────────────────────────────────────────────────
+# Every dependency must come from crates.io; no unknown registries or git deps.
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

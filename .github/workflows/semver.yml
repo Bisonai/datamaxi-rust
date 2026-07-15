@@ -1,0 +1,34 @@
+# Guards against accidental SemVer violations: cargo-semver-checks diffs the
+# crate's public API against a baseline and fails if the change (added /
+# removed / altered items) is larger than the version bump allows. The crate
+# went 0.3.3 -> 0.12.0 with no mechanical check that the bumps matched the API
+# changes; this adds one.
+#
+# The crate is distributed via git (not published to crates.io), so there is no
+# registry baseline to diff against. Instead we diff each PR's public API
+# against the PR's base commit via `baseline-rev`; `fetch-depth: 0` makes that
+# commit available in the checkout. The action derives the expected bump from
+# the version in Cargo.toml.
+#
+# PR-only: the check is about reviewing an API change before it merges.
+
+name: semver-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  semver-checks:
+    name: semver-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          baseline-rev: ${{ github.event.pull_request.base.sha }}
+          feature-group: all-features
