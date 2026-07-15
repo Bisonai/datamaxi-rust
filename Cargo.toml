@@ -1,6 +1,6 @@
 [package]
 name = "datamaxi"
-version = "0.14.0"
+version = "0.15.0"
 edition = "2021"
 rust-version = "1.86"
 readme = "README.md"
@@ -48,7 +48,7 @@ default = ["native-tls"]
 # native-tls types in reqwest's public API.
 native-tls = ["reqwest/default-tls"]
 rustls-tls = ["reqwest/rustls-tls"]
-blocking = ["reqwest/blocking"]
+sync = ["reqwest/blocking"]
 tracing = ["dep:tracing"]
 stream = ["dep:futures-core"]
 
