@@ -1317,31 +1317,37 @@ impl CexAnnouncementsOptions {
         }
     }
 
+    /// Page number (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Page size (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Specifies sort (e.g. `asc`)
     pub fn sort(mut self, sort: CexAnnouncementsSort) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    /// Specifies key to sort by (e.g. `title`)
     pub fn key(mut self, key: CexAnnouncementsKey) -> Self {
         self.key = Some(key);
         self
     }
 
+    /// Specifies exchange(s), separated by , (e.g. `binance`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Specifies category(s), separated by , (e.g. `listing`)
     pub fn category(mut self, category: CexAnnouncementsCategory) -> Self {
         self.category = Some(category);
         self
@@ -1582,26 +1588,31 @@ impl CexCandleOptions {
         }
     }
 
+    /// Specifies market (e.g. `spot`)
     pub fn market(mut self, market: CexCandleMarket) -> Self {
         self.market = Some(market);
         self
     }
 
+    /// Specifies currency (e.g. `USD`)
     pub fn currency(mut self, currency: CexCandleCurrency) -> Self {
         self.currency = Some(currency);
         self
     }
 
+    /// Specifies interval (e.g. `1d`)
     pub fn interval(mut self, interval: CexCandleInterval) -> Self {
         self.interval = Some(interval);
         self
     }
 
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
     pub fn from(mut self, from: i64) -> Self {
         self.from = Some(from);
         self
     }
 
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
     pub fn to(mut self, to: i64) -> Self {
         self.to = Some(to);
         self
@@ -1619,6 +1630,7 @@ impl CexCandleSymbolsOptions {
         CexCandleSymbolsOptions { market: None }
     }
 
+    /// Specifies market type (e.g. `spot`)
     pub fn market(mut self, market: CexCandleSymbolsMarket) -> Self {
         self.market = Some(market);
         self
@@ -2065,31 +2077,37 @@ impl CexSymbolCautionsOptions {
         }
     }
 
+    /// Exchange filter (comma-separated, empty = all)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// spot or futures
     pub fn market(mut self, market: CexSymbolCautionsMarket) -> Self {
         self.market = Some(market);
         self
     }
 
+    /// Minimum severity
     pub fn min_level(mut self, min_level: CexSymbolCautionsMinLevel) -> Self {
         self.min_level = Some(min_level);
         self
     }
 
+    /// Exclude rows whose end_at is in the past (default true)
     pub fn active_only(mut self, active_only: bool) -> Self {
         self.active_only = Some(active_only);
         self
     }
 
+    /// Page size (default 500, max 5000)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Page number (1-based)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
@@ -2127,36 +2145,43 @@ impl CexSymbolDelistingsOptions {
         }
     }
 
+    /// Exchange filter (comma-separated)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// spot or futures
     pub fn market(mut self, market: CexSymbolDelistingsMarket) -> Self {
         self.market = Some(market);
         self
     }
 
+    /// Lower bound for delisting_at (ms epoch, default = now)
     pub fn from_ms(mut self, from_ms: i64) -> Self {
         self.from_ms = Some(from_ms);
         self
     }
 
+    /// Upper bound for delisting_at (ms epoch, default = now+30 days)
     pub fn to_ms(mut self, to_ms: i64) -> Self {
         self.to_ms = Some(to_ms);
         self
     }
 
+    /// Include already-delisted rows (default false)
     pub fn include_past(mut self, include_past: bool) -> Self {
         self.include_past = Some(include_past);
         self
     }
 
+    /// Page size (default 200, max 2000)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Page number (1-based)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
@@ -2174,6 +2199,7 @@ impl CexSymbolLiquidationOptions {
         CexSymbolLiquidationOptions { window: None }
     }
 
+    /// Time window: 1h / 24h / 7d (default 24h, max 30d)
     pub fn window(mut self, window: impl Into<String>) -> Self {
         self.window = Some(window.into());
         self
@@ -2211,36 +2237,43 @@ impl CexSymbolMetadataOptions {
         }
     }
 
+    /// Comma-separated exchange names (empty = all) (e.g. `upbit,bithumb`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// spot or futures (empty = both)
     pub fn market(mut self, market: CexSymbolMetadataMarket) -> Self {
         self.market = Some(market);
         self
     }
 
+    /// Base asset filter (e.g. `BTC`)
     pub fn base(mut self, base: impl Into<String>) -> Self {
         self.base = Some(base.into());
         self
     }
 
+    /// Quote asset filter (e.g. `USDT`)
     pub fn quote(mut self, quote: impl Into<String>) -> Self {
         self.quote = Some(quote.into());
         self
     }
 
+    /// trading_status filter (repeatable, comma-separated) (e.g. `trading,delisting`)
     pub fn status(mut self, status: impl Into<String>) -> Self {
         self.status = Some(status.into());
         self
     }
 
+    /// Page size (default 200, max 2000)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Page number (1-based)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
@@ -2258,6 +2291,7 @@ impl CexSymbolOiOptions {
         CexSymbolOiOptions { exchange: None }
     }
 
+    /// Exchange filter (narrows to a single venue)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
@@ -2280,11 +2314,13 @@ impl CexSymbolOiStatsOptions {
         }
     }
 
+    /// Exchange filter — when omitted, returns every venue carrying the base
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Convert *_usd fields to target currency (USD or KRW)
     pub fn currency(mut self, currency: CexSymbolOiStatsCurrency) -> Self {
         self.currency = Some(currency);
         self
@@ -2325,41 +2361,49 @@ impl CexSymbolTagsOptions {
         }
     }
 
+    /// Tag filter (repeatable, comma-separated) (e.g. `meme,ai`)
     pub fn tag(mut self, tag: impl Into<String>) -> Self {
         self.tag = Some(tag.into());
         self
     }
 
+    /// Exchange filter (repeatable, comma-separated) (e.g. `binance`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// spot or futures
     pub fn market(mut self, market: CexSymbolTagsMarket) -> Self {
         self.market = Some(market);
         self
     }
 
+    /// Base asset filter (e.g. `BTC`)
     pub fn base(mut self, base: impl Into<String>) -> Self {
         self.base = Some(base.into());
         self
     }
 
+    /// Tag source filter
     pub fn source(mut self, source: CexSymbolTagsSource) -> Self {
         self.source = Some(source);
         self
     }
 
+    /// Minimum confidence (0-100, default 80)
     pub fn min_confidence(mut self, min_confidence: i64) -> Self {
         self.min_confidence = Some(min_confidence);
         self
     }
 
+    /// Page size (default 500, max 5000)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Page number (1-based)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
@@ -2377,6 +2421,7 @@ impl CexSymbolVolumeOptions {
         CexSymbolVolumeOptions { market: None }
     }
 
+    /// Filter to spot or futures
     pub fn market(mut self, market: CexSymbolVolumeMarket) -> Self {
         self.market = Some(market);
         self
@@ -2538,26 +2583,31 @@ impl FundingRateHistoryOptions {
         }
     }
 
+    /// Specifies page (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Specifies limit (e.g. `1000`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
     pub fn from(mut self, from: i64) -> Self {
         self.from = Some(from);
         self
     }
 
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
     pub fn to(mut self, to: i64) -> Self {
         self.to = Some(to);
         self
     }
 
+    /// Specifies sort (e.g. `asc`)
     pub fn sort(mut self, sort: FundingRateHistorySort) -> Self {
         self.sort = Some(sort);
         self
@@ -2575,6 +2625,7 @@ impl FundingRateSymbolsOptions {
         FundingRateSymbolsOptions { exchange: None }
     }
 
+    /// Specifies exchange name. Omit to receive symbols for all exchanges; constrain to a single exchange when filtering. (e.g. `binance`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
@@ -2669,16 +2720,19 @@ impl IndexPriceOptions {
         }
     }
 
+    /// Specifies from (unix seconds) (e.g. `1735657200`)
     pub fn from(mut self, from: i64) -> Self {
         self.from = Some(from);
         self
     }
 
+    /// Specifies to (unix seconds) (e.g. `1735693200`)
     pub fn to(mut self, to: i64) -> Self {
         self.to = Some(to);
         self
     }
 
+    /// interval (e.g. `5m`)
     pub fn interval(mut self, interval: IndexPriceInterval) -> Self {
         self.interval = Some(interval);
         self
@@ -2935,6 +2989,7 @@ impl LiquidationOptions {
         LiquidationOptions { limit: None }
     }
 
+    /// Number of events to return (1-1000) (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
@@ -2963,21 +3018,25 @@ impl LiquidationFeedOptions {
         }
     }
 
+    /// Exchange filter (e.g. `bybit`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Base asset filter (case-insensitive) (e.g. `BTC`)
     pub fn base(mut self, base: impl Into<String>) -> Self {
         self.base = Some(base.into());
         self
     }
 
+    /// Minimum VolumeUsd filter (e.g. `10000`)
     pub fn min_volume_usd(mut self, min_volume_usd: f64) -> Self {
         self.min_volume_usd = Some(min_volume_usd);
         self
     }
 
+    /// Number of events (1-1000) (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
@@ -3000,11 +3059,13 @@ impl LiquidationHeatmapOptions {
         }
     }
 
+    /// Rolling window
     pub fn window(mut self, window: LiquidationHeatmapWindow) -> Self {
         self.window = Some(window);
         self
     }
 
+    /// Top N tokens by total
     pub fn top_n(mut self, top_n: i64) -> Self {
         self.top_n = Some(top_n);
         self
@@ -3030,16 +3091,19 @@ impl LiquidationMapOptions {
         }
     }
 
+    /// Exchange
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Base asset (e.g. `BTC`)
     pub fn base(mut self, base: impl Into<String>) -> Self {
         self.base = Some(base.into());
         self
     }
 
+    /// Quote asset
     pub fn quote(mut self, quote: impl Into<String>) -> Self {
         self.quote = Some(quote.into());
         self
@@ -3065,16 +3129,19 @@ impl LiquidationStatsOptions {
         }
     }
 
+    /// Rolling window
     pub fn window(mut self, window: LiquidationStatsWindow) -> Self {
         self.window = Some(window);
         self
     }
 
+    /// Exchange filter (e.g. `bybit`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Minimum VolumeUsd filter (e.g. `10000`)
     pub fn min_volume_usd(mut self, min_volume_usd: f64) -> Self {
         self.min_volume_usd = Some(min_volume_usd);
         self
@@ -3103,21 +3170,25 @@ impl LiquidationSymbolHistoryOptions {
         }
     }
 
+    /// Quote asset
     pub fn quote(mut self, quote: impl Into<String>) -> Self {
         self.quote = Some(quote.into());
         self
     }
 
+    /// Optional exchange filter for the liquidation aggregation. The price line stays on Binance unless this is set.
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Bucket interval
     pub fn interval(mut self, interval: LiquidationSymbolHistoryInterval) -> Self {
         self.interval = Some(interval);
         self
     }
 
+    /// Lookback window
     pub fn window(mut self, window: LiquidationSymbolHistoryWindow) -> Self {
         self.window = Some(window);
         self
@@ -3163,6 +3234,7 @@ impl ListingsHistoricalOptions {
         ListingsHistoricalOptions { refresh: None }
     }
 
+    /// Refresh cache (e.g. `true`)
     pub fn refresh(mut self, refresh: bool) -> Self {
         self.refresh = Some(refresh);
         self
@@ -3396,16 +3468,19 @@ impl OpenInterestHistoryAggregatedOptions {
         }
     }
 
+    /// Aggregation interval (e.g. `1h`)
     pub fn interval(mut self, interval: OpenInterestHistoryAggregatedInterval) -> Self {
         self.interval = Some(interval);
         self
     }
 
+    /// Start unix-ms (default: depends on interval — 7d for 1h, 30d for 4h, 1y for 1d) (e.g. `1776000000000`)
     pub fn from(mut self, from: i64) -> Self {
         self.from = Some(from);
         self
     }
 
+    /// End unix-ms (default: now) (e.g. `1776900000000`)
     pub fn to(mut self, to: i64) -> Self {
         self.to = Some(to);
         self
@@ -3423,6 +3498,7 @@ impl OpenInterestListOptions {
         OpenInterestListOptions { exchange: None }
     }
 
+    /// Exchange filter (e.g. `bybit`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
@@ -3454,26 +3530,31 @@ impl OpenInterestOverviewOptions {
         }
     }
 
+    /// Page (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Page size (e.g. `20`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Sort-by exchange (e.g. `binance`)
     pub fn key(mut self, key: impl Into<String>) -> Self {
         self.key = Some(key.into());
         self
     }
 
+    /// Sort direction (e.g. `desc`)
     pub fn sort(mut self, sort: OpenInterestOverviewSort) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    /// Base symbol search (e.g. `BTC`)
     pub fn query(mut self, query: impl Into<String>) -> Self {
         self.query = Some(query.into());
         self
@@ -3491,6 +3572,7 @@ impl OpenInterestSummaryOptions {
         OpenInterestSummaryOptions { top_n: None }
     }
 
+    /// Top N tokens to return
     pub fn top_n(mut self, top_n: i64) -> Self {
         self.top_n = Some(top_n);
         self
@@ -3760,106 +3842,127 @@ impl PremiumOptions {
         }
     }
 
+    /// Specifies source exchange(s), separated by , (e.g. `binance`)
     pub fn source_exchange(mut self, source_exchange: impl Into<String>) -> Self {
         self.source_exchange = Some(source_exchange.into());
         self
     }
 
+    /// Specifies target exchange(s), separated by , (e.g. `upbit`)
     pub fn target_exchange(mut self, target_exchange: impl Into<String>) -> Self {
         self.target_exchange = Some(target_exchange.into());
         self
     }
 
+    /// Specifies asset(s), separated by , (e.g. `BTC`)
     pub fn asset(mut self, asset: impl Into<String>) -> Self {
         self.asset = Some(asset.into());
         self
     }
 
+    /// Specifies source quote(s), separated by , (e.g. `USDT`)
     pub fn source_quote(mut self, source_quote: impl Into<String>) -> Self {
         self.source_quote = Some(source_quote.into());
         self
     }
 
+    /// Specifies target quote(s), separated by , (e.g. `KRW`)
     pub fn target_quote(mut self, target_quote: impl Into<String>) -> Self {
         self.target_quote = Some(target_quote.into());
         self
     }
 
+    /// Specifies source market (e.g. `spot`)
     pub fn source_market(mut self, source_market: PremiumSourceMarket) -> Self {
         self.source_market = Some(source_market);
         self
     }
 
+    /// Specifies target market (e.g. `spot`)
     pub fn target_market(mut self, target_market: PremiumTargetMarket) -> Self {
         self.target_market = Some(target_market);
         self
     }
 
+    /// Specifies premium type(s), separated by , (e.g. `spot-spot`)
     pub fn premium_type(mut self, premium_type: PremiumPremiumType) -> Self {
         self.premium_type = Some(premium_type);
         self
     }
 
+    /// Specifies currency applied to price values (e.g. `KRW`)
     pub fn currency(mut self, currency: impl Into<String>) -> Self {
         self.currency = Some(currency.into());
         self
     }
 
+    /// Specifies conversion base (e.g. `USDT`)
     pub fn conversion_base(mut self, conversion_base: impl Into<String>) -> Self {
         self.conversion_base = Some(conversion_base.into());
         self
     }
 
+    /// Page number (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Page size (e.g. `10`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Specifies sort order (e.g. `desc`)
     pub fn sort(mut self, sort: PremiumSort) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    /// Specifies key to sort by (e.g. `pdp`)
     pub fn key(mut self, key: impl Into<String>) -> Self {
         self.key = Some(key.into());
         self
     }
 
+    /// Search query for filtering assets (e.g. `BTC`)
     pub fn query(mut self, query: impl Into<String>) -> Self {
         self.query = Some(query.into());
         self
     }
 
+    /// Filter only transferable assets (e.g. `false`)
     pub fn only_transferable(mut self, only_transferable: bool) -> Self {
         self.only_transferable = Some(only_transferable);
         self
     }
 
+    /// Specifies network(s), separated by , (e.g. `ethereum`)
     pub fn network(mut self, network: impl Into<String>) -> Self {
         self.network = Some(network.into());
         self
     }
 
+    /// Minimum source volume (e.g. `10000`)
     pub fn min_sv(mut self, min_sv: f64) -> Self {
         self.min_sv = Some(min_sv);
         self
     }
 
+    /// Minimum target volume (e.g. `10000`)
     pub fn min_tv(mut self, min_tv: f64) -> Self {
         self.min_tv = Some(min_tv);
         self
     }
 
+    /// Specifies token id(s) to include, separated by , (e.g. `bitcoin`)
     pub fn token_include(mut self, token_include: impl Into<String>) -> Self {
         self.token_include = Some(token_include.into());
         self
     }
 
+    /// Specifies token id(s) to exclude, separated by , (e.g. `bitcoin`)
     pub fn token_exclude(mut self, token_exclude: impl Into<String>) -> Self {
         self.token_exclude = Some(token_exclude.into());
         self
@@ -4098,26 +4201,31 @@ impl TelegramChannelsOptions {
         }
     }
 
+    /// Page number (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Page size (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Specifies language category of telegram channel (e.g. `english`)
     pub fn category(mut self, category: impl Into<String>) -> Self {
         self.category = Some(category.into());
         self
     }
 
+    /// Specifies key to sort by (e.g. `channelName`)
     pub fn key(mut self, key: TelegramChannelsKey) -> Self {
         self.key = Some(key);
         self
     }
 
+    /// Specifies sort (e.g. `asc`)
     pub fn sort(mut self, sort: TelegramChannelsSort) -> Self {
         self.sort = Some(sort);
         self
@@ -4155,36 +4263,43 @@ impl TelegramMessagesOptions {
         }
     }
 
+    /// Specifies channel username (e.g. `datamaxiplus`)
     pub fn channel(mut self, channel: impl Into<String>) -> Self {
         self.channel = Some(channel.into());
         self
     }
 
+    /// Page number (e.g. `1`)
     pub fn page(mut self, page: i64) -> Self {
         self.page = Some(page);
         self
     }
 
+    /// Page size (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
 
+    /// Specifies key to sort by (e.g. `publishedAt`)
     pub fn key(mut self, key: TelegramMessagesKey) -> Self {
         self.key = Some(key);
         self
     }
 
+    /// Specifies sort (e.g. `asc`)
     pub fn sort(mut self, sort: TelegramMessagesSort) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    /// Specifies category (e.g. `english`)
     pub fn category(mut self, category: TelegramMessagesCategory) -> Self {
         self.category = Some(category);
         self
     }
 
+    /// Specifies search query (e.g. `BTC`)
     pub fn search_query(mut self, search_query: impl Into<String>) -> Self {
         self.search_query = Some(search_query.into());
         self
@@ -4390,11 +4505,13 @@ impl TickerOptions {
         }
     }
 
+    /// Specifies currency applied to price values (e.g. `KRW`)
     pub fn currency(mut self, currency: TickerCurrency) -> Self {
         self.currency = Some(currency);
         self
     }
 
+    /// Specifies conversion base applied to price values (e.g. `USDT`)
     pub fn conversion_base(mut self, conversion_base: TickerConversionBase) -> Self {
         self.conversion_base = Some(conversion_base);
         self
@@ -4479,16 +4596,19 @@ impl CexTokenUpdatesOptions {
         }
     }
 
+    /// Specifies page (e.g. `1`)
     pub fn page(mut self, page: impl Into<String>) -> Self {
         self.page = Some(page.into());
         self
     }
 
+    /// Specifies limit (e.g. `10`)
     pub fn limit(mut self, limit: impl Into<String>) -> Self {
         self.limit = Some(limit.into());
         self
     }
 
+    /// Specifies type of token update (e.g. `listed`)
     pub fn r#type(mut self, r#type: CexTokenUpdatesType) -> Self {
         self.r#type = Some(r#type);
         self
@@ -4551,11 +4671,13 @@ impl CexFeesOptions {
         }
     }
 
+    /// Specifies exchange (e.g. `binance`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
     }
 
+    /// Specifies symbol (e.g. `BTC-USDT`)
     pub fn symbol(mut self, symbol: impl Into<String>) -> Self {
         self.symbol = Some(symbol.into());
         self
@@ -4619,6 +4741,7 @@ impl WalletStatusOptions {
         WalletStatusOptions { exchange: None }
     }
 
+    /// Specifes exchange (e.g. `binance`)
     pub fn exchange(mut self, exchange: impl Into<String>) -> Self {
         self.exchange = Some(exchange.into());
         self
