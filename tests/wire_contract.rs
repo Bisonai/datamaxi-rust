@@ -341,7 +341,10 @@ async fn status_502_maps_to_unexpected_status_code() {
                 "the endpoint must be carried"
             );
         }
-        other => panic!("expected UnexpectedStatusCode {{ 502, .. }}, got {:?}", other),
+        other => panic!(
+            "expected UnexpectedStatusCode {{ 502, .. }}, got {:?}",
+            other
+        ),
     }
 }
 
@@ -351,7 +354,13 @@ async fn status_429_maps_to_rate_limited_without_retry_after() {
         .await
         .expect_err("429 should be Err");
     assert!(
-        matches!(err, Error::RateLimited { retry_after: None, .. }),
+        matches!(
+            err,
+            Error::RateLimited {
+                retry_after: None,
+                ..
+            }
+        ),
         "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );
@@ -386,10 +395,11 @@ async fn status_429_surfaces_retry_after_seconds() {
     );
 }
 
-/// A `Retry-After` HTTP-date (rather than delay-seconds) is not parsed and must
-/// yield `None` without panicking, while still mapping to `RateLimited`.
+/// A `Retry-After` HTTP-date **in the past** is now parsed (issue #116) and,
+/// since the window has already elapsed, clamps to `Duration::ZERO` — while
+/// still mapping to `RateLimited`.
 #[tokio::test]
-async fn status_429_http_date_retry_after_yields_none() {
+async fn status_429_past_http_date_retry_after_clamps_to_zero() {
     let mut server = mockito::Server::new_async().await;
     let _mock = server
         .mock("GET", "/api/v1/liquidation/heatmap")
@@ -408,13 +418,53 @@ async fn status_429_http_date_retry_after_yields_none() {
         matches!(
             err,
             Error::RateLimited {
-                retry_after: None,
+                retry_after: Some(d),
                 ..
-            }
+            } if d == std::time::Duration::ZERO
         ),
-        "429 with HTTP-date Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
+        "429 with a past HTTP-date Retry-After should surface Duration::ZERO, got {:?}",
         err
     );
+}
+
+/// A `Retry-After` HTTP-date in the future is parsed into a positive delay
+/// (roughly the distance from now to that date).
+#[tokio::test]
+async fn status_429_future_http_date_retry_after_is_positive() {
+    let future = std::time::SystemTime::now() + std::time::Duration::from_secs(3600);
+    let header = httpdate::fmt_http_date(future);
+
+    let mut server = mockito::Server::new_async().await;
+    let _mock = server
+        .mock("GET", "/api/v1/liquidation/heatmap")
+        .with_status(429)
+        .with_header("Retry-After", &header)
+        .with_body("slow down")
+        .create_async()
+        .await;
+
+    let liq = mock_client(server.url()).liquidation();
+    let err = liq
+        .heatmap(LiquidationHeatmapOptions::new())
+        .await
+        .expect_err("429 should be Err");
+    match err {
+        Error::RateLimited {
+            retry_after: Some(d),
+            ..
+        } => {
+            assert!(
+                d > std::time::Duration::from_secs(3000)
+                    && d <= std::time::Duration::from_secs(3600),
+                "expected a ~1h future delay, got {:?}",
+                d
+            );
+        }
+        other => panic!(
+            "expected RateLimited with a positive delay, got {:?}",
+            other
+        ),
+    }
 }
 
 // --- Per-endpoint snake_case wire-key guards (issue #16) -------------------
@@ -1004,7 +1054,13 @@ fn blocking_status_404_maps_to_not_found() {
 fn blocking_status_429_maps_to_rate_limited_without_retry_after() {
     let err = blocking_call_with_status(429, None).expect_err("429 should be Err");
     assert!(
-        matches!(err, Error::RateLimited { retry_after: None, .. }),
+        matches!(
+            err,
+            Error::RateLimited {
+                retry_after: None,
+                ..
+            }
+        ),
         "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );

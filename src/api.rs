@@ -33,7 +33,7 @@ use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use thiserror::Error;
 
 // Host only: the generated endpoint paths are fully qualified and already
@@ -153,10 +153,16 @@ fn jitter_in_range(
     Duration::from_millis(random_u64(0..=upper_millis))
 }
 
-/// Parse a `Retry-After` header into a [`Duration`], expressed as an integer
-/// number of seconds. Only the numeric delay-seconds form (RFC 9110 §10.2.3)
-/// is understood; the alternative HTTP-date form yields `None` rather than
-/// panicking, as does a missing, non-ASCII, or unparseable header.
+/// Parse a `Retry-After` header into a [`Duration`], handling both forms
+/// defined in RFC 9110 §10.2.3:
+///
+/// - **delay-seconds** — a non-negative integer number of seconds, used as-is.
+/// - **HTTP-date** — an absolute date; the delay is `date - now`, clamped to
+///   zero if the date is already in the past (so a stale window never yields a
+///   negative or wildly large value). "Now" is read from the system clock.
+///
+/// A missing, non-ASCII, or otherwise unparseable header yields `None` rather
+/// than panicking.
 ///
 /// The returned value is the raw parsed duration, uncapped. Internal retry
 /// sleeps must apply their own [`RETRY_MAX_DELAY`] cap at the call site (see
@@ -164,14 +170,25 @@ fn jitter_in_range(
 /// [`Error::RateLimited`] is deliberately left uncapped so callers see the
 /// server's actual suggestion.
 fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
-    let secs = headers
+    let value = headers
         .get(reqwest::header::RETRY_AFTER)?
         .to_str()
         .ok()?
-        .trim()
-        .parse::<u64>()
-        .ok()?;
-    Some(Duration::from_secs(secs))
+        .trim();
+
+    // Prefer the delay-seconds form: a bare integer, used verbatim.
+    if let Ok(secs) = value.parse::<u64>() {
+        return Some(Duration::from_secs(secs));
+    }
+
+    // Otherwise try the HTTP-date form, computing the delay from now and
+    // clamping a past date to zero (`duration_since` errors when `when` is
+    // before `now`).
+    let when = httpdate::parse_http_date(value).ok()?;
+    Some(
+        when.duration_since(SystemTime::now())
+            .unwrap_or(Duration::ZERO),
+    )
 }
 
 /// The delay to wait before retrying a retryable response: a `429`'s
@@ -1036,9 +1053,9 @@ pub enum Error {
 
     /// The API returned a `429 Too Many Requests` (rate limited).
     ///
-    /// `retry_after` carries the raw `Retry-After` header value (in seconds)
-    /// when present; the HTTP-date form is not parsed and yields `None`. This
-    /// is the server's actual suggestion and is **not** clamped to
+    /// `retry_after` carries the `Retry-After` header when present, parsed from
+    /// either the delay-seconds or the HTTP-date form (a past date clamps to
+    /// zero). This is the server's actual suggestion and is **not** clamped to
     /// [`RETRY_MAX_DELAY`] (that cap only bounds the client's internal retry
     /// sleeps).
     #[error("Rate limited ({endpoint})")]
@@ -1523,16 +1540,42 @@ mod tests {
     }
 
     #[test]
-    fn parse_retry_after_ignores_http_date_and_missing() {
+    fn parse_retry_after_missing_or_garbage_is_none() {
         let empty = HeaderMap::new();
         assert_eq!(parse_retry_after(&empty), None);
 
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("not-a-date"));
+        assert_eq!(parse_retry_after(&headers), None);
+    }
+
+    #[test]
+    fn parse_retry_after_past_http_date_clamps_to_zero() {
+        // A date well in the past: the window has already elapsed, so the delay
+        // clamps to zero rather than going negative or wrapping.
         let mut headers = HeaderMap::new();
         headers.insert(
             RETRY_AFTER,
             HeaderValue::from_static("Wed, 21 Oct 2015 07:28:00 GMT"),
         );
-        assert_eq!(parse_retry_after(&headers), None);
+        assert_eq!(parse_retry_after(&headers), Some(Duration::ZERO));
+    }
+
+    #[test]
+    fn parse_retry_after_future_http_date_is_delay_from_now() {
+        // Format a date ~1 hour in the future via httpdate, then parse it back:
+        // the computed delay should be close to an hour (allowing a small
+        // window for the clock ticking between formatting and parsing).
+        let future = SystemTime::now() + Duration::from_secs(3600);
+        let header = httpdate::fmt_http_date(future);
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_str(&header).unwrap());
+
+        let delay = parse_retry_after(&headers).expect("future HTTP-date should parse");
+        assert!(
+            delay <= Duration::from_secs(3600) && delay >= Duration::from_secs(3590),
+            "expected ~3600s delay, got {delay:?}"
+        );
     }
 
     #[test]
