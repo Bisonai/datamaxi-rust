@@ -218,7 +218,7 @@ async fn status_400_maps_to_bad_request() {
         .await
         .expect_err("400 should be Err");
     assert!(
-        matches!(err, Error::BadRequest(_)),
+        matches!(err, Error::BadRequest { .. }),
         "400 should map to BadRequest, got {:?}",
         err
     );
@@ -230,7 +230,7 @@ async fn status_401_maps_to_unauthorized() {
         .await
         .expect_err("401 should be Err");
     assert!(
-        matches!(err, Error::Unauthorized),
+        matches!(err, Error::Unauthorized { .. }),
         "401 should map to Unauthorized, got {:?}",
         err
     );
@@ -242,7 +242,7 @@ async fn status_500_maps_to_internal_server_error() {
         .await
         .expect_err("500 should be Err");
     assert!(
-        matches!(err, Error::InternalServerError(_)),
+        matches!(err, Error::InternalServerError { .. }),
         "500 should map to InternalServerError, got {:?}",
         err
     );
@@ -258,7 +258,7 @@ async fn status_400_body_over_1000_bytes_is_truncated() {
         .await
         .expect_err("400 should be Err");
     match err {
-        Error::BadRequest(body) => {
+        Error::BadRequest { body, .. } => {
             assert!(
                 body.len() <= 1000,
                 "expected truncated body <= 1000 bytes, got {}",
@@ -279,7 +279,7 @@ async fn status_500_body_over_1000_bytes_is_truncated() {
         .await
         .expect_err("500 should be Err");
     match err {
-        Error::InternalServerError(body) => {
+        Error::InternalServerError { body, .. } => {
             assert!(
                 body.len() <= 1000,
                 "expected truncated body <= 1000 bytes, got {}",
@@ -296,22 +296,28 @@ async fn status_403_maps_to_forbidden() {
         .await
         .expect_err("403 should be Err");
     assert!(
-        matches!(err, Error::Forbidden),
+        matches!(err, Error::Forbidden { .. }),
         "403 should map to Forbidden, got {:?}",
         err
     );
 }
 
+/// A `404` maps to `NotFound` AND carries the request path that 404'd, so the
+/// error is diagnosable without `tracing` (issue #116).
 #[tokio::test]
-async fn status_404_maps_to_not_found() {
+async fn status_404_maps_to_not_found_with_endpoint() {
     let err = call_with_status(404, "nope")
         .await
         .expect_err("404 should be Err");
-    assert!(
-        matches!(err, Error::NotFound),
-        "404 should map to NotFound, got {:?}",
-        err
-    );
+    match err {
+        Error::NotFound { endpoint } => {
+            assert_eq!(
+                endpoint, "/api/v1/liquidation/heatmap",
+                "NotFound must carry the endpoint that failed"
+            );
+        }
+        other => panic!("expected NotFound {{ endpoint }}, got {:?}", other),
+    }
 }
 
 /// An unmapped status (here `502`) still falls through to the catch-all
@@ -323,9 +329,17 @@ async fn status_502_maps_to_unexpected_status_code() {
         .await
         .expect_err("502 should be Err");
     match err {
-        Error::UnexpectedStatusCode { status, body } => {
+        Error::UnexpectedStatusCode {
+            endpoint,
+            status,
+            body,
+        } => {
             assert_eq!(status, 502);
             assert_eq!(body, "bad gateway", "the response body must be carried");
+            assert_eq!(
+                endpoint, "/api/v1/liquidation/heatmap",
+                "the endpoint must be carried"
+            );
         }
         other => panic!("expected UnexpectedStatusCode {{ 502, .. }}, got {:?}", other),
     }
@@ -337,7 +351,7 @@ async fn status_429_maps_to_rate_limited_without_retry_after() {
         .await
         .expect_err("429 should be Err");
     assert!(
-        matches!(err, Error::RateLimited { retry_after: None }),
+        matches!(err, Error::RateLimited { retry_after: None, .. }),
         "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );
@@ -363,7 +377,8 @@ async fn status_429_surfaces_retry_after_seconds() {
         matches!(
             err,
             Error::RateLimited {
-                retry_after: Some(d)
+                retry_after: Some(d),
+                ..
             } if d == std::time::Duration::from_secs(42)
         ),
         "429 with Retry-After: 42 should surface Duration::from_secs(42), got {:?}",
@@ -393,7 +408,8 @@ async fn status_429_http_date_retry_after_yields_none() {
         matches!(
             err,
             Error::RateLimited {
-                retry_after: None
+                retry_after: None,
+                ..
             }
         ),
         "429 with HTTP-date Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
@@ -863,7 +879,7 @@ async fn no_retry_on_400() {
 
     mock.assert_async().await; // exactly one attempt, no retries
     assert!(
-        matches!(res, Err(Error::BadRequest(_))),
+        matches!(res, Err(Error::BadRequest { .. })),
         "expected BadRequest without retry, got {:?}",
         res
     );
@@ -934,7 +950,7 @@ fn blocking_no_retry_on_400() {
 
     mock.assert();
     assert!(
-        matches!(res, Err(Error::BadRequest(_))),
+        matches!(res, Err(Error::BadRequest { .. })),
         "expected BadRequest without retry, got {:?}",
         res
     );
@@ -966,7 +982,7 @@ fn blocking_call_with_status(
 fn blocking_status_403_maps_to_forbidden() {
     let err = blocking_call_with_status(403, None).expect_err("403 should be Err");
     assert!(
-        matches!(err, Error::Forbidden),
+        matches!(err, Error::Forbidden { .. }),
         "403 should map to Forbidden, got {:?}",
         err
     );
@@ -977,7 +993,7 @@ fn blocking_status_403_maps_to_forbidden() {
 fn blocking_status_404_maps_to_not_found() {
     let err = blocking_call_with_status(404, None).expect_err("404 should be Err");
     assert!(
-        matches!(err, Error::NotFound),
+        matches!(err, Error::NotFound { .. }),
         "404 should map to NotFound, got {:?}",
         err
     );
@@ -988,7 +1004,7 @@ fn blocking_status_404_maps_to_not_found() {
 fn blocking_status_429_maps_to_rate_limited_without_retry_after() {
     let err = blocking_call_with_status(429, None).expect_err("429 should be Err");
     assert!(
-        matches!(err, Error::RateLimited { retry_after: None }),
+        matches!(err, Error::RateLimited { retry_after: None, .. }),
         "429 without Retry-After should map to RateLimited {{ retry_after: None }}, got {:?}",
         err
     );
@@ -1001,7 +1017,7 @@ fn blocking_status_429_surfaces_retry_after_seconds() {
     assert!(
         matches!(
             err,
-            Error::RateLimited { retry_after: Some(d) }
+            Error::RateLimited { retry_after: Some(d), .. }
             if d == std::time::Duration::from_secs(42)
         ),
         "429 with Retry-After: 42 should surface Duration::from_secs(42), got {:?}",

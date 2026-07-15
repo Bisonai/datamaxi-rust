@@ -213,12 +213,23 @@ fn truncate_body(mut s: String) -> String {
 /// (which need per-flavor body handling) — to the corresponding [`Error`].
 /// Returns `None` for those three statuses, leaving them to the caller.
 /// Shared by the async and blocking `handle_response`.
-fn map_error_status(status: StatusCode, headers: &reqwest::header::HeaderMap) -> Option<Error> {
+fn map_error_status(
+    status: StatusCode,
+    headers: &reqwest::header::HeaderMap,
+    endpoint: &str,
+) -> Option<Error> {
     match status {
-        StatusCode::UNAUTHORIZED => Some(Error::Unauthorized),
-        StatusCode::FORBIDDEN => Some(Error::Forbidden),
-        StatusCode::NOT_FOUND => Some(Error::NotFound),
+        StatusCode::UNAUTHORIZED => Some(Error::Unauthorized {
+            endpoint: endpoint.to_string(),
+        }),
+        StatusCode::FORBIDDEN => Some(Error::Forbidden {
+            endpoint: endpoint.to_string(),
+        }),
+        StatusCode::NOT_FOUND => Some(Error::NotFound {
+            endpoint: endpoint.to_string(),
+        }),
         StatusCode::TOO_MANY_REQUESTS => Some(Error::RateLimited {
+            endpoint: endpoint.to_string(),
             retry_after: parse_retry_after(headers),
         }),
         _ => None,
@@ -345,7 +356,7 @@ macro_rules! get_loop {
                         $sleep(delay)$(.$aw)?;
                         continue;
                     }
-                    return $handle_response(response)$(.$aw)?;
+                    return $handle_response(response, $endpoint)$(.$aw)?;
                 }
                 Err(error) => {
                     if attempt < $self.retry.max_retries && is_retryable_error(&error) {
@@ -815,19 +826,28 @@ async fn read_body_capped(mut response: reqwest::Response) -> String {
     truncate_body(String::from_utf8_lossy(&buf).into_owned())
 }
 
-/// Processes an async response from the API and returns the result.
-async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Result<T> {
+/// Processes an async response from the API and returns the result. `endpoint`
+/// is the request path, attached to the returned [`Error`] for diagnosability.
+async fn handle_response<T: DeserializeOwned>(
+    response: reqwest::Response,
+    endpoint: &str,
+) -> Result<T> {
     match response.status() {
         StatusCode::OK => Ok(response.json::<T>().await?),
-        StatusCode::INTERNAL_SERVER_ERROR => {
-            Err(Error::InternalServerError(read_body_capped(response).await))
-        }
-        StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response).await)),
-        status => match map_error_status(status, response.headers()) {
+        StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError {
+            endpoint: endpoint.to_string(),
+            body: read_body_capped(response).await,
+        }),
+        StatusCode::BAD_REQUEST => Err(Error::BadRequest {
+            endpoint: endpoint.to_string(),
+            body: read_body_capped(response).await,
+        }),
+        status => match map_error_status(status, response.headers(), endpoint) {
             Some(err) => Err(err),
             None => {
                 let code = status.as_u16();
                 Err(Error::UnexpectedStatusCode {
+                    endpoint: endpoint.to_string(),
                     status: code,
                     body: read_body_capped(response).await,
                 })
@@ -959,20 +979,41 @@ pub enum Error {
     MissingApiKey,
 
     /// The API returned a `400 Bad Request`; the payload carries the server message.
-    #[error("Bad request: {0}")]
-    BadRequest(String),
+    ///
+    /// `endpoint` is the request path that failed (e.g.
+    /// `/api/v1/liquidation/heatmap`), so failures are diagnosable without
+    /// enabling `tracing`.
+    #[error("Bad request ({endpoint}): {body}")]
+    BadRequest {
+        /// The request path that produced this error.
+        endpoint: String,
+        /// The server message (capped, possibly empty).
+        body: String,
+    },
 
     /// The API returned a `401 Unauthorized` (missing or invalid API key).
-    #[error("Unauthorized")]
-    Unauthorized,
+    #[error("Unauthorized ({endpoint})")]
+    Unauthorized {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `403 Forbidden` (the key is valid but lacks access to the resource).
-    #[error("Forbidden")]
-    Forbidden,
+    #[error("Forbidden ({endpoint})")]
+    Forbidden {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `404 Not Found` (the resource or endpoint does not exist).
-    #[error("Not found")]
-    NotFound,
+    ///
+    /// `endpoint` names which of the endpoints 404'd, so the error is
+    /// actionable on its own.
+    #[error("Not found ({endpoint})")]
+    NotFound {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `429 Too Many Requests` (rate limited).
     ///
@@ -981,33 +1022,45 @@ pub enum Error {
     /// is the server's actual suggestion and is **not** clamped to
     /// [`RETRY_MAX_DELAY`] (that cap only bounds the client's internal retry
     /// sleeps).
-    #[error("Rate limited")]
+    #[error("Rate limited ({endpoint})")]
     RateLimited {
+        /// The request path that produced this error.
+        endpoint: String,
         /// Suggested wait before retrying, from the `Retry-After` header
         /// (raw, uncapped).
         retry_after: Option<Duration>,
     },
 
     /// The API returned a `500 Internal Server Error`; the payload carries the server message.
-    #[error("Internal server error: {0}")]
-    InternalServerError(String),
+    #[error("Internal server error ({endpoint}): {body}")]
+    InternalServerError {
+        /// The request path that produced this error.
+        endpoint: String,
+        /// The server message (capped, possibly empty).
+        body: String,
+    },
 
     /// The API returned a status code the client does not specifically handle.
     ///
-    /// Carries both the raw status code and the (capped) response body. An
-    /// unexpected status is exactly the case where the body is most useful for
-    /// diagnosis, so — like [`Error::BadRequest`] / [`Error::InternalServerError`]
-    /// — it is preserved rather than discarded. The body is truncated to at most
-    /// [`MAX_ERROR_BODY_BYTES`] bytes on a UTF-8 char boundary.
-    #[error("Received unexpected status code {status}: {body}")]
+    /// Carries the request `endpoint`, the raw status code, and the (capped)
+    /// response body. An unexpected status is exactly the case where the body
+    /// is most useful for diagnosis, so — like [`Error::BadRequest`] /
+    /// [`Error::InternalServerError`] — it is preserved rather than discarded.
+    /// The body is truncated to at most [`MAX_ERROR_BODY_BYTES`] bytes on a
+    /// UTF-8 char boundary.
+    #[error("Received unexpected status code {status} ({endpoint}): {body}")]
     UnexpectedStatusCode {
+        /// The request path that produced this error.
+        endpoint: String,
         /// The raw HTTP status code.
         status: u16,
         /// The response body (capped, possibly empty).
         body: String,
     },
 
-    /// The underlying HTTP request failed, or the response body could not be decoded.
+    /// The underlying HTTP request failed, or the response body could not be
+    /// decoded. The failing URL is available via
+    /// [`reqwest::Error::url`](reqwest::Error::url) on the wrapped error.
     #[error(transparent)]
     Http(#[from] reqwest::Error),
 
@@ -1223,18 +1276,25 @@ pub mod blocking {
     }
 
     /// Processes a blocking response from the API and returns the result.
-    fn handle_response<T: DeserializeOwned>(response: Response) -> Result<T> {
+    /// `endpoint` is the request path, attached to the returned [`Error`] for
+    /// diagnosability.
+    fn handle_response<T: DeserializeOwned>(response: Response, endpoint: &str) -> Result<T> {
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>()?),
-            StatusCode::INTERNAL_SERVER_ERROR => {
-                Err(Error::InternalServerError(read_body_capped(response)?))
-            }
-            StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response)?)),
-            status => match map_error_status(status, response.headers()) {
+            StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError {
+                endpoint: endpoint.to_string(),
+                body: read_body_capped(response)?,
+            }),
+            StatusCode::BAD_REQUEST => Err(Error::BadRequest {
+                endpoint: endpoint.to_string(),
+                body: read_body_capped(response)?,
+            }),
+            status => match map_error_status(status, response.headers(), endpoint) {
                 Some(err) => Err(err),
                 None => {
                     let code = status.as_u16();
                     Err(Error::UnexpectedStatusCode {
+                        endpoint: endpoint.to_string(),
                         status: code,
                         body: read_body_capped(response)?,
                     })
