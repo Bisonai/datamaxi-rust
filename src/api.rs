@@ -1108,7 +1108,7 @@ pub enum Error {
 ///
 /// Mirrors the async [`Client`] with the same status-to-[`Error`] mapping, for
 /// scripts, notebooks, and other callers that don't run an async runtime. The
-/// generated endpoint wrappers under [`crate::generated::sync_endpoints`] use this.
+/// generated endpoint wrappers under [`crate::generated::sync`] use this.
 #[cfg(feature = "blocking")]
 #[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
 pub mod blocking {
