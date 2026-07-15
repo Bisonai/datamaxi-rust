@@ -115,8 +115,19 @@ candle
     .await?;
 ```
 
-With the `blocking` feature the same calls are synchronous (no `.await`), via
-`datamaxi::blocking::CexCandle` and `datamaxi::api::blocking`.
+With the `blocking` feature the same calls are synchronous (no `.await`).
+Everything the sync API needs lives under the single `datamaxi::blocking`
+module — `use datamaxi::blocking::{Client, CexCandle};` — the blocking
+counterpart to the crate root:
+
+```rust,ignore
+use datamaxi::blocking::Client;
+use datamaxi::CexCandleOptions;
+
+let client = Client::new("my_api_key");
+let candle = client.cex_candle();
+candle.get("binance", "ETH-USDT", CexCandleOptions::new())?;
+```
 
 Data endpoints deserialize into typed response structs generated from the API
 spec: object responses into a struct (e.g. `candle.get(..)` → `CexCandleResponse`)
