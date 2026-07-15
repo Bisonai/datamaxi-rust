@@ -38,8 +38,9 @@
 //! ### CEX Candle
 //!
 //! The client is async by default (requires a runtime such as `tokio`). For a
-//! synchronous client, enable the `blocking` feature and use the mirrored
-//! wrappers under `datamaxi::blocking` with `datamaxi::api::blocking`.
+//! synchronous client, enable the `blocking` feature; everything the sync API
+//! needs then lives under the single `datamaxi::blocking` module, e.g.
+//! `use datamaxi::blocking::{Client, CexCandle};`.
 //!
 //! ```no_run
 //! use datamaxi::{
@@ -118,6 +119,39 @@ pub use generated::*;
 /// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
 /// off the client via generated accessors, e.g. `client.cex_candle()`.
 pub use api::{Client, ClientBuilder};
+
+#[cfg(feature = "blocking")]
+#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
+pub mod blocking {
+    //! Synchronous entry point for the SDK (feature `blocking`) — the blocking
+    //! counterpart to the crate root.
+    //!
+    //! This one module gathers everything the sync API needs: the [`Client`] /
+    //! [`ClientBuilder`] (blocking equivalents of the crate-root
+    //! [`crate::Client`] / [`crate::ClientBuilder`]), the [`Paginator`], and the
+    //! synchronous endpoint-wrapper types (`CexCandle`, `Announcements`, …) that
+    //! mirror the ones re-exported at the crate root. Prefer the single import
+    //! path `use datamaxi::blocking::{Client, CexCandle};` over combining
+    //! [`crate::api::blocking`] with the crate root.
+    //!
+    //! The [`Client`] / [`ClientBuilder`] / [`Paginator`] here are re-exports of
+    //! the same types in [`crate::api::blocking`], so those longer paths keep
+    //! working unchanged.
+    //!
+    //! ```no_run
+    //! use datamaxi::blocking::Client;
+    //! use datamaxi::CexCandleOptions;
+    //!
+    //! # fn run() -> Result<(), Box<dyn std::error::Error>> {
+    //! let client = Client::new("YOUR_API_KEY");
+    //! let candle = client.cex_candle();
+    //! let _ = candle.get("binance", "BTC-USDT", CexCandleOptions::new())?;
+    //! # Ok(())
+    //! # }
+    //! ```
+    pub use crate::api::blocking::{Client, ClientBuilder, Paginator};
+    pub use crate::generated::blocking::*;
+}
 
 /// Re-exported so callers can name the exact `reqwest::Client` /
 /// `reqwest::blocking::Client` type expected by
