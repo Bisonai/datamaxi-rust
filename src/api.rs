@@ -32,6 +32,7 @@ use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -315,7 +316,7 @@ impl BuilderState {
 /// blocking flavor.
 macro_rules! get_loop {
     ($self:expr, $endpoint:expr, $parameters:expr, $handle_response:path, $sleep:path $(, $aw:ident)?) => {{
-        let url: String = format!("{}{}", $self.base_url, $endpoint);
+        let url: String = format!("{}{}", $self.inner.base_url, $endpoint);
         let mut attempt: u32 = 0;
 
         loop {
@@ -323,9 +324,10 @@ macro_rules! get_loop {
             tracing::Span::current().record("attempt", attempt as u64);
 
             let mut request = $self
+                .inner
                 .inner_client
                 .get(url.as_str())
-                .header("X-DTMX-APIKEY", &$self.api_key);
+                .header("X-DTMX-APIKEY", &$self.inner.api_key);
 
             if let Some(ref p) = $parameters {
                 request = request.query(p);
@@ -337,9 +339,9 @@ macro_rules! get_loop {
                     #[cfg(feature = "tracing")]
                     tracing::Span::current().record("status", status.as_u16() as u64);
 
-                    if attempt < $self.retry.max_retries && is_retryable_status(status) {
+                    if attempt < $self.inner.retry.max_retries && is_retryable_status(status) {
                         let delay = retry_delay_for_response(
-                            &$self.retry,
+                            &$self.inner.retry,
                             status,
                             response.headers(),
                             attempt,
@@ -359,8 +361,8 @@ macro_rules! get_loop {
                     return $handle_response(response, $endpoint)$(.$aw)?;
                 }
                 Err(error) => {
-                    if attempt < $self.retry.max_retries && is_retryable_error(&error) {
-                        let delay = jittered_backoff_delay(&$self.retry, attempt);
+                    if attempt < $self.inner.retry.max_retries && is_retryable_error(&error) {
+                        let delay = jittered_backoff_delay(&$self.inner.retry, attempt);
                         #[cfg(feature = "tracing")]
                         tracing::debug!(
                             target: "datamaxi::retry",
@@ -394,23 +396,36 @@ fn build_inner_client(timeout: Duration) -> reqwest::Client {
         .unwrap_or_else(|_| reqwest::Client::new())
 }
 
-/// The async client for interacting with the Datamaxi+ API.
-///
-/// This is the default surface. For a synchronous client, enable the
-/// `blocking` feature and use [`blocking::Client`].
-#[derive(Clone)]
-pub struct Client {
+/// Shared, immutable inner state of a [`Client`], held behind an [`Arc`] so
+/// that [`Client::clone`] — done once per endpoint-accessor call, e.g.
+/// [`Client::cex_candle`] — is a single refcount bump rather than re-allocating
+/// the `base_url` / `api_key` strings each time. `reqwest::Client` is already an
+/// `Arc` internally; wrapping the whole set of fields makes the two `String`s
+/// cheap to clone too.
+struct ClientInner {
     base_url: String,
     api_key: String,
     inner_client: reqwest::Client,
     retry: RetryConfig,
 }
 
+/// The async client for interacting with the Datamaxi+ API.
+///
+/// This is the default surface. For a synchronous client, enable the
+/// `blocking` feature and use [`blocking::Client`].
+///
+/// Cloning a `Client` is cheap: the shared state lives behind an [`Arc`], so a
+/// clone is a single refcount bump (see [`ClientInner`]).
+#[derive(Clone)]
+pub struct Client {
+    inner: Arc<ClientInner>,
+}
+
 impl std::fmt::Debug for Client {
     /// Redacts the API key so it never leaks into logs or error output.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Client")
-            .field("base_url", &self.base_url)
+            .field("base_url", &self.inner.base_url)
             .field("api_key", &"<redacted>")
             .finish_non_exhaustive()
     }
@@ -425,10 +440,12 @@ impl Client {
     /// groups are reached via accessors, e.g. [`Client::cex_candle`].
     pub fn new(api_key: impl Into<String>) -> Self {
         Client {
-            base_url: BASE_URL.to_string(),
-            api_key: api_key.into(),
-            inner_client: build_inner_client(DEFAULT_TIMEOUT),
-            retry: RetryConfig::default(),
+            inner: Arc::new(ClientInner {
+                base_url: BASE_URL.to_string(),
+                api_key: api_key.into(),
+                inner_client: build_inner_client(DEFAULT_TIMEOUT),
+                retry: RetryConfig::default(),
+            }),
         }
     }
 
@@ -953,10 +970,12 @@ impl ClientBuilder {
             .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
         Ok(Client {
-            base_url: resolved.base_url,
-            api_key: resolved.api_key,
-            inner_client,
-            retry: resolved.retry,
+            inner: Arc::new(ClientInner {
+                base_url: resolved.base_url,
+                api_key: resolved.api_key,
+                inner_client,
+                retry: resolved.retry,
+            }),
         })
     }
 }
@@ -1089,6 +1108,7 @@ pub mod blocking {
     use std::collections::BTreeMap;
     use std::io::Read;
     use std::marker::PhantomData;
+    use std::sync::Arc;
     use std::time::Duration;
 
     /// Build the underlying blocking HTTP client with our defaults. Falls back
@@ -1102,20 +1122,30 @@ pub mod blocking {
             .unwrap_or_else(|_| reqwest::blocking::Client::new())
     }
 
-    /// The blocking client for interacting with the Datamaxi+ API.
-    #[derive(Clone)]
-    pub struct Client {
+    /// Shared, immutable inner state of a blocking [`Client`], held behind an
+    /// [`Arc`] so cloning is a single refcount bump. Mirrors the async
+    /// [`super::ClientInner`].
+    struct ClientInner {
         base_url: String,
         api_key: String,
         inner_client: reqwest::blocking::Client,
         retry: RetryConfig,
     }
 
+    /// The blocking client for interacting with the Datamaxi+ API.
+    ///
+    /// Cloning is cheap: the shared state lives behind an [`Arc`], so a clone is
+    /// a single refcount bump.
+    #[derive(Clone)]
+    pub struct Client {
+        inner: Arc<ClientInner>,
+    }
+
     impl std::fmt::Debug for Client {
         /// Redacts the API key so it never leaks into logs or error output.
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("Client")
-                .field("base_url", &self.base_url)
+                .field("base_url", &self.inner.base_url)
                 .field("api_key", &"<redacted>")
                 .finish_non_exhaustive()
         }
@@ -1128,10 +1158,12 @@ pub mod blocking {
         /// accessors, e.g. [`Client::cex_candle`].
         pub fn new(api_key: impl Into<String>) -> Self {
             Client {
-                base_url: BASE_URL.to_string(),
-                api_key: api_key.into(),
-                inner_client: build_inner_client(DEFAULT_TIMEOUT),
-                retry: RetryConfig::default(),
+                inner: Arc::new(ClientInner {
+                    base_url: BASE_URL.to_string(),
+                    api_key: api_key.into(),
+                    inner_client: build_inner_client(DEFAULT_TIMEOUT),
+                    retry: RetryConfig::default(),
+                }),
             }
         }
 
@@ -1370,10 +1402,12 @@ pub mod blocking {
                 .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
             Ok(Client {
-                base_url: resolved.base_url,
-                api_key: resolved.api_key,
-                inner_client,
-                retry: resolved.retry,
+                inner: Arc::new(ClientInner {
+                    base_url: resolved.base_url,
+                    api_key: resolved.api_key,
+                    inner_client,
+                    retry: resolved.retry,
+                }),
             })
         }
     }
