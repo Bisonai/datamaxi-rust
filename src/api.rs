@@ -74,10 +74,10 @@ const MAX_ERROR_BODY_BYTES: usize = 1000;
 /// with exponential backoff (`base_delay * 2^attempt`, capped at
 /// [`RETRY_MAX_DELAY`]) plus full jitter (see [`apply_jitter`]), so many
 /// clients retrying at once don't thundering-herd the server in lockstep. A
-/// `429` response honors its `Retry-After` header (in seconds) when present —
-/// that's an explicit server-suggested delay, so it is used as-is, without
-/// jitter. Fatal statuses (`400`/`401`/`403`/`404`, and every other `4xx`)
-/// are never retried.
+/// `429` response honors its `Retry-After` header when present (either the
+/// delay-seconds or the HTTP-date form; see [`parse_retry_after`]) — that's an
+/// explicit server-suggested delay, so it is used as-is, without jitter. Fatal
+/// statuses (`400`/`401`/`403`/`404`, and every other `4xx`) are never retried.
 #[derive(Debug, Clone)]
 struct RetryConfig {
     max_retries: u32,
@@ -432,7 +432,7 @@ struct ClientInner {
 /// `blocking` feature and use [`blocking::Client`].
 ///
 /// Cloning a `Client` is cheap: the shared state lives behind an [`Arc`], so a
-/// clone is a single refcount bump (see [`ClientInner`]).
+/// clone is a single refcount bump.
 #[derive(Clone)]
 pub struct Client {
     inner: Arc<ClientInner>,
@@ -1082,8 +1082,7 @@ pub enum Error {
     /// response body. An unexpected status is exactly the case where the body
     /// is most useful for diagnosis, so — like [`Error::BadRequest`] /
     /// [`Error::InternalServerError`] — it is preserved rather than discarded.
-    /// The body is truncated to at most [`MAX_ERROR_BODY_BYTES`] bytes on a
-    /// UTF-8 char boundary.
+    /// The body is truncated to a capped length on a UTF-8 char boundary.
     #[error("Received unexpected status code {status} ({endpoint}): {body}")]
     UnexpectedStatusCode {
         /// The request path that produced this error.
