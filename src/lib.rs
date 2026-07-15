@@ -40,9 +40,9 @@
 //! ### CEX Candle
 //!
 //! The client is async by default (requires a runtime such as `tokio`). For a
-//! synchronous client, enable the `blocking` feature; everything the sync API
-//! needs then lives under the single `datamaxi::blocking` module, e.g.
-//! `use datamaxi::blocking::{Client, CexCandle};`.
+//! synchronous client, enable the `sync` feature; everything the sync API
+//! needs then lives under the single `datamaxi::sync` module, e.g.
+//! `use datamaxi::sync::{Client, CexCandle};`.
 //!
 //! ```no_run
 //! use datamaxi::{
@@ -100,7 +100,7 @@ pub mod generated;
 /// Typed wrappers for every REST endpoint on the data API — the canonical
 /// surface (CEX candle, OI, Liquidation, cex-symbol, …). Endpoint groups are
 /// reached through accessors on the root [`Client`]. Async by default; with the
-/// `blocking` feature, a parallel [`blocking`] module offers synchronous
+/// `sync` feature, a parallel [`sync`] module offers synchronous
 /// equivalents.
 ///
 /// ```no_run
@@ -117,31 +117,37 @@ pub mod generated;
 /// ```
 pub use generated::*;
 
+// The async endpoint-wrapper structs (`CexCandle`, `Announcements`, …) now live
+// in a `#[doc(hidden)]` submodule of `generated`; re-export them flat at the
+// crate root so `datamaxi::CexCandle` still resolves. The parallel sync wrappers
+// stay under `datamaxi::sync` (feature `sync`), never flat at the root.
+pub use generated::async_internal::*;
+
 /// The root client and its builder are re-exported at the crate root so callers
 /// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
 /// off the client via generated accessors, e.g. `client.cex_candle()`.
 pub use api::{Client, ClientBuilder};
 
-#[cfg(feature = "blocking")]
-#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
-pub mod blocking {
-    //! Synchronous entry point for the SDK (feature `blocking`) — the blocking
+#[cfg(feature = "sync")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sync")))]
+pub mod sync {
+    //! Synchronous entry point for the SDK (feature `sync`) — the synchronous
     //! counterpart to the crate root.
     //!
     //! This one module gathers everything the sync API needs: the [`Client`] /
-    //! [`ClientBuilder`] (blocking equivalents of the crate-root
+    //! [`ClientBuilder`] (synchronous equivalents of the crate-root
     //! [`crate::Client`] / [`crate::ClientBuilder`]), the [`Paginator`], and the
     //! synchronous endpoint-wrapper types (`CexCandle`, `Announcements`, …) that
     //! mirror the ones re-exported at the crate root. Prefer the single import
-    //! path `use datamaxi::blocking::{Client, CexCandle};` over combining
-    //! [`crate::api::blocking`] with the crate root.
+    //! path `use datamaxi::sync::{Client, CexCandle};` over combining
+    //! [`crate::api::sync`] with the crate root.
     //!
     //! The [`Client`] / [`ClientBuilder`] / [`Paginator`] here are re-exports of
-    //! the same types in [`crate::api::blocking`], so those longer paths keep
+    //! the same types in [`crate::api::sync`], so those longer paths keep
     //! working unchanged.
     //!
     //! ```no_run
-    //! use datamaxi::blocking::Client;
+    //! use datamaxi::sync::Client;
     //! use datamaxi::CexCandleOptions;
     //!
     //! # fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -151,13 +157,13 @@ pub mod blocking {
     //! # Ok(())
     //! # }
     //! ```
-    pub use crate::api::blocking::{Client, ClientBuilder, Paginator};
-    pub use crate::generated::blocking::*;
+    pub use crate::api::sync::{Client, ClientBuilder, Paginator};
+    pub use crate::generated::sync_internal::*;
 }
 
 /// Re-exported so callers can name the exact `reqwest::Client` /
 /// `reqwest::blocking::Client` type expected by
-/// [`ClientBuilder::http_client`] / `blocking::ClientBuilder::http_client`
+/// [`ClientBuilder::http_client`] / `sync::ClientBuilder::http_client`
 /// (and the `reqwest::Error` wrapped by [`api::Error::Http`]) without adding
 /// `reqwest` to their own `Cargo.toml` and risking a version mismatch with
 /// this crate's dependency.

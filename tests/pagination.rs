@@ -1,5 +1,5 @@
 //! Integration tests for the auto-paginator added for issue #88
-//! ([`datamaxi::api::Client::paginate`] / [`datamaxi::api::blocking::Client::paginate`]),
+//! ([`datamaxi::api::Client::paginate`] / [`datamaxi::api::sync::Client::paginate`]),
 //! plus the total-less envelope coverage and `stream` feature added for
 //! issue #102.
 //!
@@ -165,10 +165,10 @@ async fn paginate_honors_starting_page_param() {
     mock.assert_async().await;
 }
 
-/// The blocking mirror ([`datamaxi::api::blocking::Client::paginate`])
+/// The blocking mirror ([`datamaxi::api::sync::Client::paginate`])
 /// implements [`Iterator`], yielding one `Result<Vec<_>>` per page and
 /// stopping once `page * limit >= total`.
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_paginate_walks_multiple_pages_until_total_reached() {
     let mut server = mockito::Server::new();
@@ -197,7 +197,7 @@ fn blocking_paginate_walks_multiple_pages_until_total_reached() {
         .expect(1)
         .create();
 
-    let client = datamaxi::api::blocking::ClientBuilder::new()
+    let client = datamaxi::api::sync::ClientBuilder::new()
         .api_key(API_KEY)
         .base_url(server.url())
         .build()

@@ -14,12 +14,12 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
 The client is **async** by default and needs an async runtime (e.g. `tokio`).
-For a synchronous client, enable the `blocking` feature and use the mirrored
-wrappers under `datamaxi::blocking`:
+For a synchronous client, enable the `sync` feature and use the mirrored
+wrappers under `datamaxi::sync`:
 
 ```toml
 [dependencies]
-datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["blocking"] }
+datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["sync"] }
 ```
 
 ### TLS backend
@@ -46,7 +46,7 @@ Two independent, opt-in hooks:
   ```toml
   datamaxi = { git = "https://github.com/bisonai/datamaxi-rust.git", features = ["tracing"] }
   ```
-- **Custom HTTP client** — `ClientBuilder::http_client` (and the `blocking`
+- **Custom HTTP client** — `ClientBuilder::http_client` (and the `sync`
   mirror) let you supply your own pre-built `reqwest::Client`, e.g. wrapped
   with `reqwest-middleware` for custom auth, metrics, or logging. Use the
   crate's re-exported `datamaxi::reqwest` to build it, so the type always
@@ -58,7 +58,7 @@ Two independent, opt-in hooks:
 
 ### Pagination
 
-`Client::paginate` / `blocking::Client::paginate` auto-paginate any paged
+`Client::paginate` / `sync::Client::paginate` auto-paginate any paged
 response envelope, with or without a reported `total`. The async paginator
 is a plain `next_page()` cursor by default; enable the opt-in `stream`
 feature to also drive it as a `futures::Stream` (adds no dependency unless
@@ -115,13 +115,13 @@ candle
     .await?;
 ```
 
-With the `blocking` feature the same calls are synchronous (no `.await`).
-Everything the sync API needs lives under the single `datamaxi::blocking`
-module — `use datamaxi::blocking::{Client, CexCandle};` — the blocking
+With the `sync` feature the same calls are synchronous (no `.await`).
+Everything the sync API needs lives under the single `datamaxi::sync`
+module — `use datamaxi::sync::{Client, CexCandle};` — the synchronous
 counterpart to the crate root:
 
 ```rust,ignore
-use datamaxi::blocking::Client;
+use datamaxi::sync::Client;
 use datamaxi::CexCandleOptions;
 
 let client = Client::new("my_api_key");

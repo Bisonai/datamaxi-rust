@@ -48,7 +48,7 @@ default = ["native-tls"]
 # native-tls types in reqwest's public API.
 native-tls = ["reqwest/default-tls"]
 rustls-tls = ["reqwest/rustls-tls"]
-blocking = ["reqwest/blocking"]
+sync = ["reqwest/blocking"]
 tracing = ["dep:tracing"]
 stream = ["dep:futures-core"]
 

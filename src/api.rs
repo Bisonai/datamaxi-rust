@@ -2,14 +2,14 @@
 //!
 //! Two independent, additive, opt-in hooks:
 //!
-//! - **`tracing` feature** — instruments [`Client::get`] / [`blocking::Client::get`]
+//! - **`tracing` feature** — instruments [`Client::get`] / [`sync::Client::get`]
 //!   with a span (`method`, `endpoint`, `attempt`, `status`) and debug events on
 //!   each retry (backoff delay, transient status/error). Off by default and
 //!   compiles away entirely (no `tracing` dependency pulled in) when disabled.
 //!   The API key is never recorded — [`Client`]'s `Debug` impl already redacts
 //!   it, and no span/event field ever carries it.
 //! - **Custom HTTP client** — [`ClientBuilder::http_client`] /
-//!   [`blocking::ClientBuilder::http_client`] let callers supply their own
+//!   [`sync::ClientBuilder::http_client`] let callers supply their own
 //!   pre-built `reqwest::Client`, e.g. wrapped with `reqwest-middleware` for
 //!   custom auth, metrics, or logging middleware. When omitted, the client
 //!   falls back to the built-in defaults (`User-Agent`, unbounded idle pool,
@@ -17,7 +17,7 @@
 //!
 //! ## Pagination
 //!
-//! [`Client::paginate`] / [`blocking::Client::paginate`] auto-paginate any
+//! [`Client::paginate`] / [`sync::Client::paginate`] auto-paginate any
 //! [`Paginated`] response envelope, whether or not it reports a `total` (see
 //! [`Paginated::total`]). The async [`Paginator`] is a plain `next_page()`
 //! cursor by default; enabling the opt-in **`stream` feature** additionally
@@ -26,7 +26,7 @@
 //! for it, so it composes with `futures`/`StreamExt` combinators and
 //! `.next().await`. Off by default and compiles away entirely (no
 //! `futures-core` dependency pulled in) when disabled. The blocking
-//! [`blocking::Paginator`] already implements [`Iterator`] unconditionally.
+//! [`sync::Paginator`] already implements [`Iterator`] unconditionally.
 
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
@@ -255,7 +255,7 @@ fn map_error_status(
 }
 
 /// Shared mutable state behind [`ClientBuilder`] and
-/// [`blocking::ClientBuilder`]: the four knobs (API key, base URL, timeout,
+/// [`sync::ClientBuilder`]: the four knobs (API key, base URL, timeout,
 /// retry policy) plus the logic to resolve them at `build()` time. Each
 /// flavor's builder is a thin wrapper that forwards its setters here and
 /// supplies its own `build_inner_client` to construct the right `Client`.
@@ -327,7 +327,7 @@ impl BuilderState {
 }
 
 /// Generates the retry loop shared by [`Client::get`] and
-/// [`blocking::Client::get`]. The two flavors are identical except for
+/// [`sync::Client::get`]. The two flavors are identical except for
 /// whether `send`, the backoff sleep, and `handle_response` are awaited: pass
 /// `await` as the trailing argument for the async flavor, and omit it for the
 /// blocking flavor.
@@ -429,7 +429,7 @@ struct ClientInner {
 /// The async client for interacting with the Datamaxi+ API.
 ///
 /// This is the default surface. For a synchronous client, enable the
-/// `blocking` feature and use [`blocking::Client`].
+/// `sync` feature and use [`sync::Client`].
 ///
 /// Cloning a `Client` is cheap: the shared state lives behind an [`Arc`], so a
 /// clone is a single refcount bump.
@@ -521,7 +521,7 @@ impl Client {
 /// Implemented by paged response envelopes — the `page`/`limit`/`data` shape
 /// shared by several Datamaxi+ endpoints, with or without a `total` (e.g.
 /// `CexAnnouncementsResponse` reports `total`; `FundingRateHistoryResponse`
-/// does not) — so [`Client::paginate`] / [`blocking::Client::paginate`] can
+/// does not) — so [`Client::paginate`] / [`sync::Client::paginate`] can
 /// drive a generic auto-paginator over them without codegen needing to emit a
 /// bespoke helper per endpoint.
 ///
@@ -737,7 +737,7 @@ where
 /// [`futures_core::Stream`] over [`Paginator`]'s pages, gated by the `stream`
 /// feature so the `futures-core` dependency stays opt-in. Yields one
 /// `Result<Vec<T::Item>>` per page and, like [`Iterator`] for
-/// [`blocking::Paginator`], stops (yields `None`) once the server reports no
+/// [`sync::Paginator`], stops (yields `None`) once the server reports no
 /// more data, and after the first `Err`.
 ///
 /// Each poll drives an owned future built from clones of `client`/`endpoint`/
@@ -1104,14 +1104,14 @@ pub enum Error {
     Io(#[from] std::io::Error),
 }
 
-/// Synchronous client surface, enabled by the `blocking` feature.
+/// Synchronous client surface, enabled by the `sync` feature.
 ///
 /// Mirrors the async [`Client`] with the same status-to-[`Error`] mapping, for
 /// scripts, notebooks, and other callers that don't run an async runtime. The
-/// generated endpoint wrappers under [`crate::generated::blocking`] use this.
-#[cfg(feature = "blocking")]
-#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
-pub mod blocking {
+/// generated endpoint wrappers under [`crate::generated::sync_internal`] use this.
+#[cfg(feature = "sync")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sync")))]
+pub mod sync {
     use super::{
         consume_page, is_retryable_error, is_retryable_status, jittered_backoff_delay,
         map_error_status, retry_delay_for_response, starting_page, truncate_body, user_agent,
@@ -1239,7 +1239,7 @@ pub mod blocking {
     /// without risking a retry of the same failing page.
     ///
     /// ```no_run
-    /// use datamaxi::api::blocking::ClientBuilder;
+    /// use datamaxi::api::sync::ClientBuilder;
     /// use datamaxi::CexAnnouncementsResponse;
     /// use std::collections::BTreeMap;
     ///

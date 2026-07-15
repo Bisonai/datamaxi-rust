@@ -40,10 +40,10 @@ fn mock_client(base_url: String) -> Client {
         .expect("mock client builds")
 }
 
-/// Blocking mirror of [`mock_client`], over `crate::api::blocking::Client`.
-#[cfg(feature = "blocking")]
-fn mock_blocking_client(base_url: String) -> datamaxi::api::blocking::Client {
-    datamaxi::api::blocking::ClientBuilder::new()
+/// Blocking mirror of [`mock_client`], over `crate::api::sync::Client`.
+#[cfg(feature = "sync")]
+fn mock_blocking_client(base_url: String) -> datamaxi::api::sync::Client {
+    datamaxi::api::sync::ClientBuilder::new()
         .api_key(API_KEY)
         .base_url(base_url)
         .build()
@@ -717,7 +717,7 @@ async fn client_builder_http_client_overrides_inner_client() {
 }
 
 /// Blocking mirror of [`client_builder_http_client_overrides_inner_client`].
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_client_builder_http_client_overrides_inner_client() {
     let mut server = mockito::Server::new();
@@ -738,7 +738,7 @@ fn blocking_client_builder_http_client_overrides_inner_client() {
         .build()
         .expect("custom blocking reqwest client builds");
 
-    let client = datamaxi::api::blocking::ClientBuilder::new()
+    let client = datamaxi::api::sync::ClientBuilder::new()
         .api_key(API_KEY)
         .base_url(server.url())
         .http_client(custom)
@@ -755,8 +755,8 @@ fn blocking_client_builder_http_client_overrides_inner_client() {
 // --- Blocking feature smoke tests ------------------------------------------
 
 /// The `blocking` mirror exposes the same endpoints synchronously and routes
-/// through `crate::api::blocking::Client`.
-#[cfg(feature = "blocking")]
+/// through `crate::api::sync::Client`.
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_cex_candle_exchanges_smoke() {
     let mut server = mockito::Server::new();
@@ -779,7 +779,7 @@ fn blocking_cex_candle_exchanges_smoke() {
 
 /// Blocking mirror decodes a typed object response and maps status errors the
 /// same way as the async surface.
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_liquidation_heatmap_smoke() {
     let mut server = mockito::Server::new();
@@ -937,7 +937,7 @@ async fn no_retry_on_400() {
 
 /// Blocking mirror: a transient `503` is retried and the following `200`
 /// succeeds, proving the blocking `get` shares the async retry semantics.
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_retry_then_succeed_on_5xx() {
     let mut server = mockito::Server::new();
@@ -955,7 +955,7 @@ fn blocking_retry_then_succeed_on_5xx() {
         .expect(1)
         .create();
 
-    let client = datamaxi::api::blocking::ClientBuilder::new()
+    let client = datamaxi::api::sync::ClientBuilder::new()
         .api_key(API_KEY)
         .base_url(server.url())
         .max_retries(2)
@@ -976,7 +976,7 @@ fn blocking_retry_then_succeed_on_5xx() {
 }
 
 /// Blocking mirror: a fatal `400` is not retried (exactly one request).
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_no_retry_on_400() {
     let mut server = mockito::Server::new();
@@ -987,7 +987,7 @@ fn blocking_no_retry_on_400() {
         .expect(1)
         .create();
 
-    let client = datamaxi::api::blocking::ClientBuilder::new()
+    let client = datamaxi::api::sync::ClientBuilder::new()
         .api_key(API_KEY)
         .base_url(server.url())
         .max_retries(5)
@@ -1008,7 +1008,7 @@ fn blocking_no_retry_on_400() {
 
 /// Blocking mirror maps 403/404/429 to the same dedicated variants as async,
 /// including surfacing `Retry-After` on 429.
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 fn blocking_call_with_status(
     status: usize,
     retry_after: Option<&str>,
@@ -1027,7 +1027,7 @@ fn blocking_call_with_status(
     liq.heatmap(LiquidationHeatmapOptions::new())
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_status_403_maps_to_forbidden() {
     let err = blocking_call_with_status(403, None).expect_err("403 should be Err");
@@ -1038,7 +1038,7 @@ fn blocking_status_403_maps_to_forbidden() {
     );
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_status_404_maps_to_not_found() {
     let err = blocking_call_with_status(404, None).expect_err("404 should be Err");
@@ -1049,7 +1049,7 @@ fn blocking_status_404_maps_to_not_found() {
     );
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_status_429_maps_to_rate_limited_without_retry_after() {
     let err = blocking_call_with_status(429, None).expect_err("429 should be Err");
@@ -1066,7 +1066,7 @@ fn blocking_status_429_maps_to_rate_limited_without_retry_after() {
     );
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "sync")]
 #[test]
 fn blocking_status_429_surfaces_retry_after_seconds() {
     let err = blocking_call_with_status(429, Some("42")).expect_err("429 should be Err");
@@ -1343,7 +1343,7 @@ async fn funding_rate_exchanges_decodes_string_vec() {
 // async-aware subscriber) must produce at least the "retrying transient
 // response" debug event emitted by `get_loop!`.
 
-#[cfg(all(feature = "tracing", feature = "blocking"))]
+#[cfg(all(feature = "tracing", feature = "sync"))]
 mod tracing_smoke {
     use super::{API_KEY, HEATMAP_BODY};
     use datamaxi::LiquidationHeatmapOptions;
@@ -1395,7 +1395,7 @@ mod tracing_smoke {
             .expect(1)
             .create();
 
-        let client = datamaxi::api::blocking::ClientBuilder::new()
+        let client = datamaxi::api::sync::ClientBuilder::new()
             .api_key(API_KEY)
             .base_url(server.url())
             .max_retries(1)
