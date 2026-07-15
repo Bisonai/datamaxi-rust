@@ -1,0 +1,28 @@
+# Guards against accidental SemVer violations: cargo-semver-checks diffs the
+# crate's public API against the version already published on crates.io and
+# fails if the change (added/removed/altered items) is larger than the version
+# bump allows. The crate went 0.3.3 -> 0.12.0 with no mechanical check that the
+# bumps matched the API changes; this adds one.
+#
+# PR-only: the check is about reviewing an API change before it merges, and it
+# needs the published baseline to compare against.
+
+name: semver-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  semver-checks:
+    name: semver-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          feature-group: all-features
