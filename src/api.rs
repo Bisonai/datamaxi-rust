@@ -32,7 +32,8 @@ use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
-use std::time::Duration;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 use thiserror::Error;
 
 // Host only: the generated endpoint paths are fully qualified and already
@@ -73,10 +74,10 @@ const MAX_ERROR_BODY_BYTES: usize = 1000;
 /// with exponential backoff (`base_delay * 2^attempt`, capped at
 /// [`RETRY_MAX_DELAY`]) plus full jitter (see [`apply_jitter`]), so many
 /// clients retrying at once don't thundering-herd the server in lockstep. A
-/// `429` response honors its `Retry-After` header (in seconds) when present —
-/// that's an explicit server-suggested delay, so it is used as-is, without
-/// jitter. Fatal statuses (`400`/`401`/`403`/`404`, and every other `4xx`)
-/// are never retried.
+/// `429` response honors its `Retry-After` header when present (either the
+/// delay-seconds or the HTTP-date form; see [`parse_retry_after`]) — that's an
+/// explicit server-suggested delay, so it is used as-is, without jitter. Fatal
+/// statuses (`400`/`401`/`403`/`404`, and every other `4xx`) are never retried.
 #[derive(Debug, Clone)]
 struct RetryConfig {
     max_retries: u32,
@@ -152,10 +153,16 @@ fn jitter_in_range(
     Duration::from_millis(random_u64(0..=upper_millis))
 }
 
-/// Parse a `Retry-After` header into a [`Duration`], expressed as an integer
-/// number of seconds. Only the numeric delay-seconds form (RFC 9110 §10.2.3)
-/// is understood; the alternative HTTP-date form yields `None` rather than
-/// panicking, as does a missing, non-ASCII, or unparseable header.
+/// Parse a `Retry-After` header into a [`Duration`], handling both forms
+/// defined in RFC 9110 §10.2.3:
+///
+/// - **delay-seconds** — a non-negative integer number of seconds, used as-is.
+/// - **HTTP-date** — an absolute date; the delay is `date - now`, clamped to
+///   zero if the date is already in the past (so a stale window never yields a
+///   negative or wildly large value). "Now" is read from the system clock.
+///
+/// A missing, non-ASCII, or otherwise unparseable header yields `None` rather
+/// than panicking.
 ///
 /// The returned value is the raw parsed duration, uncapped. Internal retry
 /// sleeps must apply their own [`RETRY_MAX_DELAY`] cap at the call site (see
@@ -163,14 +170,25 @@ fn jitter_in_range(
 /// [`Error::RateLimited`] is deliberately left uncapped so callers see the
 /// server's actual suggestion.
 fn parse_retry_after(headers: &reqwest::header::HeaderMap) -> Option<Duration> {
-    let secs = headers
+    let value = headers
         .get(reqwest::header::RETRY_AFTER)?
         .to_str()
         .ok()?
-        .trim()
-        .parse::<u64>()
-        .ok()?;
-    Some(Duration::from_secs(secs))
+        .trim();
+
+    // Prefer the delay-seconds form: a bare integer, used verbatim.
+    if let Ok(secs) = value.parse::<u64>() {
+        return Some(Duration::from_secs(secs));
+    }
+
+    // Otherwise try the HTTP-date form, computing the delay from now and
+    // clamping a past date to zero (`duration_since` errors when `when` is
+    // before `now`).
+    let when = httpdate::parse_http_date(value).ok()?;
+    Some(
+        when.duration_since(SystemTime::now())
+            .unwrap_or(Duration::ZERO),
+    )
 }
 
 /// The delay to wait before retrying a retryable response: a `429`'s
@@ -213,12 +231,23 @@ fn truncate_body(mut s: String) -> String {
 /// (which need per-flavor body handling) — to the corresponding [`Error`].
 /// Returns `None` for those three statuses, leaving them to the caller.
 /// Shared by the async and blocking `handle_response`.
-fn map_error_status(status: StatusCode, headers: &reqwest::header::HeaderMap) -> Option<Error> {
+fn map_error_status(
+    status: StatusCode,
+    headers: &reqwest::header::HeaderMap,
+    endpoint: &str,
+) -> Option<Error> {
     match status {
-        StatusCode::UNAUTHORIZED => Some(Error::Unauthorized),
-        StatusCode::FORBIDDEN => Some(Error::Forbidden),
-        StatusCode::NOT_FOUND => Some(Error::NotFound),
+        StatusCode::UNAUTHORIZED => Some(Error::Unauthorized {
+            endpoint: endpoint.to_string(),
+        }),
+        StatusCode::FORBIDDEN => Some(Error::Forbidden {
+            endpoint: endpoint.to_string(),
+        }),
+        StatusCode::NOT_FOUND => Some(Error::NotFound {
+            endpoint: endpoint.to_string(),
+        }),
         StatusCode::TOO_MANY_REQUESTS => Some(Error::RateLimited {
+            endpoint: endpoint.to_string(),
             retry_after: parse_retry_after(headers),
         }),
         _ => None,
@@ -304,7 +333,7 @@ impl BuilderState {
 /// blocking flavor.
 macro_rules! get_loop {
     ($self:expr, $endpoint:expr, $parameters:expr, $handle_response:path, $sleep:path $(, $aw:ident)?) => {{
-        let url: String = format!("{}{}", $self.base_url, $endpoint);
+        let url: String = format!("{}{}", $self.inner.base_url, $endpoint);
         let mut attempt: u32 = 0;
 
         loop {
@@ -312,9 +341,10 @@ macro_rules! get_loop {
             tracing::Span::current().record("attempt", attempt as u64);
 
             let mut request = $self
+                .inner
                 .inner_client
                 .get(url.as_str())
-                .header("X-DTMX-APIKEY", &$self.api_key);
+                .header("X-DTMX-APIKEY", &$self.inner.api_key);
 
             if let Some(ref p) = $parameters {
                 request = request.query(p);
@@ -326,9 +356,9 @@ macro_rules! get_loop {
                     #[cfg(feature = "tracing")]
                     tracing::Span::current().record("status", status.as_u16() as u64);
 
-                    if attempt < $self.retry.max_retries && is_retryable_status(status) {
+                    if attempt < $self.inner.retry.max_retries && is_retryable_status(status) {
                         let delay = retry_delay_for_response(
-                            &$self.retry,
+                            &$self.inner.retry,
                             status,
                             response.headers(),
                             attempt,
@@ -345,11 +375,11 @@ macro_rules! get_loop {
                         $sleep(delay)$(.$aw)?;
                         continue;
                     }
-                    return $handle_response(response)$(.$aw)?;
+                    return $handle_response(response, $endpoint)$(.$aw)?;
                 }
                 Err(error) => {
-                    if attempt < $self.retry.max_retries && is_retryable_error(&error) {
-                        let delay = jittered_backoff_delay(&$self.retry, attempt);
+                    if attempt < $self.inner.retry.max_retries && is_retryable_error(&error) {
+                        let delay = jittered_backoff_delay(&$self.inner.retry, attempt);
                         #[cfg(feature = "tracing")]
                         tracing::debug!(
                             target: "datamaxi::retry",
@@ -383,23 +413,36 @@ fn build_inner_client(timeout: Duration) -> reqwest::Client {
         .unwrap_or_else(|_| reqwest::Client::new())
 }
 
-/// The async client for interacting with the Datamaxi+ API.
-///
-/// This is the default surface. For a synchronous client, enable the
-/// `blocking` feature and use [`blocking::Client`].
-#[derive(Clone)]
-pub struct Client {
+/// Shared, immutable inner state of a [`Client`], held behind an [`Arc`] so
+/// that [`Client::clone`] — done once per endpoint-accessor call, e.g.
+/// [`Client::cex_candle`] — is a single refcount bump rather than re-allocating
+/// the `base_url` / `api_key` strings each time. `reqwest::Client` is already an
+/// `Arc` internally; wrapping the whole set of fields makes the two `String`s
+/// cheap to clone too.
+struct ClientInner {
     base_url: String,
     api_key: String,
     inner_client: reqwest::Client,
     retry: RetryConfig,
 }
 
+/// The async client for interacting with the Datamaxi+ API.
+///
+/// This is the default surface. For a synchronous client, enable the
+/// `blocking` feature and use [`blocking::Client`].
+///
+/// Cloning a `Client` is cheap: the shared state lives behind an [`Arc`], so a
+/// clone is a single refcount bump.
+#[derive(Clone)]
+pub struct Client {
+    inner: Arc<ClientInner>,
+}
+
 impl std::fmt::Debug for Client {
     /// Redacts the API key so it never leaks into logs or error output.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Client")
-            .field("base_url", &self.base_url)
+            .field("base_url", &self.inner.base_url)
             .field("api_key", &"<redacted>")
             .finish_non_exhaustive()
     }
@@ -414,10 +457,12 @@ impl Client {
     /// groups are reached via accessors, e.g. [`Client::cex_candle`].
     pub fn new(api_key: impl Into<String>) -> Self {
         Client {
-            base_url: BASE_URL.to_string(),
-            api_key: api_key.into(),
-            inner_client: build_inner_client(DEFAULT_TIMEOUT),
-            retry: RetryConfig::default(),
+            inner: Arc::new(ClientInner {
+                base_url: BASE_URL.to_string(),
+                api_key: api_key.into(),
+                inner_client: build_inner_client(DEFAULT_TIMEOUT),
+                retry: RetryConfig::default(),
+            }),
         }
     }
 
@@ -815,17 +860,32 @@ async fn read_body_capped(mut response: reqwest::Response) -> String {
     truncate_body(String::from_utf8_lossy(&buf).into_owned())
 }
 
-/// Processes an async response from the API and returns the result.
-async fn handle_response<T: DeserializeOwned>(response: reqwest::Response) -> Result<T> {
+/// Processes an async response from the API and returns the result. `endpoint`
+/// is the request path, attached to the returned [`Error`] for diagnosability.
+async fn handle_response<T: DeserializeOwned>(
+    response: reqwest::Response,
+    endpoint: &str,
+) -> Result<T> {
     match response.status() {
         StatusCode::OK => Ok(response.json::<T>().await?),
-        StatusCode::INTERNAL_SERVER_ERROR => {
-            Err(Error::InternalServerError(read_body_capped(response).await))
-        }
-        StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response).await)),
-        status => match map_error_status(status, response.headers()) {
+        StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError {
+            endpoint: endpoint.to_string(),
+            body: read_body_capped(response).await,
+        }),
+        StatusCode::BAD_REQUEST => Err(Error::BadRequest {
+            endpoint: endpoint.to_string(),
+            body: read_body_capped(response).await,
+        }),
+        status => match map_error_status(status, response.headers(), endpoint) {
             Some(err) => Err(err),
-            None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+            None => {
+                let code = status.as_u16();
+                Err(Error::UnexpectedStatusCode {
+                    endpoint: endpoint.to_string(),
+                    status: code,
+                    body: read_body_capped(response).await,
+                })
+            }
         },
     }
 }
@@ -927,10 +987,12 @@ impl ClientBuilder {
             .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
         Ok(Client {
-            base_url: resolved.base_url,
-            api_key: resolved.api_key,
-            inner_client,
-            retry: resolved.retry,
+            inner: Arc::new(ClientInner {
+                base_url: resolved.base_url,
+                api_key: resolved.api_key,
+                inner_client,
+                retry: resolved.retry,
+            }),
         })
     }
 }
@@ -953,44 +1015,87 @@ pub enum Error {
     MissingApiKey,
 
     /// The API returned a `400 Bad Request`; the payload carries the server message.
-    #[error("Bad request: {0}")]
-    BadRequest(String),
+    ///
+    /// `endpoint` is the request path that failed (e.g.
+    /// `/api/v1/liquidation/heatmap`), so failures are diagnosable without
+    /// enabling `tracing`.
+    #[error("Bad request ({endpoint}): {body}")]
+    BadRequest {
+        /// The request path that produced this error.
+        endpoint: String,
+        /// The server message (capped, possibly empty).
+        body: String,
+    },
 
     /// The API returned a `401 Unauthorized` (missing or invalid API key).
-    #[error("Unauthorized")]
-    Unauthorized,
+    #[error("Unauthorized ({endpoint})")]
+    Unauthorized {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `403 Forbidden` (the key is valid but lacks access to the resource).
-    #[error("Forbidden")]
-    Forbidden,
+    #[error("Forbidden ({endpoint})")]
+    Forbidden {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `404 Not Found` (the resource or endpoint does not exist).
-    #[error("Not found")]
-    NotFound,
+    ///
+    /// `endpoint` names which of the endpoints 404'd, so the error is
+    /// actionable on its own.
+    #[error("Not found ({endpoint})")]
+    NotFound {
+        /// The request path that produced this error.
+        endpoint: String,
+    },
 
     /// The API returned a `429 Too Many Requests` (rate limited).
     ///
-    /// `retry_after` carries the raw `Retry-After` header value (in seconds)
-    /// when present; the HTTP-date form is not parsed and yields `None`. This
-    /// is the server's actual suggestion and is **not** clamped to
+    /// `retry_after` carries the `Retry-After` header when present, parsed from
+    /// either the delay-seconds or the HTTP-date form (a past date clamps to
+    /// zero). This is the server's actual suggestion and is **not** clamped to
     /// [`RETRY_MAX_DELAY`] (that cap only bounds the client's internal retry
     /// sleeps).
-    #[error("Rate limited")]
+    #[error("Rate limited ({endpoint})")]
     RateLimited {
+        /// The request path that produced this error.
+        endpoint: String,
         /// Suggested wait before retrying, from the `Retry-After` header
         /// (raw, uncapped).
         retry_after: Option<Duration>,
     },
 
     /// The API returned a `500 Internal Server Error`; the payload carries the server message.
-    #[error("Internal server error: {0}")]
-    InternalServerError(String),
+    #[error("Internal server error ({endpoint}): {body}")]
+    InternalServerError {
+        /// The request path that produced this error.
+        endpoint: String,
+        /// The server message (capped, possibly empty).
+        body: String,
+    },
 
     /// The API returned a status code the client does not specifically handle.
-    #[error("Received unexpected status code: {0}")]
-    UnexpectedStatusCode(u16),
+    ///
+    /// Carries the request `endpoint`, the raw status code, and the (capped)
+    /// response body. An unexpected status is exactly the case where the body
+    /// is most useful for diagnosis, so — like [`Error::BadRequest`] /
+    /// [`Error::InternalServerError`] — it is preserved rather than discarded.
+    /// The body is truncated to a capped length on a UTF-8 char boundary.
+    #[error("Received unexpected status code {status} ({endpoint}): {body}")]
+    UnexpectedStatusCode {
+        /// The request path that produced this error.
+        endpoint: String,
+        /// The raw HTTP status code.
+        status: u16,
+        /// The response body (capped, possibly empty).
+        body: String,
+    },
 
-    /// The underlying HTTP request failed, or the response body could not be decoded.
+    /// The underlying HTTP request failed, or the response body could not be
+    /// decoded. The failing URL is available via
+    /// [`reqwest::Error::url`](reqwest::Error::url) on the wrapped error.
     #[error(transparent)]
     Http(#[from] reqwest::Error),
 
@@ -1019,6 +1124,7 @@ pub mod blocking {
     use std::collections::BTreeMap;
     use std::io::Read;
     use std::marker::PhantomData;
+    use std::sync::Arc;
     use std::time::Duration;
 
     /// Build the underlying blocking HTTP client with our defaults. Falls back
@@ -1032,20 +1138,30 @@ pub mod blocking {
             .unwrap_or_else(|_| reqwest::blocking::Client::new())
     }
 
-    /// The blocking client for interacting with the Datamaxi+ API.
-    #[derive(Clone)]
-    pub struct Client {
+    /// Shared, immutable inner state of a blocking [`Client`], held behind an
+    /// [`Arc`] so cloning is a single refcount bump. Mirrors the async
+    /// [`super::ClientInner`].
+    struct ClientInner {
         base_url: String,
         api_key: String,
         inner_client: reqwest::blocking::Client,
         retry: RetryConfig,
     }
 
+    /// The blocking client for interacting with the Datamaxi+ API.
+    ///
+    /// Cloning is cheap: the shared state lives behind an [`Arc`], so a clone is
+    /// a single refcount bump.
+    #[derive(Clone)]
+    pub struct Client {
+        inner: Arc<ClientInner>,
+    }
+
     impl std::fmt::Debug for Client {
         /// Redacts the API key so it never leaks into logs or error output.
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("Client")
-                .field("base_url", &self.base_url)
+                .field("base_url", &self.inner.base_url)
                 .field("api_key", &"<redacted>")
                 .finish_non_exhaustive()
         }
@@ -1058,10 +1174,12 @@ pub mod blocking {
         /// accessors, e.g. [`Client::cex_candle`].
         pub fn new(api_key: impl Into<String>) -> Self {
             Client {
-                base_url: BASE_URL.to_string(),
-                api_key: api_key.into(),
-                inner_client: build_inner_client(DEFAULT_TIMEOUT),
-                retry: RetryConfig::default(),
+                inner: Arc::new(ClientInner {
+                    base_url: BASE_URL.to_string(),
+                    api_key: api_key.into(),
+                    inner_client: build_inner_client(DEFAULT_TIMEOUT),
+                    retry: RetryConfig::default(),
+                }),
             }
         }
 
@@ -1206,16 +1324,29 @@ pub mod blocking {
     }
 
     /// Processes a blocking response from the API and returns the result.
-    fn handle_response<T: DeserializeOwned>(response: Response) -> Result<T> {
+    /// `endpoint` is the request path, attached to the returned [`Error`] for
+    /// diagnosability.
+    fn handle_response<T: DeserializeOwned>(response: Response, endpoint: &str) -> Result<T> {
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>()?),
-            StatusCode::INTERNAL_SERVER_ERROR => {
-                Err(Error::InternalServerError(read_body_capped(response)?))
-            }
-            StatusCode::BAD_REQUEST => Err(Error::BadRequest(read_body_capped(response)?)),
-            status => match map_error_status(status, response.headers()) {
+            StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError {
+                endpoint: endpoint.to_string(),
+                body: read_body_capped(response)?,
+            }),
+            StatusCode::BAD_REQUEST => Err(Error::BadRequest {
+                endpoint: endpoint.to_string(),
+                body: read_body_capped(response)?,
+            }),
+            status => match map_error_status(status, response.headers(), endpoint) {
                 Some(err) => Err(err),
-                None => Err(Error::UnexpectedStatusCode(status.as_u16())),
+                None => {
+                    let code = status.as_u16();
+                    Err(Error::UnexpectedStatusCode {
+                        endpoint: endpoint.to_string(),
+                        status: code,
+                        body: read_body_capped(response)?,
+                    })
+                }
             },
         }
     }
@@ -1287,10 +1418,12 @@ pub mod blocking {
                 .unwrap_or_else(|| build_inner_client(resolved.timeout));
 
             Ok(Client {
-                base_url: resolved.base_url,
-                api_key: resolved.api_key,
-                inner_client,
-                retry: resolved.retry,
+                inner: Arc::new(ClientInner {
+                    base_url: resolved.base_url,
+                    api_key: resolved.api_key,
+                    inner_client,
+                    retry: resolved.retry,
+                }),
             })
         }
     }
@@ -1406,16 +1539,42 @@ mod tests {
     }
 
     #[test]
-    fn parse_retry_after_ignores_http_date_and_missing() {
+    fn parse_retry_after_missing_or_garbage_is_none() {
         let empty = HeaderMap::new();
         assert_eq!(parse_retry_after(&empty), None);
 
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("not-a-date"));
+        assert_eq!(parse_retry_after(&headers), None);
+    }
+
+    #[test]
+    fn parse_retry_after_past_http_date_clamps_to_zero() {
+        // A date well in the past: the window has already elapsed, so the delay
+        // clamps to zero rather than going negative or wrapping.
         let mut headers = HeaderMap::new();
         headers.insert(
             RETRY_AFTER,
             HeaderValue::from_static("Wed, 21 Oct 2015 07:28:00 GMT"),
         );
-        assert_eq!(parse_retry_after(&headers), None);
+        assert_eq!(parse_retry_after(&headers), Some(Duration::ZERO));
+    }
+
+    #[test]
+    fn parse_retry_after_future_http_date_is_delay_from_now() {
+        // Format a date ~1 hour in the future via httpdate, then parse it back:
+        // the computed delay should be close to an hour (allowing a small
+        // window for the clock ticking between formatting and parsing).
+        let future = SystemTime::now() + Duration::from_secs(3600);
+        let header = httpdate::fmt_http_date(future);
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_str(&header).unwrap());
+
+        let delay = parse_retry_after(&headers).expect("future HTTP-date should parse");
+        assert!(
+            delay <= Duration::from_secs(3600) && delay >= Duration::from_secs(3590),
+            "expected ~3600s delay, got {delay:?}"
+        );
     }
 
     #[test]

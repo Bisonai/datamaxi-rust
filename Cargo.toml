@@ -1,6 +1,6 @@
 [package]
 name = "datamaxi"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2021"
 rust-version = "1.86"
 readme = "README.md"
@@ -25,6 +25,9 @@ thiserror = "2.0.11"
 # Retry backoff jitter (see `apply_jitter` in `src/api.rs`). Zero deps outside
 # wasm targets; MSRV 1.63, well under our 1.86 floor.
 fastrand = "2"
+# Parses the HTTP-date form of the `Retry-After` header (RFC 9110 §10.2.3) in
+# `parse_retry_after`. Tiny, zero-dependency, MSRV well under our 1.86 floor.
+httpdate = "1"
 # Only the `time` feature, for the async retry backoff sleep. reqwest's async
 # surface already requires a Tokio runtime, so this adds no new runtime
 # requirement — it only makes the timer dependency explicit.
