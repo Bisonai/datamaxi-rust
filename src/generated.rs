@@ -4838,7 +4838,7 @@ impl Client {
 }
 
 #[cfg(feature = "blocking")]
-pub mod blocking {
+pub mod sync_endpoints {
     //! Synchronous mirror of the endpoint wrappers (feature `blocking`).
     //!
     //! Identical API to the async surface minus `async`/`.await`, backed by
