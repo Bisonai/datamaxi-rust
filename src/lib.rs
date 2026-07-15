@@ -152,7 +152,7 @@ pub mod blocking {
     //! # }
     //! ```
     pub use crate::api::blocking::{Client, ClientBuilder, Paginator};
-    pub use crate::generated::blocking::*;
+    pub use crate::generated::sync_endpoints::*;
 }
 
 /// Re-exported so callers can name the exact `reqwest::Client` /
