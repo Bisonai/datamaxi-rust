@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["api"]};
+window.SIDEBAR_ITEMS = {"mod":["api"],"struct":["Announcements","CexCandle","CexSymbol","Forex","FundingRate","IndexPrice","Liquidation","Listing","MarginBorrow","NaverTrend","OpenInterest","Premium","Telegram","Ticker","Token","TradingFees","WalletStatus"]};

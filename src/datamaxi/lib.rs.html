@@ -40,9 +40,9 @@
 <a href=#40 id=40 data-nosnippet>40</a>//! ### CEX Candle
 <a href=#41 id=41 data-nosnippet>41</a>//!
 <a href=#42 id=42 data-nosnippet>42</a>//! The client is async by default (requires a runtime such as `tokio`). For a
-<a href=#43 id=43 data-nosnippet>43</a>//! synchronous client, enable the `blocking` feature; everything the sync API
-<a href=#44 id=44 data-nosnippet>44</a>//! needs then lives under the single `datamaxi::blocking` module, e.g.
-<a href=#45 id=45 data-nosnippet>45</a>//! `use datamaxi::blocking::{Client, CexCandle};`.
+<a href=#43 id=43 data-nosnippet>43</a>//! synchronous client, enable the `sync` feature; everything the sync API
+<a href=#44 id=44 data-nosnippet>44</a>//! needs then lives under the single `datamaxi::sync` module, e.g.
+<a href=#45 id=45 data-nosnippet>45</a>//! `use datamaxi::sync::{Client, CexCandle};`.
 <a href=#46 id=46 data-nosnippet>46</a>//!
 <a href=#47 id=47 data-nosnippet>47</a>//! ```no_run
 <a href=#48 id=48 data-nosnippet>48</a>//! use datamaxi::{
@@ -100,7 +100,7 @@
 <a href=#100 id=100 data-nosnippet>100</a><span class="doccomment">/// Typed wrappers for every REST endpoint on the data API — the canonical
 <a href=#101 id=101 data-nosnippet>101</a>/// surface (CEX candle, OI, Liquidation, cex-symbol, …). Endpoint groups are
 <a href=#102 id=102 data-nosnippet>102</a>/// reached through accessors on the root [`Client`]. Async by default; with the
-<a href=#103 id=103 data-nosnippet>103</a>/// `blocking` feature, a parallel [`blocking`] module offers synchronous
+<a href=#103 id=103 data-nosnippet>103</a>/// `sync` feature, a parallel [`sync`] module offers synchronous
 <a href=#104 id=104 data-nosnippet>104</a>/// equivalents.
 <a href=#105 id=105 data-nosnippet>105</a>///
 <a href=#106 id=106 data-nosnippet>106</a>/// ```no_run
@@ -117,56 +117,62 @@
 <a href=#117 id=117 data-nosnippet>117</a>/// ```
 <a href=#118 id=118 data-nosnippet>118</a></span><span class="kw">pub use </span>generated::<span class="kw-2">*</span>;
 <a href=#119 id=119 data-nosnippet>119</a>
-<a href=#120 id=120 data-nosnippet>120</a><span class="doccomment">/// The root client and its builder are re-exported at the crate root so callers
-<a href=#121 id=121 data-nosnippet>121</a>/// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
-<a href=#122 id=122 data-nosnippet>122</a>/// off the client via generated accessors, e.g. `client.cex_candle()`.
-<a href=#123 id=123 data-nosnippet>123</a></span><span class="kw">pub use </span>api::{Client, ClientBuilder};
-<a href=#124 id=124 data-nosnippet>124</a>
-<a href=#125 id=125 data-nosnippet>125</a><span class="attr">#[cfg(feature = <span class="string">"blocking"</span>)]
-<a href=#126 id=126 data-nosnippet>126</a>#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"blocking"</span>)))]
-<a href=#127 id=127 data-nosnippet>127</a></span><span class="kw">pub mod </span>blocking {
-<a href=#128 id=128 data-nosnippet>128</a>    <span class="doccomment">//! Synchronous entry point for the SDK (feature `blocking`) — the blocking
-<a href=#129 id=129 data-nosnippet>129</a>    //! counterpart to the crate root.
-<a href=#130 id=130 data-nosnippet>130</a>    //!
-<a href=#131 id=131 data-nosnippet>131</a>    //! This one module gathers everything the sync API needs: the [`Client`] /
-<a href=#132 id=132 data-nosnippet>132</a>    //! [`ClientBuilder`] (blocking equivalents of the crate-root
-<a href=#133 id=133 data-nosnippet>133</a>    //! [`crate::Client`] / [`crate::ClientBuilder`]), the [`Paginator`], and the
-<a href=#134 id=134 data-nosnippet>134</a>    //! synchronous endpoint-wrapper types (`CexCandle`, `Announcements`, …) that
-<a href=#135 id=135 data-nosnippet>135</a>    //! mirror the ones re-exported at the crate root. Prefer the single import
-<a href=#136 id=136 data-nosnippet>136</a>    //! path `use datamaxi::blocking::{Client, CexCandle};` over combining
-<a href=#137 id=137 data-nosnippet>137</a>    //! [`crate::api::blocking`] with the crate root.
-<a href=#138 id=138 data-nosnippet>138</a>    //!
-<a href=#139 id=139 data-nosnippet>139</a>    //! The [`Client`] / [`ClientBuilder`] / [`Paginator`] here are re-exports of
-<a href=#140 id=140 data-nosnippet>140</a>    //! the same types in [`crate::api::blocking`], so those longer paths keep
-<a href=#141 id=141 data-nosnippet>141</a>    //! working unchanged.
-<a href=#142 id=142 data-nosnippet>142</a>    //!
-<a href=#143 id=143 data-nosnippet>143</a>    //! ```no_run
-<a href=#144 id=144 data-nosnippet>144</a>    //! use datamaxi::blocking::Client;
-<a href=#145 id=145 data-nosnippet>145</a>    //! use datamaxi::CexCandleOptions;
-<a href=#146 id=146 data-nosnippet>146</a>    //!
-<a href=#147 id=147 data-nosnippet>147</a>    //! # fn run() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-<a href=#148 id=148 data-nosnippet>148</a>    //! let client = Client::new("YOUR_API_KEY");
-<a href=#149 id=149 data-nosnippet>149</a>    //! let candle = client.cex_candle();
-<a href=#150 id=150 data-nosnippet>150</a>    //! let _ = candle.get("binance", "BTC-USDT", CexCandleOptions::new())?;
-<a href=#151 id=151 data-nosnippet>151</a>    //! # Ok(())
-<a href=#152 id=152 data-nosnippet>152</a>    //! # }
-<a href=#153 id=153 data-nosnippet>153</a>    //! ```
-<a href=#154 id=154 data-nosnippet>154</a>    </span><span class="kw">pub use </span><span class="kw">crate</span>::api::blocking::{Client, ClientBuilder, Paginator};
-<a href=#155 id=155 data-nosnippet>155</a>    <span class="kw">pub use </span><span class="kw">crate</span>::generated::blocking::<span class="kw-2">*</span>;
-<a href=#156 id=156 data-nosnippet>156</a>}
-<a href=#157 id=157 data-nosnippet>157</a>
-<a href=#158 id=158 data-nosnippet>158</a><span class="doccomment">/// Re-exported so callers can name the exact `reqwest::Client` /
-<a href=#159 id=159 data-nosnippet>159</a>/// `reqwest::blocking::Client` type expected by
-<a href=#160 id=160 data-nosnippet>160</a>/// [`ClientBuilder::http_client`] / `blocking::ClientBuilder::http_client`
-<a href=#161 id=161 data-nosnippet>161</a>/// (and the `reqwest::Error` wrapped by [`api::Error::Http`]) without adding
-<a href=#162 id=162 data-nosnippet>162</a>/// `reqwest` to their own `Cargo.toml` and risking a version mismatch with
-<a href=#163 id=163 data-nosnippet>163</a>/// this crate's dependency.
-<a href=#164 id=164 data-nosnippet>164</a></span><span class="kw">pub use </span>reqwest;
-<a href=#165 id=165 data-nosnippet>165</a>
-<a href=#166 id=166 data-nosnippet>166</a><span class="attr">#[cfg(not(any(feature = <span class="string">"native-tls"</span>, feature = <span class="string">"rustls-tls"</span>)))]
-<a href=#167 id=167 data-nosnippet>167</a></span><span class="macro">compile_error!</span>(
-<a href=#168 id=168 data-nosnippet>168</a>    <span class="string">"datamaxi requires a TLS backend: enable either the `native-tls` (default) \
-<a href=#169 id=169 data-nosnippet>169</a>     or `rustls-tls` feature. If you set `default-features = false`, add \
-<a href=#170 id=170 data-nosnippet>170</a>     `features = [\"rustls-tls\"]`."
-<a href=#171 id=171 data-nosnippet>171</a></span>);
+<a href=#120 id=120 data-nosnippet>120</a><span class="comment">// The async endpoint-wrapper structs (`CexCandle`, `Announcements`, …) now live
+<a href=#121 id=121 data-nosnippet>121</a>// in a `#[doc(hidden)]` submodule of `generated`; re-export them flat at the
+<a href=#122 id=122 data-nosnippet>122</a>// crate root so `datamaxi::CexCandle` still resolves. The parallel sync wrappers
+<a href=#123 id=123 data-nosnippet>123</a>// stay under `datamaxi::sync` (feature `sync`), never flat at the root.
+<a href=#124 id=124 data-nosnippet>124</a></span><span class="kw">pub use </span>generated::async_internal::<span class="kw-2">*</span>;
+<a href=#125 id=125 data-nosnippet>125</a>
+<a href=#126 id=126 data-nosnippet>126</a><span class="doccomment">/// The root client and its builder are re-exported at the crate root so callers
+<a href=#127 id=127 data-nosnippet>127</a>/// write `datamaxi::Client` / `datamaxi::ClientBuilder`. Endpoint groups hang
+<a href=#128 id=128 data-nosnippet>128</a>/// off the client via generated accessors, e.g. `client.cex_candle()`.
+<a href=#129 id=129 data-nosnippet>129</a></span><span class="kw">pub use </span>api::{Client, ClientBuilder};
+<a href=#130 id=130 data-nosnippet>130</a>
+<a href=#131 id=131 data-nosnippet>131</a><span class="attr">#[cfg(feature = <span class="string">"sync"</span>)]
+<a href=#132 id=132 data-nosnippet>132</a>#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"sync"</span>)))]
+<a href=#133 id=133 data-nosnippet>133</a></span><span class="kw">pub mod </span>sync {
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="doccomment">//! Synchronous entry point for the SDK (feature `sync`) — the synchronous
+<a href=#135 id=135 data-nosnippet>135</a>    //! counterpart to the crate root.
+<a href=#136 id=136 data-nosnippet>136</a>    //!
+<a href=#137 id=137 data-nosnippet>137</a>    //! This one module gathers everything the sync API needs: the [`Client`] /
+<a href=#138 id=138 data-nosnippet>138</a>    //! [`ClientBuilder`] (synchronous equivalents of the crate-root
+<a href=#139 id=139 data-nosnippet>139</a>    //! [`crate::Client`] / [`crate::ClientBuilder`]), the [`Paginator`], and the
+<a href=#140 id=140 data-nosnippet>140</a>    //! synchronous endpoint-wrapper types (`CexCandle`, `Announcements`, …) that
+<a href=#141 id=141 data-nosnippet>141</a>    //! mirror the ones re-exported at the crate root. Prefer the single import
+<a href=#142 id=142 data-nosnippet>142</a>    //! path `use datamaxi::sync::{Client, CexCandle};` over combining
+<a href=#143 id=143 data-nosnippet>143</a>    //! [`crate::api::sync`] with the crate root.
+<a href=#144 id=144 data-nosnippet>144</a>    //!
+<a href=#145 id=145 data-nosnippet>145</a>    //! The [`Client`] / [`ClientBuilder`] / [`Paginator`] here are re-exports of
+<a href=#146 id=146 data-nosnippet>146</a>    //! the same types in [`crate::api::sync`], so those longer paths keep
+<a href=#147 id=147 data-nosnippet>147</a>    //! working unchanged.
+<a href=#148 id=148 data-nosnippet>148</a>    //!
+<a href=#149 id=149 data-nosnippet>149</a>    //! ```no_run
+<a href=#150 id=150 data-nosnippet>150</a>    //! use datamaxi::sync::Client;
+<a href=#151 id=151 data-nosnippet>151</a>    //! use datamaxi::CexCandleOptions;
+<a href=#152 id=152 data-nosnippet>152</a>    //!
+<a href=#153 id=153 data-nosnippet>153</a>    //! # fn run() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+<a href=#154 id=154 data-nosnippet>154</a>    //! let client = Client::new("YOUR_API_KEY");
+<a href=#155 id=155 data-nosnippet>155</a>    //! let candle = client.cex_candle();
+<a href=#156 id=156 data-nosnippet>156</a>    //! let _ = candle.get("binance", "BTC-USDT", CexCandleOptions::new())?;
+<a href=#157 id=157 data-nosnippet>157</a>    //! # Ok(())
+<a href=#158 id=158 data-nosnippet>158</a>    //! # }
+<a href=#159 id=159 data-nosnippet>159</a>    //! ```
+<a href=#160 id=160 data-nosnippet>160</a>    </span><span class="kw">pub use </span><span class="kw">crate</span>::api::sync::{Client, ClientBuilder, Paginator};
+<a href=#161 id=161 data-nosnippet>161</a>    <span class="kw">pub use </span><span class="kw">crate</span>::generated::sync_internal::<span class="kw-2">*</span>;
+<a href=#162 id=162 data-nosnippet>162</a>}
+<a href=#163 id=163 data-nosnippet>163</a>
+<a href=#164 id=164 data-nosnippet>164</a><span class="doccomment">/// Re-exported so callers can name the exact `reqwest::Client` /
+<a href=#165 id=165 data-nosnippet>165</a>/// `reqwest::blocking::Client` type expected by
+<a href=#166 id=166 data-nosnippet>166</a>/// [`ClientBuilder::http_client`] / `sync::ClientBuilder::http_client`
+<a href=#167 id=167 data-nosnippet>167</a>/// (and the `reqwest::Error` wrapped by [`api::Error::Http`]) without adding
+<a href=#168 id=168 data-nosnippet>168</a>/// `reqwest` to their own `Cargo.toml` and risking a version mismatch with
+<a href=#169 id=169 data-nosnippet>169</a>/// this crate's dependency.
+<a href=#170 id=170 data-nosnippet>170</a></span><span class="kw">pub use </span>reqwest;
+<a href=#171 id=171 data-nosnippet>171</a>
+<a href=#172 id=172 data-nosnippet>172</a><span class="attr">#[cfg(not(any(feature = <span class="string">"native-tls"</span>, feature = <span class="string">"rustls-tls"</span>)))]
+<a href=#173 id=173 data-nosnippet>173</a></span><span class="macro">compile_error!</span>(
+<a href=#174 id=174 data-nosnippet>174</a>    <span class="string">"datamaxi requires a TLS backend: enable either the `native-tls` (default) \
+<a href=#175 id=175 data-nosnippet>175</a>     or `rustls-tls` feature. If you set `default-features = false`, add \
+<a href=#176 id=176 data-nosnippet>176</a>     `features = [\"rustls-tls\"]`."
+<a href=#177 id=177 data-nosnippet>177</a></span>);
 </code></pre></div></section></main></body></html>
