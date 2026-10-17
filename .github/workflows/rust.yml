@@ -11,7 +11,7 @@ env:
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -22,7 +22,7 @@ jobs:
 
   fmt:
     name: format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -32,7 +32,7 @@ jobs:
 
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -43,7 +43,7 @@ jobs:
 
   msrv:
     name: msrv
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.86.0
@@ -53,7 +53,7 @@ jobs:
 
   rustls:
     name: rustls-tls
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
