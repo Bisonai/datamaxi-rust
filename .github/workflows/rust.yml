@@ -44,6 +44,9 @@ jobs:
   msrv:
     name: msrv
     runs-on: ubuntu-24.04
+    env:
+      # pick deps whose rust-version <= ours (no Cargo.lock; edition 2021 resolver ignores it)
+      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.86.0
