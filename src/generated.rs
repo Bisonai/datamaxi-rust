@@ -1458,9 +1458,9 @@ pub struct CexCandleOptions {
     pub currency: Option<CexCandleCurrency>,
     /// Specifies interval (e.g. `1d`)
     pub interval: Option<CexCandleInterval>,
-    /// Specifies from (unix seconds) (e.g. `1735657200`)
+    /// Specifies from (unix seconds; not before 2024-01-01, at most 1,000 candles before to) (e.g. `1735657200`)
     pub from: Option<i64>,
-    /// Specifies to (unix seconds) (e.g. `1735693200`)
+    /// Specifies to (unix seconds; with from and to omitted: the latest 1,000 candles) (e.g. `1735693200`)
     pub to: Option<i64>,
 }
 
@@ -1493,13 +1493,13 @@ impl CexCandleOptions {
         self
     }
 
-    /// Specifies from (unix seconds) (e.g. `1735657200`)
+    /// Specifies from (unix seconds; not before 2024-01-01, at most 1,000 candles before to) (e.g. `1735657200`)
     pub fn from(mut self, from: i64) -> Self {
         self.from = Some(from);
         self
     }
 
-    /// Specifies to (unix seconds) (e.g. `1735693200`)
+    /// Specifies to (unix seconds; with from and to omitted: the latest 1,000 candles) (e.g. `1735693200`)
     pub fn to(mut self, to: i64) -> Self {
         self.to = Some(to);
         self
@@ -2142,7 +2142,7 @@ impl std::fmt::Display for FundingRateHistorySort {
 pub struct FundingRateHistoryOptions {
     /// Specifies page (e.g. `1`)
     pub page: Option<i64>,
-    /// Specifies limit (e.g. `1000`)
+    /// Specifies limit (max 100; larger values are capped) (e.g. `100`)
     pub limit: Option<i64>,
     /// Specifies from (unix seconds) (e.g. `1735657200`)
     pub from: Option<i64>,
@@ -2169,7 +2169,7 @@ impl FundingRateHistoryOptions {
         self
     }
 
-    /// Specifies limit (e.g. `1000`)
+    /// Specifies limit (max 100; larger values are capped) (e.g. `100`)
     pub fn limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
@@ -2368,7 +2368,7 @@ impl std::fmt::Display for LiquidationSymbolHistoryInterval {
     }
 }
 
-/// Lookback window
+/// Lookback window (72h needs interval 15m or 1h, 7d needs 1h)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 #[non_exhaustive]
@@ -2573,7 +2573,7 @@ pub struct LiquidationSymbolHistoryOptions {
     pub exchange: Option<String>,
     /// Bucket interval
     pub interval: Option<LiquidationSymbolHistoryInterval>,
-    /// Lookback window
+    /// Lookback window (72h needs interval 15m or 1h, 7d needs 1h)
     pub window: Option<LiquidationSymbolHistoryWindow>,
 }
 
@@ -2605,7 +2605,7 @@ impl LiquidationSymbolHistoryOptions {
         self
     }
 
-    /// Lookback window
+    /// Lookback window (72h needs interval 15m or 1h, 7d needs 1h)
     pub fn window(mut self, window: LiquidationSymbolHistoryWindow) -> Self {
         self.window = Some(window);
         self
@@ -3728,7 +3728,7 @@ pub mod async_internal {
             Self { client }
         }
 
-        /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`.
+        /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`. Returns at most 1,000 candles per call: `to` - `from` may span at most 1,000 intervals (larger ranges return 400), and with both omitted the latest 1,000 candles are returned. History starts 2024-01-01: earlier timestamps are rejected for intervals up to 4h and clamped to 2024-01-01 for longer ones.
         pub async fn get(
             &self,
             exchange: impl Into<String>,
@@ -4041,7 +4041,7 @@ pub mod async_internal {
                 .await
         }
 
-        /// Get historical funding rate data for a given `exchange` and `symbol`.
+        /// Get historical funding rate data for a given `exchange` and `symbol`. Returns at most 100 rows per call; page through or narrow from/to for longer ranges.
         pub async fn history(
             &self,
             exchange: impl Into<String>,
@@ -4244,7 +4244,7 @@ pub mod async_internal {
                 .await
         }
 
-        /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
+        /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. The window is capped by interval: 5m up to 24h, 15m up to 72h, 1h up to 7d (larger combinations return 400). Cached ~30s server-side.
         pub async fn symbol_history(
             &self,
             symbol: impl Into<String>,
@@ -4949,7 +4949,7 @@ pub mod sync_internal {
             Self { client }
         }
 
-        /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`.
+        /// Get historical candle data for a given `exchange`, `symbol`, `interval` and `market`. Returns at most 1,000 candles per call: `to` - `from` may span at most 1,000 intervals (larger ranges return 400), and with both omitted the latest 1,000 candles are returned. History starts 2024-01-01: earlier timestamps are rejected for intervals up to 4h and clamped to 2024-01-01 for longer ones.
         pub fn get(
             &self,
             exchange: impl Into<String>,
@@ -5246,7 +5246,7 @@ pub mod sync_internal {
             self.client.get("/api/v1/funding-rate/exchanges", None)
         }
 
-        /// Get historical funding rate data for a given `exchange` and `symbol`.
+        /// Get historical funding rate data for a given `exchange` and `symbol`. Returns at most 100 rows per call; page through or narrow from/to for longer ranges.
         pub fn history(
             &self,
             exchange: impl Into<String>,
@@ -5431,7 +5431,7 @@ pub mod sync_internal {
                 .get("/api/v1/liquidation/stats", Some(parameters))
         }
 
-        /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. Cached ~30s server-side.
+        /// Bucketed long / short liquidation USD over time for a single (base, quote) pair, joined with the futures-candle close as a reference price line. Long/short USD comes from `cex.liquidation` (Side='sell' = long position liquidated, 'buy' = short). Price comes from `candle.futures_1m` on the requested exchange — or Binance as the reference when none is specified. The window is capped by interval: 5m up to 24h, 15m up to 72h, 1h up to 7d (larger combinations return 400). Cached ~30s server-side.
         pub fn symbol_history(
             &self,
             symbol: impl Into<String>,
